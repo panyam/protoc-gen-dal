@@ -1,0 +1,278 @@
+// Copyright 2025 Sri Panyam
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//  http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package dal.v1;
+
+import "google/protobuf/descriptor.proto";
+
+option go_package = "github.com/panyam/protoc-gen-go-dal/proto/gen/go/dal/v1";
+
+// table specifies database table options for a message.
+// Use this to customize how a message maps to a database table.
+//
+// Example usage:
+//   message Book {
+//     option (dal.v1.table) = {
+//       name: "books"
+//       schema: "library"
+//     };
+//     string id = 1;
+//     string title = 2;
+//   }
+extend google.protobuf.MessageOptions {
+  TableOptions table = 60001;
+}
+
+// column specifies database column options for a field.
+// Use this to customize how a field maps to a database column.
+//
+// Example usage:
+//   message Book {
+//     string id = 1 [(dal.v1.column) = {
+//       name: "book_id"
+//       type: "UUID"
+//       primary_key: true
+//     }];
+//     string title = 2 [(dal.v1.column) = {
+//       name: "book_title"
+//       nullable: false
+//       max_length: 255
+//     }];
+//   }
+extend google.protobuf.FieldOptions {
+  ColumnOptions column = 60002;
+}
+
+// index specifies an index on the table.
+// Can be used on message or field level.
+//
+// Example usage:
+//   message Book {
+//     option (dal.v1.index) = {
+//       name: "idx_author_title"
+//       fields: "author,title"
+//       unique: true
+//     };
+//     string author = 1;
+//     string title = 2;
+//   }
+//
+// Or on field level:
+//   message Book {
+//     string author = 1 [(dal.v1.index) = {unique: false}];
+//   }
+extend google.protobuf.MessageOptions {
+  repeated IndexOptions index = 60003;
+}
+extend google.protobuf.FieldOptions {
+  IndexOptions field_index = 60004;
+}
+
+// foreign_key specifies a foreign key relationship.
+//
+// Example usage:
+//   message Book {
+//     string author_id = 3 [(dal.v1.foreign_key) = {
+//       references: "authors.id"
+//       on_delete: CASCADE
+//       on_update: RESTRICT
+//     }];
+//   }
+extend google.protobuf.FieldOptions {
+  ForeignKeyOptions foreign_key = 60005;
+}
+
+// skip_dal excludes a message or field from DAL generation.
+//
+// Example usage:
+//   message InternalData {
+//     option (dal.v1.skip_dal) = true;
+//   }
+//
+//   message User {
+//     string password_hash = 5 [(dal.v1.skip_dal) = true];
+//   }
+extend google.protobuf.MessageOptions {
+  bool skip_dal = 60006;
+}
+extend google.protobuf.FieldOptions {
+  bool skip_field = 60007;
+}
+
+// gorm_options specifies GORM-specific options.
+//
+// Example usage:
+//   message Book {
+//     option (dal.v1.gorm_options) = {
+//       disable_auto_create_time: false
+//       disable_auto_update_time: false
+//     };
+//   }
+extend google.protobuf.MessageOptions {
+  GormOptions gorm_options = 60008;
+}
+
+// datastore_options specifies Google Cloud Datastore options.
+//
+// Example usage:
+//   message Book {
+//     option (dal.v1.datastore_options) = {
+//       kind: "Book"
+//       namespace: "library"
+//     };
+//   }
+extend google.protobuf.MessageOptions {
+  DatastoreOptions datastore_options = 60009;
+}
+
+// Configuration for table mapping
+message TableOptions {
+  // Table name in the database
+  string name = 1;
+
+  // Database schema/namespace
+  string schema = 2;
+
+  // Custom table comment/description
+  string comment = 3;
+
+  // Source message fully qualified name (e.g., "library.v1.Book")
+  // This links the DAL schema message to the API proto message
+  string source = 4;
+}
+
+// Configuration for column mapping
+message ColumnOptions {
+  // Column name in the database
+  string name = 1;
+
+  // Database-specific column type (e.g., "UUID", "TEXT", "JSONB")
+  string type = 2;
+
+  // Whether this is a primary key
+  bool primary_key = 3;
+
+  // Whether the column is nullable
+  bool nullable = 4;
+
+  // Default value expression
+  string default = 5;
+
+  // Maximum length for string/varchar types
+  int32 max_length = 6;
+
+  // Precision for numeric types
+  int32 precision = 7;
+
+  // Scale for numeric types
+  int32 scale = 8;
+
+  // Whether this column is auto-increment
+  bool auto_increment = 9;
+
+  // Whether this field should be updated on record update
+  bool auto_update_time = 10;
+
+  // Whether this field should be set on record creation
+  bool auto_create_time = 11;
+
+  // Custom column comment/description
+  string comment = 12;
+
+  // Unique constraint
+  bool unique = 13;
+}
+
+// Configuration for indexes
+message IndexOptions {
+  // Index name
+  string name = 1;
+
+  // Comma-separated list of field names (for composite indexes)
+  string fields = 2;
+
+  // Whether this is a unique index
+  bool unique = 3;
+
+  // Index type (e.g., "BTREE", "HASH", "GIN", "GIST")
+  string type = 4;
+
+  // Partial index condition (WHERE clause)
+  string where = 5;
+}
+
+// Configuration for foreign keys
+message ForeignKeyOptions {
+  // Referenced table and column (e.g., "authors.id")
+  string references = 1;
+
+  // Action on delete
+  ReferentialAction on_delete = 2;
+
+  // Action on update
+  ReferentialAction on_update = 3;
+
+  // Foreign key constraint name
+  string constraint_name = 4;
+}
+
+// Referential actions for foreign keys
+enum ReferentialAction {
+  NO_ACTION = 0;
+  RESTRICT = 1;
+  CASCADE = 2;
+  SET_NULL = 3;
+  SET_DEFAULT = 4;
+}
+
+// GORM-specific options
+message GormOptions {
+  // Disable automatic CreatedAt field
+  bool disable_auto_create_time = 1;
+
+  // Disable automatic UpdatedAt field
+  bool disable_auto_update_time = 2;
+
+  // Disable automatic DeletedAt field (soft deletes)
+  bool disable_soft_delete = 3;
+
+  // Custom table name (alternative to table.name)
+  string table_name = 4;
+
+  // Embedded fields
+  repeated string embedded = 5;
+
+  // Source message fully qualified name (e.g., "library.v1.Book")
+  string source = 6;
+}
+
+// Google Cloud Datastore options
+message DatastoreOptions {
+  // Datastore kind name
+  string kind = 1;
+
+  // Datastore namespace
+  string namespace = 2;
+
+  // Whether to use incomplete keys (auto-generated)
+  bool incomplete_key = 3;
+
+  // Ancestor path
+  string ancestor = 4;
+
+  // Source message fully qualified name (e.g., "library.v1.Book")
+  string source = 5;
+}
