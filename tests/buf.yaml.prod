@@ -1,0 +1,14 @@
+version: v2
+modules:
+  - path: protos
+deps:
+  - buf.build/protocolbuffers/wellknowntypes
+  - buf.build/googleapis/googleapis
+  - buf.build/grpc-ecosystem/grpc-gateway
+  - buf.build/panyam/protoc-gen-dal
+lint:
+  use:
+    - STANDARD
+breaking:
+  use:
+    - FILE

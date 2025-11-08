@@ -1,0 +1,21 @@
+version: v2
+clean: true
+managed:
+  enabled: true
+  disable:
+    # Don't modify any files in buf.build/googleapis/googleapis
+    - module: buf.build/googleapis/googleapis
+    - module: buf.build/grpc-ecosystem/grpc-gateway
+  override:
+    - file_option: go_package_prefix
+      value: github.com/panyam/protoc-gen-dal/tests/gen
+plugins:
+  # Generate standard Go protobuf types
+  - remote: buf.build/protocolbuffers/go
+    out: ./gen/go
+    opt: paths=source_relative
+
+  # Local binary for testing
+  - local: ../bin/protoc-gen-dal-gorm
+    out: ./gen/gorm
+    opt: paths=source_relative

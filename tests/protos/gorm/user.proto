@@ -1,0 +1,217 @@
+syntax = "proto3";
+
+package gorm;
+
+import "dal/v1/annotations.proto";
+import "api/user.proto";  // Import API protos so they're available for source references
+
+option go_package = "github.com/panyam/protoc-gen-dal/tests/gen/dal;testdal";
+
+// UserGorm demonstrates comprehensive GORM features from https://gorm.io/docs/models.html
+message UserGorm {
+  option (dal.v1.gorm) = {
+    source: "api.User"
+    table: "users"
+  };
+
+  // Primary key with auto increment
+  uint32 id = 1 [(dal.v1.column) = {
+    gorm_tags: ["primaryKey", "autoIncrement"]
+  }];
+
+  // Regular string field
+  string name = 2 [(dal.v1.column) = {
+    gorm_tags: ["type:varchar(100)", "not null"]
+  }];
+
+  // Nullable string (pointer in Go)
+  string email = 3 [(dal.v1.column) = {
+    gorm_tags: ["uniqueIndex", "type:varchar(100)"]
+  }];
+
+  // Unsigned integer
+  uint32 age = 4 [(dal.v1.column) = {
+    gorm_tags: ["type:uint8"]
+  }];
+
+  // Timestamp stored as int64 (Unix time)
+  int64 birthday = 5 [(dal.v1.column) = {
+    gorm_tags: ["type:bigint"]
+  }];
+
+  // Nullable string field
+  string member_number = 6 [(dal.v1.column) = {
+    gorm_tags: ["type:varchar(50)"]
+  }];
+
+  // Nullable timestamp
+  int64 activated_at = 7 [(dal.v1.column) = {
+    gorm_tags: ["type:bigint"]
+  }];
+
+  // Auto-managed timestamps (GORM conventions)
+  int64 created_at = 8 [(dal.v1.column) = {
+    gorm_tags: ["autoCreateTime"]
+  }];
+
+  int64 updated_at = 9 [(dal.v1.column) = {
+    gorm_tags: ["autoUpdateTime"]
+  }];
+
+  // Soft delete support (gorm.DeletedAt equivalent)
+  int64 deleted_at = 10 [(dal.v1.column) = {
+    gorm_tags: ["index"]
+  }];
+}
+
+// UserWithPermissions demonstrates field-level permission tags
+message UserWithPermissions {
+  option (dal.v1.gorm) = {
+    source: "api.User"
+    table: "users_with_perms"
+  };
+
+  uint32 id = 1 [(dal.v1.column) = {
+    gorm_tags: ["primaryKey"]
+  }];
+
+  // Create-only field
+  string name = 2 [(dal.v1.column) = {
+    gorm_tags: ["<-:create"]
+  }];
+
+  // Update-only field
+  string email = 3 [(dal.v1.column) = {
+    gorm_tags: ["<-:update"]
+  }];
+
+  // Read-only field
+  int64 created_at = 4 [(dal.v1.column) = {
+    gorm_tags: ["->", "autoCreateTime"]
+  }];
+
+  // Read and write
+  int64 updated_at = 5 [(dal.v1.column) = {
+    gorm_tags: ["<-", "autoUpdateTime"]
+  }];
+}
+
+// UserWithCustomTimestamps demonstrates different timestamp tracking modes
+message UserWithCustomTimestamps {
+  option (dal.v1.gorm) = {
+    source: "api.User"
+    table: "users_custom_time"
+  };
+
+  uint32 id = 1 [(dal.v1.column) = {
+    gorm_tags: ["primaryKey"]
+  }];
+
+  string name = 2;
+
+  // Unix timestamp in seconds
+  int64 created_at = 3 [(dal.v1.column) = {
+    gorm_tags: ["autoCreateTime"]
+  }];
+
+  // Unix timestamp in milliseconds
+  int64 updated_milli = 4 [(dal.v1.column) = {
+    gorm_tags: ["autoUpdateTime:milli"]
+  }];
+
+  // Unix timestamp in nanoseconds
+  int64 updated_nano = 5 [(dal.v1.column) = {
+    gorm_tags: ["autoUpdateTime:nano"]
+  }];
+}
+
+// UserWithIndexes demonstrates various index types
+message UserWithIndexes {
+  option (dal.v1.gorm) = {
+    source: "api.User"
+    table: "users_indexed"
+  };
+
+  uint32 id = 1 [(dal.v1.column) = {
+    gorm_tags: ["primaryKey"]
+  }];
+
+  // Simple index
+  string name = 2 [(dal.v1.column) = {
+    gorm_tags: ["index"]
+  }];
+
+  // Unique index
+  string email = 3 [(dal.v1.column) = {
+    gorm_tags: ["uniqueIndex"]
+  }];
+
+  // Named index with options
+  string city = 4 [(dal.v1.column) = {
+    gorm_tags: ["index:idx_city,sort:desc"]
+  }];
+
+  // Composite index (same index name on multiple fields)
+  string first_name = 5 [(dal.v1.column) = {
+    gorm_tags: ["index:idx_name"]
+  }];
+
+  string last_name = 6 [(dal.v1.column) = {
+    gorm_tags: ["index:idx_name"]
+  }];
+}
+
+// UserWithDefaults demonstrates default values
+message UserWithDefaults {
+  option (dal.v1.gorm) = {
+    source: "api.User"
+    table: "users_defaults"
+  };
+
+  uint32 id = 1 [(dal.v1.column) = {
+    gorm_tags: ["primaryKey"]
+  }];
+
+  string name = 2 [(dal.v1.column) = {
+    gorm_tags: ["default:guest"]
+  }];
+
+  bool active = 3 [(dal.v1.column) = {
+    gorm_tags: ["default:true"]
+  }];
+
+  int64 created_at = 4 [(dal.v1.column) = {
+    gorm_tags: ["default:CURRENT_TIMESTAMP"]
+  }];
+}
+
+// AuthorGorm for embedded struct (no table - just embedded in Blog)
+message AuthorGorm {
+  string name = 1;
+  string email = 2;
+}
+
+// BlogGorm demonstrates embedded structs with prefix
+message BlogGorm {
+  option (dal.v1.gorm) = {
+    source: "api.Blog"
+    table: "blogs"
+  };
+
+  uint32 id = 1 [(dal.v1.column) = {
+    gorm_tags: ["primaryKey", "autoIncrement"]
+  }];
+
+  // Embedded struct with prefix (author_name, author_email in DB)
+  AuthorGorm author = 2 [(dal.v1.column) = {
+    gorm_tags: ["embedded", "embeddedPrefix:author_"]
+  }];
+
+  int32 upvotes = 3 [(dal.v1.column) = {
+    gorm_tags: ["default:0"]
+  }];
+
+  string title = 4 [(dal.v1.column) = {
+    gorm_tags: ["type:varchar(255)", "not null"]
+  }];
+}

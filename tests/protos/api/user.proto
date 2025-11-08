@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package api;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/panyam/protoc-gen-dal/tests/gen/go/api;testapi";
+
+// User is the clean API message
+message User {
+  uint32 id = 1;
+  string name = 2;
+  string email = 3;
+  uint32 age = 4;
+  google.protobuf.Timestamp birthday = 5;
+  string member_number = 6;
+  google.protobuf.Timestamp activated_at = 7;
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
+}
+
+// Author for embedded struct example
+message Author {
+  string name = 1;
+  string email = 2;
+}
+
+// Blog demonstrates embedded structs
+message Blog {
+  uint32 id = 1;
+  Author author = 2;
+  int32 upvotes = 3;
+  string title = 4;
+}
