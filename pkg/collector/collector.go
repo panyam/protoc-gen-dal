@@ -144,6 +144,8 @@ func extractMessageInfo(msg *protogen.Message, target Target, index map[string]*
 
 	// Dispatch to target-specific extraction
 	switch target {
+	case TargetGorm:
+		return extractGormInfo(msg, opts, index)
 	case TargetPostgres:
 		return extractPostgresInfo(msg, opts, index)
 	case TargetFirestore:
@@ -152,6 +154,45 @@ func extractMessageInfo(msg *protogen.Message, target Target, index map[string]*
 		return extractMongoDBInfo(msg, opts, index)
 	}
 
+	return nil
+}
+
+// extractGormInfo extracts GORM message info.
+//
+// Looks for the (dal.v1.gorm) annotation on the message.
+//
+// Example proto:
+//
+//	message BookGorm {
+//	  option (dal.v1.gorm) = {
+//	    source: "library.v1.Book"    // API message to convert from
+//	    table: "books"                // Table name
+//	  };
+//	}
+//
+// Why check if source exists?
+// If the source message isn't found, this is a broken reference.
+// We return nil to skip this message rather than crash.
+func extractGormInfo(msg *protogen.Message, opts proto.Message, index map[string]*protogen.Message) *MessageInfo {
+	// Check if message has gorm annotation
+	if v := proto.GetExtension(opts, dalv1.E_Gorm); v != nil {
+		if gormOpts, ok := v.(*dalv1.GormOptions); ok && gormOpts != nil {
+			// Look up source message by fully qualified name
+			sourceMsg := index[gormOpts.Source]
+			if sourceMsg == nil {
+				// Source message not found - skip this DAL schema
+				return nil
+			}
+
+			return &MessageInfo{
+				SourceMessage: sourceMsg,
+				TargetMessage: msg,
+				SourceName:    gormOpts.Source,
+				TableName:     gormOpts.Table,
+				SchemaName:    "", // GORM doesn't use schema
+			}
+		}
+	}
 	return nil
 }
 

@@ -137,18 +137,11 @@ func (r RelationshipType) String() string {
 }
 
 // GetStorageStrategy determines the storage strategy from column options
+// GetStorageStrategy is deprecated - we now use target-specific tags directly.
+// Keeping this for reference but it's not used in the new design.
 func GetStorageStrategy(colOpts *dalv1.ColumnOptions, field *protogen.Field) StorageStrategy {
-	if colOpts == nil {
-		return StorageAuto
-	}
-
-	// Check if column type indicates a specific strategy
-	switch colOpts.Type {
-	case "JSON", "JSONB":
-		return StorageJSON
-	case "TEXT[]", "VARCHAR[]", "INTEGER[]":
-		return StorageArray
-	default:
-		return StorageAuto
-	}
+	// NOTE: This function is not used. With the new design, storage strategies
+	// are determined by target-specific tags (e.g., gorm_tags: ["type:jsonb"]).
+	// Users specify types directly using their target's syntax.
+	return StorageAuto
 }

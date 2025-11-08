@@ -1,0 +1,6 @@
+{{ define "struct" -}}
+// {{ .Name }} is the GORM model for {{ .SourceName }}
+type {{ .Name }} struct {
+{{ range .Fields }}	{{ .Name }} {{ .Type }}{{ if .GormTag }} `gorm:"{{ .GormTag }}"`{{ end }}
+{{ end }}}
+{{- end }}

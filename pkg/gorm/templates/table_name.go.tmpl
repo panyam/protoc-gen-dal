@@ -1,0 +1,6 @@
+{{ define "table_name" -}}
+// TableName returns the table name for {{ .Name }}
+func ({{ .Name }}) TableName() string {
+	return "{{ .TableName }}"
+}
+{{- end }}
