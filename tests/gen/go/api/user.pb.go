@@ -278,8 +278,8 @@ const file_api_user_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\rR\x02id\x12#\n" +
 	"\x06author\x18\x02 \x01(\v2\v.api.AuthorR\x06author\x12\x18\n" +
 	"\aupvotes\x18\x03 \x01(\x05R\aupvotes\x12\x14\n" +
-	"\x05title\x18\x04 \x01(\tR\x05titleBp\n" +
-	"\acom.apiB\tUserProtoP\x01Z.github.com/panyam/protoc-gen-dal/tests/gen/api\xa2\x02\x03AXX\xaa\x02\x03Api\xca\x02\x03Api\xe2\x02\x0fApi\\GPBMetadata\xea\x02\x03Apib\x06proto3"
+	"\x05title\x18\x04 \x01(\tR\x05titleBs\n" +
+	"\acom.apiB\tUserProtoP\x01Z1github.com/panyam/protoc-gen-dal/tests/gen/go/api\xa2\x02\x03AXX\xaa\x02\x03Api\xca\x02\x03Api\xe2\x02\x0fApi\\GPBMetadata\xea\x02\x03Apib\x06proto3"
 
 var (
 	file_api_user_proto_rawDescOnce sync.Once

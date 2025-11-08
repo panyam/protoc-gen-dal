@@ -8,7 +8,7 @@ managed:
     - module: buf.build/grpc-ecosystem/grpc-gateway
   override:
     - file_option: go_package_prefix
-      value: github.com/panyam/protoc-gen-dal/tests/gen
+      value: github.com/panyam/protoc-gen-dal/tests/gen/go
 plugins:
   # Generate standard Go protobuf types
   - remote: buf.build/protocolbuffers/go

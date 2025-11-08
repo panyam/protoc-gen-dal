@@ -11,8 +11,8 @@ import (
 	sync "sync"
 	unsafe "unsafe"
 
-	_ "github.com/panyam/protoc-gen-dal/tests/gen/api"
-	_ "github.com/panyam/protoc-gen-dal/tests/gen/dal/v1"
+	_ "github.com/panyam/protoc-gen-dal/tests/gen/go/api"
+	_ "github.com/panyam/protoc-gen-dal/tests/gen/go/dal/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
@@ -662,8 +662,8 @@ const file_gorm_user_proto_rawDesc = "" +
 	"\x06author\x18\x02 \x01(\v2\x10.gorm.AuthorGormB&\x92\xa6\x1d\"R\bembeddedR\x16embeddedPrefix:author_R\x06author\x12)\n" +
 	"\aupvotes\x18\x03 \x01(\x05B\x0f\x92\xa6\x1d\vR\tdefault:0R\aupvotes\x127\n" +
 	"\x05title\x18\x04 \x01(\tB!\x92\xa6\x1d\x1dR\x11type:varchar(255)R\bnot nullR\x05title:\x15ʦ\x1d\x11\n" +
-	"\bapi.Blog\x12\x05blogsBv\n" +
-	"\bcom.gormB\tUserProtoP\x01Z/github.com/panyam/protoc-gen-dal/tests/gen/gorm\xa2\x02\x03GXX\xaa\x02\x04Gorm\xca\x02\x04Gorm\xe2\x02\x10Gorm\\GPBMetadata\xea\x02\x04Gormb\x06proto3"
+	"\bapi.Blog\x12\x05blogsBy\n" +
+	"\bcom.gormB\tUserProtoP\x01Z2github.com/panyam/protoc-gen-dal/tests/gen/go/gorm\xa2\x02\x03GXX\xaa\x02\x04Gorm\xca\x02\x04Gorm\xe2\x02\x10Gorm\\GPBMetadata\xea\x02\x04Gormb\x06proto3"
 
 var (
 	file_gorm_user_proto_rawDescOnce sync.Once
