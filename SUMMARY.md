@@ -6,15 +6,26 @@ Generate Data Access Layer (DAL) converters that transform between clean API pro
 
 ## Core Principles
 
-### 1. Targets vs Vehicles
+### 1. Targets: Database Access Layers
 
-**Target** = Where data lives (The Hero)
-- postgres, firestore, mongodb, dynamodb, etc.
-- The primary concern - what database/datastore you're using
+**Target** = The data access technology you're using
 
-**Vehicle** = How you access it (Implementation Detail)
-- Go + database/sql, Go + GORM, Python + psycopg2, TypeScript + Prisma
-- Just different ways to access the same target
+There are three types of targets:
+
+**1. Direct Database Targets** (database-specific)
+- `postgres-raw`, `mysql-raw` - Direct SQL for specific databases
+- Language can vary: Go + database/sql, Python + psycopg2, TypeScript + pg
+- Tied to one database type
+
+**2. ORM Targets** (database-agnostic at codegen time)
+- `gorm` - Database-agnostic ORM (supports postgres, mysql, sqlite, etc.)
+- Database chosen at runtime via GORM dialects
+- Allows database-specific type hints (e.g., `type: "jsonb"` for PostgreSQL)
+- Generated code is Go only (GORM is Go-specific)
+
+**3. Datastore Targets** (NoSQL/document stores)
+- `firestore`, `mongodb`, `dynamodb` - NoSQL datastores
+- Language can vary per target
 
 ### 2. Sidecar Pattern (API Purity)
 
@@ -28,7 +39,8 @@ proto/
 │
 └── dal/
     └── library/v1/
-        ├── book_postgres.proto      # PostgreSQL schema
+        ├── book_gorm.proto          # GORM schema (multi-DB)
+        ├── book_postgres.proto      # PostgreSQL raw SQL schema
         ├── book_firestore.proto     # Firestore schema
         └── book_mongodb.proto       # MongoDB schema
 ```
@@ -130,14 +142,14 @@ Phase 2: Generation
 - Need to resolve relationships across entire proto set
 - One-to-many, many-to-many requires seeing all related messages
 
-### One Binary Per Target+Vehicle
+### One Binary Per Target
 
 ```
 cmd/
-├── protoc-gen-dal-postgres-raw/
-├── protoc-gen-dal-postgres-gorm/
-├── protoc-gen-dal-firestore-raw/
-└── protoc-gen-python-dal-postgres-raw/
+├── protoc-gen-dal-gorm/              # GORM (multi-DB ORM)
+├── protoc-gen-dal-postgres-raw/      # PostgreSQL raw SQL (Go)
+├── protoc-gen-dal-firestore/         # Firestore (Go)
+└── protoc-gen-python-dal-postgres/   # PostgreSQL raw SQL (Python)
 ```
 
 **Each main.go is thin:**
@@ -147,7 +159,7 @@ cmd/
 
 **Benefits:**
 - Focused single responsibility
-- Easy to add new target+vehicle combinations
+- Easy to add new targets
 - Independent versioning possible
 - Clear separation of concerns
 
@@ -156,30 +168,33 @@ cmd/
 ```
 protoc-gen-dal/                    # Monorepo
 ├── cmd/
-│   ├── protoc-gen-dal-postgres-gorm/
+│   ├── protoc-gen-dal-gorm/
 │   │   └── main.go                   # Thin: collect → delegate
 │   ├── protoc-gen-dal-postgres-raw/
-│   └── protoc-gen-dal-firestore-raw/
+│   └── protoc-gen-dal-firestore/
 │
 ├── pkg/
 │   ├── collector/
 │   │   └── collector.go              # Shared: collect messages by target
 │   │
+│   ├── gorm/
+│   │   ├── generator.go              # GORM generator (multi-DB)
+│   │   └── templates/
+│   │       └── go/
+│   │
 │   ├── postgres/
-│   │   ├── gorm_go.go                # Generator for Go+GORM
 │   │   ├── raw_go.go                 # Generator for Go+raw SQL
 │   │   ├── raw_python.go             # Generator for Python+psycopg2
 │   │   └── templates/
-│   │       ├── go_gorm/
-│   │       ├── go_raw/
-│   │       └── python_raw/
+│   │       ├── go/
+│   │       └── python/
 │   │
 │   ├── firestore/
-│   │   ├── raw_go.go
+│   │   ├── generator_go.go
 │   │   └── templates/
 │   │
 │   └── mongodb/
-│       └── raw_go.go
+│       └── generator_go.go
 │
 └── proto/
     └── dal/v1/
@@ -191,41 +206,40 @@ protoc-gen-dal/                    # Monorepo
 ### Target-Focused Annotations
 
 ```protobuf
-// Postgres target
+// GORM target (database-agnostic ORM)
+message GormOptions {
+  string source = 1;            // "library.v1.Book" - links to API message
+  string table = 2;             // "books"
+  repeated string embedded = 3; // Embedded field names
+}
+
+// PostgreSQL target (raw SQL)
 message PostgresOptions {
   string source = 1;        // "library.v1.Book" - links to API message
   string table = 2;         // "books"
   string schema = 3;        // "public"
-
-  // Vehicle-specific hints (optional)
-  GormHints gorm = 10;
-}
-
-message GormHints {
-  bool disable_soft_delete = 1;
-  repeated string embedded = 2;
 }
 
 // Firestore target
 message FirestoreOptions {
-  string source = 1;
-  string collection = 2;
+  string source = 1;        // "library.v1.Book" - links to API message
+  string collection = 2;    // "books"
 }
 ```
 
 ### Field-Level Annotations
 
+**Philosophy: No abstraction layer - use native target syntax directly**
+
 ```protobuf
 message ColumnOptions {
-  string name = 1;              // Column name
-  string type = 2;              // DB-specific type ("UUID", "JSONB")
-  bool primary_key = 3;
-  bool nullable = 4;
-  string default = 5;
-  bool unique = 6;
-  bool auto_increment = 7;
-  bool auto_create_time = 8;
-  bool auto_update_time = 9;
+  string name = 1;  // Column name override (optional)
+
+  // Target-specific tags (use what you already know!)
+  repeated string gorm_tags = 10;      // GORM: ["primaryKey", "type:uuid"]
+  repeated string sql_tags = 11;       // Raw SQL
+  repeated string firestore_tags = 12; // Firestore
+  repeated string mongodb_tags = 13;   // MongoDB
 }
 
 message ForeignKeyOptions {
@@ -235,21 +249,49 @@ message ForeignKeyOptions {
 }
 ```
 
+**Example:**
+```protobuf
+int64 created_at = 5 [(dal.v1.column) = {
+  gorm_tags: ["autoCreateTime", "index"]
+}];
+// Generates: `gorm:"autoCreateTime;index"`
+```
+
 ## Generated Code Pattern
 
 ### GORM Example
 
 **Input:**
 ```protobuf
-message BookPostgres {
-  option (dal.v1.postgres) = {
+message BookGorm {
+  option (dal.v1.gorm) = {
     source: "library.v1.Book"
     table: "books"
   };
 
-  string id = 1 [(dal.v1.column) = {primary_key: true}];
-  string title = 2;
-  int64 published_at = 3;  // Transformed from Timestamp
+  // Use GORM tags directly - no abstraction!
+  string id = 1 [(dal.v1.column) = {
+    gorm_tags: ["primaryKey", "type:uuid"]
+  }];
+
+  string title = 2 [(dal.v1.column) = {
+    gorm_tags: ["type:varchar(255)", "not null"]
+  }];
+
+  int64 published_at = 3;
+
+  repeated string tags = 4 [(dal.v1.column) = {
+    gorm_tags: ["type:jsonb"]  // PostgreSQL-specific - works with postgres dialect
+  }];
+
+  // Timestamp fields with GORM's auto-time tags
+  int64 created_at = 5 [(dal.v1.column) = {
+    gorm_tags: ["autoCreateTime", "index"]
+  }];
+
+  int64 updated_at = 6 [(dal.v1.column) = {
+    gorm_tags: ["autoUpdateTime"]
+  }];
 }
 ```
 
@@ -257,11 +299,12 @@ message BookPostgres {
 ```go
 // Generated GORM model
 type BookGORM struct {
-    ID          string `gorm:"primaryKey;column:id"`
-    Title       string `gorm:"column:title"`
-    PublishedAt int64  `gorm:"column:published_at"`
-    CreatedAt   time.Time
-    UpdatedAt   time.Time
+    ID          string   `gorm:"primaryKey;type:uuid"`
+    Title       string   `gorm:"type:varchar(255);not null"`
+    PublishedAt int64    `gorm:"column:published_at"`
+    Tags        []string `gorm:"type:jsonb"`
+    CreatedAt   int64    `gorm:"autoCreateTime;index"`
+    UpdatedAt   int64    `gorm:"autoUpdateTime"`
 }
 
 func (BookGORM) TableName() string { return "books" }
@@ -405,7 +448,7 @@ const BookTableDDL = `CREATE TABLE IF NOT EXISTS books (...)`
 |----------|-----------|
 | Sidecar pattern | Keep API protos clean, allow multiple DB representations |
 | No IR layer | Direct proto reading simpler, no duplication |
-| One binary per target+vehicle | Focused, easy to add new combinations |
+| One binary per target | Focused, easy to add new combinations |
 | Grouper phase | Need all messages to resolve cross-file relationships |
 | Type safety | Compile-time checks, no runtime map lookups |
 | Function pointer hooks | Avoid interface boilerplate |
@@ -413,3 +456,5 @@ const BookTableDDL = `CREATE TABLE IF NOT EXISTS books (...)`
 | Target-focused annotations | Database is the hero, not the language |
 | Opt-in messages | Explicit about which messages are DB entities |
 | TDD workflow | Prevent over-engineering, ensure correctness |
+| GORM as target (not vehicle) | GORM is database-agnostic; database chosen at runtime via dialects. Same generated code works for postgres/mysql/sqlite. Users specify DB-specific types if needed (e.g., `type: "jsonb"`). Simpler mental model than postgres-gorm, mysql-gorm, etc. |
+| No abstraction layer for tags | Use native target syntax directly (e.g., `gorm_tags: ["primaryKey", "autoCreateTime"]`). Don't create another language on top of what users already know. Pass through tags verbatim. Reduces learning curve and maintains full feature access. |

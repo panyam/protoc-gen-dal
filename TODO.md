@@ -10,23 +10,25 @@
 - [x] Add `FirestoreOptions` annotation
 - [x] Regenerate proto Go code
 
-### 1.2 Shared Collector Package
-- [ ] **TEST**: Collector finds postgres messages across multiple files
-- [ ] Implement `collector.CollectMessages()`
-- [ ] **TEST**: Collector builds message index correctly
-- [ ] Implement `buildMessageIndex()`
-- [ ] **TEST**: Collector extracts PostgresOptions correctly
-- [ ] Implement `extractMessageInfo()` for postgres
-- [ ] **TEST**: Collector links source message via `source` field
-- [ ] Implement source message lookup
+### 1.2 Shared Collector Package ✅
+- [x] **TEST**: Collector finds postgres messages across multiple files
+- [x] Implement `collector.CollectMessages()`
+- [x] **TEST**: Collector builds message index correctly
+- [x] Implement `buildMessageIndex()`
+- [x] **TEST**: Collector extracts PostgresOptions correctly
+- [x] Implement `extractMessageInfo()` for postgres
+- [x] **TEST**: Collector links source message via `source` field
+- [x] Implement source message lookup
 
-### 1.3 First Generator: postgres+gorm (Go)
+### 1.3 First Generator: GORM (Go)
 - [ ] **TEST**: Simple message generates BookGORM struct
 - [ ] Implement basic GORM struct generation
 - [ ] **TEST**: Primary key generates correct GORM tag
 - [ ] Implement primary key tag generation
 - [ ] **TEST**: Column annotation generates correct GORM tag
 - [ ] Implement column name/type tag generation
+- [ ] **TEST**: Database-specific type passes through (e.g., type: "jsonb")
+- [ ] Implement database-specific type tag generation
 - [ ] **TEST**: Generates TableName() method
 - [ ] Implement TableName() method generation
 - [ ] **TEST**: Generates BookToGORM converter
@@ -34,7 +36,7 @@
 - [ ] **TEST**: Generates BookFromGORM converter
 - [ ] Implement reverse converter generation
 
-### 1.4 First Binary: protoc-gen-dal-postgres-gorm
+### 1.4 First Binary: protoc-gen-dal-gorm
 - [ ] **TEST**: Binary collects and generates from test protos
 - [ ] Create thin main.go that delegates to collector + generator
 - [ ] **TEST**: Integration test with buf generate
@@ -84,40 +86,40 @@
 
 ## Phase 3: Additional Targets
 
-### 3.1 postgres+raw (Go + database/sql)
+### 3.1 postgres-raw (Go + database/sql)
 - [ ] **TEST**: Generates BookToPostgresRow converter
 - [ ] Implement raw SQL converter (columns, values)
 - [ ] **TEST**: Generates BookFromPostgresRow converter
 - [ ] Implement row scanning
 - [ ] Create `protoc-gen-dal-postgres-raw` binary
 
-### 3.2 firestore+raw (Go)
-- [ ] Update annotations with FirestoreOptions
+### 3.2 firestore (Go)
+- [ ] Add collector support for TargetFirestore
 - [ ] **TEST**: Generates BookToFirestore converter
 - [ ] Implement Firestore document conversion
 - [ ] **TEST**: Generates BookFromFirestore converter
 - [ ] Implement reverse conversion
-- [ ] Create `protoc-gen-dal-firestore-raw` binary
+- [ ] Create `protoc-gen-dal-firestore` binary
 
-### 3.3 mongodb+raw (Go)
-- [ ] Add MongoDBOptions annotation
+### 3.3 mongodb (Go)
+- [ ] Add collector support for TargetMongoDB
 - [ ] **TEST**: Generates BookToBSON converter
 - [ ] Implement BSON conversion
-- [ ] Create `protoc-gen-dal-mongodb-raw` binary
+- [ ] Create `protoc-gen-dal-mongodb` binary
 
 ## Phase 4: Multi-Language Support
 
-### 4.1 Python + postgres+raw (psycopg2)
+### 4.1 Python + postgres (psycopg2)
 - [ ] **TEST**: Generates Python converter functions
 - [ ] Implement Python code generation
 - [ ] **TEST**: Type hints are correct
 - [ ] Implement Python type mapping
-- [ ] Create `protoc-gen-python-dal-postgres-raw` binary
+- [ ] Create `protoc-gen-python-dal-postgres` binary
 
-### 4.2 TypeScript + postgres (Prisma)
+### 4.2 TypeScript + Prisma (ORM)
 - [ ] **TEST**: Generates Prisma schema
 - [ ] Implement Prisma schema generation
-- [ ] Create `protoc-gen-ts-dal-postgres-prisma` binary
+- [ ] Create `protoc-gen-ts-dal-prisma` binary
 
 ## Phase 5: Advanced Features
 
@@ -180,15 +182,15 @@
 
 ## Current Sprint
 
-**Focus:** Phase 1.2 - Shared Collector Package
+**Focus:** Phase 1.3 - First Generator: GORM (Go)
 
 **Next Test to Write:**
 ```go
-// pkg/collector/collector_test.go
-func TestCollectMessages_FindsPostgresMessages(t *testing.T) {
-    // Given: Multiple proto files with postgres annotations
-    // When: CollectMessages called with TargetPostgres
-    // Then: Returns all postgres messages with correct metadata
+// pkg/gorm/generator_test.go
+func TestGenerateGORM_SimpleMessage(t *testing.T) {
+    // Given: A simple Book message with basic fields
+    // When: Generate GORM code
+    // Then: Should generate BookGORM struct with correct fields and TableName method
 }
 ```
 

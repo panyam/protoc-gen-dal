@@ -126,17 +126,17 @@ extend google.protobuf.MessageOptions {
   PostgresOptions postgres = 60008;
 }
 
-// gorm_options specifies GORM-specific options (deprecated - use postgres with gorm hints).
+// gorm specifies GORM target options (database-agnostic ORM).
 //
 // Example usage:
-//   message Book {
-//     option (dal.v1.gorm_options) = {
-//       disable_auto_create_time: false
-//       disable_auto_update_time: false
+//   message BookGorm {
+//     option (dal.v1.gorm) = {
+//       source: "library.v1.Book"
+//       table: "books"
 //     };
 //   }
 extend google.protobuf.MessageOptions {
-  GormOptions gorm_options = 60009;
+  GormOptions gorm = 60009;
 }
 
 // datastore_options specifies Google Cloud Datastore options.
@@ -180,44 +180,23 @@ message TableOptions {
 
 // Configuration for column mapping
 message ColumnOptions {
-  // Column name in the database
+  // Column name override (optional - defaults to field name)
   string name = 1;
 
-  // Database-specific column type (e.g., "UUID", "TEXT", "JSONB")
-  string type = 2;
+  // GORM-specific tags (for GORM target)
+  // Example: ["primaryKey", "type:uuid", "default:gen_random_uuid()"]
+  // Generates: `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
+  repeated string gorm_tags = 10;
 
-  // Whether this is a primary key
-  bool primary_key = 3;
+  // Raw SQL column definition tags (for raw SQL targets)
+  // Target-specific usage
+  repeated string sql_tags = 11;
 
-  // Whether the column is nullable
-  bool nullable = 4;
+  // Firestore tags (for Firestore target)
+  repeated string firestore_tags = 12;
 
-  // Default value expression
-  string default = 5;
-
-  // Maximum length for string/varchar types
-  int32 max_length = 6;
-
-  // Precision for numeric types
-  int32 precision = 7;
-
-  // Scale for numeric types
-  int32 scale = 8;
-
-  // Whether this column is auto-increment
-  bool auto_increment = 9;
-
-  // Whether this field should be updated on record update
-  bool auto_update_time = 10;
-
-  // Whether this field should be set on record creation
-  bool auto_create_time = 11;
-
-  // Custom column comment/description
-  string comment = 12;
-
-  // Unique constraint
-  bool unique = 13;
+  // MongoDB tags (for MongoDB target)
+  repeated string mongodb_tags = 13;
 }
 
 // Configuration for indexes
@@ -262,28 +241,19 @@ enum ReferentialAction {
   SET_DEFAULT = 4;
 }
 
-// GORM-specific options
+// GORM target options (database-agnostic ORM)
 message GormOptions {
-  // Disable automatic CreatedAt field
-  bool disable_auto_create_time = 1;
-
-  // Disable automatic UpdatedAt field
-  bool disable_auto_update_time = 2;
-
-  // Disable automatic DeletedAt field (soft deletes)
-  bool disable_soft_delete = 3;
-
-  // Custom table name (alternative to table.name)
-  string table_name = 4;
-
-  // Embedded fields
-  repeated string embedded = 5;
-
   // Source message fully qualified name (e.g., "library.v1.Book")
-  string source = 6;
+  string source = 1;
+
+  // Table name
+  string table = 2;
+
+  // Embedded field names (for GORM embedded structs)
+  repeated string embedded = 3;
 }
 
-// PostgreSQL target options
+// PostgreSQL target options (raw SQL)
 message PostgresOptions {
   // Source message fully qualified name (e.g., "library.v1.Book")
   string source = 1;
@@ -293,15 +263,6 @@ message PostgresOptions {
 
   // Schema name (default: "public")
   string schema = 3;
-
-  // GORM-specific hints (optional)
-  GormHints gorm = 10;
-}
-
-// GORM-specific hints for PostgreSQL
-message GormHints {
-  bool disable_soft_delete = 1;
-  repeated string embedded = 2;
 }
 
 // Google Cloud Datastore options

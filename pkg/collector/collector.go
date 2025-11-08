@@ -25,8 +25,10 @@ import (
 type Target int
 
 const (
-	// TargetPostgres identifies PostgreSQL target
-	TargetPostgres Target = iota
+	// TargetGorm identifies GORM target (database-agnostic ORM)
+	TargetGorm Target = iota
+	// TargetPostgres identifies PostgreSQL target (raw SQL)
+	TargetPostgres
 	// TargetFirestore identifies Google Cloud Firestore target
 	TargetFirestore
 	// TargetMongoDB identifies MongoDB target
