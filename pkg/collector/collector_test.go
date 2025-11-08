@@ -23,7 +23,7 @@ import (
 	"google.golang.org/protobuf/types/descriptorpb"
 	"google.golang.org/protobuf/types/pluginpb"
 
-	dalv1 "github.com/panyam/protoc-gen-go-dal/proto/gen/go/dal/v1"
+	dalv1 "github.com/panyam/protoc-gen-dal/proto/gen/dal/v1"
 )
 
 // TestCollectMessages_FindsPostgresMessages tests that the collector finds
@@ -34,8 +34,8 @@ func TestCollectMessages_FindsPostgresMessages(t *testing.T) {
 		files: []testFile{
 			// File 1: API proto with Book message
 			{
-				name:    "library/v1/book.proto",
-				pkg:     "library.v1",
+				name: "library/v1/book.proto",
+				pkg:  "library.v1",
 				messages: []testMessage{
 					{
 						name: "Book",
@@ -217,25 +217,25 @@ type testProtoSet struct {
 
 // testFile represents a single proto file with messages.
 type testFile struct {
-	name     string          // e.g., "library/v1/book.proto"
-	pkg      string          // e.g., "library.v1"
+	name     string // e.g., "library/v1/book.proto"
+	pkg      string // e.g., "library.v1"
 	messages []testMessage
 }
 
 // testMessage represents a proto message definition.
 // It can have optional postgres annotation to mark it as a DAL schema.
 type testMessage struct {
-	name         string                   // e.g., "Book" or "BookPostgres"
-	postgresOpts *dalv1.PostgresOptions  // If present, this is a DAL schema message
+	name         string                 // e.g., "Book" or "BookPostgres"
+	postgresOpts *dalv1.PostgresOptions // If present, this is a DAL schema message
 	fields       []testField
 }
 
 // testField represents a simple proto field.
 // For tests, we only support basic types (string, int32, int64).
 type testField struct {
-	name     string  // Field name
-	number   int32   // Field number
-	typeName string  // "string", "int32", or "int64"
+	name     string // Field name
+	number   int32  // Field number
+	typeName string // "string", "int32", or "int64"
 }
 
 // createTestPlugin creates a protogen.Plugin from test data.

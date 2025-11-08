@@ -15,8 +15,8 @@
 package ir
 
 import (
+	dalv1 "github.com/panyam/protoc-gen-dal/proto/gen/dal/v1"
 	"google.golang.org/protobuf/compiler/protogen"
-	dalv1 "github.com/panyam/protoc-gen-go-dal/proto/gen/go/dal/v1"
 )
 
 // FieldMapping maps a source proto field to a target database column

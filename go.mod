@@ -1,4 +1,4 @@
-module github.com/panyam/protoc-gen-go-dal
+module github.com/panyam/protoc-gen-dal
 
 go 1.23.5
 

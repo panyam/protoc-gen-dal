@@ -18,7 +18,7 @@ import (
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
 
-	dalv1 "github.com/panyam/protoc-gen-go-dal/proto/gen/go/dal/v1"
+	dalv1 "github.com/panyam/protoc-gen-dal/proto/gen/dal/v1"
 )
 
 // Target identifies a datastore target
@@ -101,9 +101,10 @@ func CollectMessages(gen *protogen.Plugin, target Target) []*MessageInfo {
 // (e.g., "library.v1.Book"). We need fast lookup to link them together.
 //
 // Example:
-//   message BookPostgres {
-//     option (dal.v1.postgres) = {source: "library.v1.Book"};  // <- Need to find this
-//   }
+//
+//	message BookPostgres {
+//	  option (dal.v1.postgres) = {source: "library.v1.Book"};  // <- Need to find this
+//	}
 //
 // The index maps "library.v1.Book" -> *protogen.Message for Book
 //
@@ -157,13 +158,14 @@ func extractMessageInfo(msg *protogen.Message, target Target, index map[string]*
 // Looks for the (dal.v1.postgres) annotation on the message.
 //
 // Example proto:
-//   message BookPostgres {
-//     option (dal.v1.postgres) = {
-//       source: "library.v1.Book"    // API message to convert from
-//       table: "books"                // PostgreSQL table name
-//       schema: "library"             // PostgreSQL schema (optional)
-//     };
-//   }
+//
+//	message BookPostgres {
+//	  option (dal.v1.postgres) = {
+//	    source: "library.v1.Book"    // API message to convert from
+//	    table: "books"                // PostgreSQL table name
+//	    schema: "library"             // PostgreSQL schema (optional)
+//	  };
+//	}
 //
 // Why check if source exists?
 // If the source message isn't found, this is a broken reference.
@@ -198,12 +200,13 @@ func extractPostgresInfo(msg *protogen.Message, opts proto.Message, index map[st
 // Similar to extractPostgresInfo but for Firestore target.
 //
 // Example proto:
-//   message BookFirestore {
-//     option (dal.v1.firestore) = {
-//       source: "library.v1.Book"
-//       collection: "books"
-//     };
-//   }
+//
+//	message BookFirestore {
+//	  option (dal.v1.firestore) = {
+//	    source: "library.v1.Book"
+//	    collection: "books"
+//	  };
+//	}
 //
 // Note: TableName is used for "collection" name to keep MessageInfo generic.
 func extractFirestoreInfo(msg *protogen.Message, opts proto.Message, index map[string]*protogen.Message) *MessageInfo {
@@ -230,13 +233,14 @@ func extractFirestoreInfo(msg *protogen.Message, opts proto.Message, index map[s
 // Similar to extractPostgresInfo but for MongoDB target.
 //
 // Example proto:
-//   message BookMongo {
-//     option (dal.v1.mongodb) = {
-//       source: "library.v1.Book"
-//       collection: "books"
-//       database: "library_db"
-//     };
-//   }
+//
+//	message BookMongo {
+//	  option (dal.v1.mongodb) = {
+//	    source: "library.v1.Book"
+//	    collection: "books"
+//	    database: "library_db"
+//	  };
+//	}
 //
 // Note: SchemaName is used for "database" name to keep MessageInfo generic.
 func extractMongoDBInfo(msg *protogen.Message, opts proto.Message, index map[string]*protogen.Message) *MessageInfo {
@@ -252,7 +256,7 @@ func extractMongoDBInfo(msg *protogen.Message, opts proto.Message, index map[str
 				TargetMessage: msg,
 				SourceName:    mongoOpts.Source,
 				TableName:     mongoOpts.Collection, // MongoDB uses "collection"
-				SchemaName:    mongoOpts.Database,    // SchemaName repurposed for "database"
+				SchemaName:    mongoOpts.Database,   // SchemaName repurposed for "database"
 			}
 		}
 	}

@@ -1,4 +1,4 @@
-# protoc-gen-go-dal: Design Summary
+# protoc-gen-dal: Design Summary
 
 ## Project Vision
 
@@ -134,9 +134,9 @@ Phase 2: Generation
 
 ```
 cmd/
-├── protoc-gen-go-dal-postgres-raw/
-├── protoc-gen-go-dal-postgres-gorm/
-├── protoc-gen-go-dal-firestore-raw/
+├── protoc-gen-dal-postgres-raw/
+├── protoc-gen-dal-postgres-gorm/
+├── protoc-gen-dal-firestore-raw/
 └── protoc-gen-python-dal-postgres-raw/
 ```
 
@@ -154,12 +154,12 @@ cmd/
 ### Package Structure
 
 ```
-protoc-gen-go-dal/                    # Monorepo
+protoc-gen-dal/                    # Monorepo
 ├── cmd/
-│   ├── protoc-gen-go-dal-postgres-gorm/
+│   ├── protoc-gen-dal-postgres-gorm/
 │   │   └── main.go                   # Thin: collect → delegate
-│   ├── protoc-gen-go-dal-postgres-raw/
-│   └── protoc-gen-go-dal-firestore-raw/
+│   ├── protoc-gen-dal-postgres-raw/
+│   └── protoc-gen-dal-firestore-raw/
 │
 ├── pkg/
 │   ├── collector/

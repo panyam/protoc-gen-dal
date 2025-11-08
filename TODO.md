@@ -34,7 +34,7 @@
 - [ ] **TEST**: Generates BookFromGORM converter
 - [ ] Implement reverse converter generation
 
-### 1.4 First Binary: protoc-gen-go-dal-postgres-gorm
+### 1.4 First Binary: protoc-gen-dal-postgres-gorm
 - [ ] **TEST**: Binary collects and generates from test protos
 - [ ] Create thin main.go that delegates to collector + generator
 - [ ] **TEST**: Integration test with buf generate
@@ -89,7 +89,7 @@
 - [ ] Implement raw SQL converter (columns, values)
 - [ ] **TEST**: Generates BookFromPostgresRow converter
 - [ ] Implement row scanning
-- [ ] Create `protoc-gen-go-dal-postgres-raw` binary
+- [ ] Create `protoc-gen-dal-postgres-raw` binary
 
 ### 3.2 firestore+raw (Go)
 - [ ] Update annotations with FirestoreOptions
@@ -97,13 +97,13 @@
 - [ ] Implement Firestore document conversion
 - [ ] **TEST**: Generates BookFromFirestore converter
 - [ ] Implement reverse conversion
-- [ ] Create `protoc-gen-go-dal-firestore-raw` binary
+- [ ] Create `protoc-gen-dal-firestore-raw` binary
 
 ### 3.3 mongodb+raw (Go)
 - [ ] Add MongoDBOptions annotation
 - [ ] **TEST**: Generates BookToBSON converter
 - [ ] Implement BSON conversion
-- [ ] Create `protoc-gen-go-dal-mongodb-raw` binary
+- [ ] Create `protoc-gen-dal-mongodb-raw` binary
 
 ## Phase 4: Multi-Language Support
 

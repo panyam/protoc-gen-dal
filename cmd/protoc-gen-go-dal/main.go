@@ -13,7 +13,7 @@
 // limitations under the License.
 
 /*
-protoc-gen-go-dal is a Protocol Buffers compiler plugin that generates Data Access Layer (DAL) converters for protobuf messages.
+protoc-gen-dal is a Protocol Buffers compiler plugin that generates Data Access Layer (DAL) converters for protobuf messages.
 
 # Overview
 
@@ -22,12 +22,12 @@ It supports generating converters for SQL databases, NoSQL stores, and other per
 
 # Installation
 
-	go install github.com/panyam/protoc-gen-go-dal/cmd/protoc-gen-go-dal@latest
+	go install github.com/panyam/protoc-gen-dal/cmd/protoc-gen-dal@latest
 
 Verify installation:
 
-	which protoc-gen-go-dal
-	# Should output: /path/to/go/bin/protoc-gen-go-dal
+	which protoc-gen-dal
+	# Should output: /path/to/go/bin/protoc-gen-dal
 
 # Usage with buf
 
@@ -41,21 +41,21 @@ Add to your buf.gen.yaml:
 	    opt: paths=source_relative
 
 	  # Generate DAL converters (raw database)
-	  - local: protoc-gen-go-dal
+	  - local: protoc-gen-dal
 	    out: ./gen/dal
 	    opt:
 	      - datastores=postgres
 	      - target=raw
 
 	  # OR Generate GORM models
-	  - local: protoc-gen-go-dal
+	  - local: protoc-gen-dal
 	    out: ./gen/dal
 	    opt:
 	      - datastores=postgres
 	      - target=gorm
 
 	  # OR Generate Google Cloud Datastore bindings
-	  - local: protoc-gen-go-dal
+	  - local: protoc-gen-dal
 	    out: ./gen/dal
 	    opt:
 	      - target=datastore
@@ -142,15 +142,15 @@ Use the generated converters:
 
 The generator uses a simple architecture:
 
-  1. DALGenerator: Orchestrates converter generation
-  2. Filters: Message filtering
-  3. Templates: Converter code templates per datastore type
+ 1. DALGenerator: Orchestrates converter generation
+ 2. Filters: Message filtering
+ 3. Templates: Converter code templates per datastore type
 
 # Links
 
 Documentation:
 
-  - GitHub: https://github.com/panyam/protoc-gen-go-dal
+  - GitHub: https://github.com/panyam/protoc-gen-dal
 */
 package main
 
@@ -161,9 +161,9 @@ import (
 
 	"google.golang.org/protobuf/compiler/protogen"
 
-	"github.com/panyam/protoc-gen-go-dal/pkg/builders"
-	"github.com/panyam/protoc-gen-go-dal/pkg/filters"
-	"github.com/panyam/protoc-gen-go-dal/pkg/generators"
+	"github.com/panyam/protoc-gen-dal/pkg/builders"
+	"github.com/panyam/protoc-gen-dal/pkg/filters"
+	"github.com/panyam/protoc-gen-dal/pkg/generators"
 )
 
 func main() {
@@ -222,11 +222,11 @@ func main() {
 
 		// Perform generation with detailed error handling
 		if err := dalGenerator.Generate(config, filterCriteria); err != nil {
-			log.Printf("protoc-gen-go-dal: Generation failed: %v", err)
+			log.Printf("protoc-gen-dal: Generation failed: %v", err)
 			return fmt.Errorf("DAL generation failed: %w", err)
 		}
 
-		log.Printf("protoc-gen-go-dal: Generation completed successfully")
+		log.Printf("protoc-gen-dal: Generation completed successfully")
 		return nil
 	})
 }
