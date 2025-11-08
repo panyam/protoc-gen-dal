@@ -112,7 +112,21 @@ extend google.protobuf.FieldOptions {
   bool skip_field = 60007;
 }
 
-// gorm_options specifies GORM-specific options.
+// postgres specifies PostgreSQL target options.
+//
+// Example usage:
+//   message BookPostgres {
+//     option (dal.v1.postgres) = {
+//       source: "library.v1.Book"
+//       table: "books"
+//       schema: "library"
+//     };
+//   }
+extend google.protobuf.MessageOptions {
+  PostgresOptions postgres = 60008;
+}
+
+// gorm_options specifies GORM-specific options (deprecated - use postgres with gorm hints).
 //
 // Example usage:
 //   message Book {
@@ -122,7 +136,7 @@ extend google.protobuf.FieldOptions {
 //     };
 //   }
 extend google.protobuf.MessageOptions {
-  GormOptions gorm_options = 60008;
+  GormOptions gorm_options = 60009;
 }
 
 // datastore_options specifies Google Cloud Datastore options.
@@ -135,7 +149,17 @@ extend google.protobuf.MessageOptions {
 //     };
 //   }
 extend google.protobuf.MessageOptions {
-  DatastoreOptions datastore_options = 60009;
+  DatastoreOptions datastore_options = 60010;
+}
+
+// firestore specifies Firestore target options.
+extend google.protobuf.MessageOptions {
+  FirestoreOptions firestore = 60011;
+}
+
+// mongodb specifies MongoDB target options.
+extend google.protobuf.MessageOptions {
+  MongoDBOptions mongodb = 60012;
 }
 
 // Configuration for table mapping
@@ -259,6 +283,27 @@ message GormOptions {
   string source = 6;
 }
 
+// PostgreSQL target options
+message PostgresOptions {
+  // Source message fully qualified name (e.g., "library.v1.Book")
+  string source = 1;
+
+  // Table name in PostgreSQL
+  string table = 2;
+
+  // Schema name (default: "public")
+  string schema = 3;
+
+  // GORM-specific hints (optional)
+  GormHints gorm = 10;
+}
+
+// GORM-specific hints for PostgreSQL
+message GormHints {
+  bool disable_soft_delete = 1;
+  repeated string embedded = 2;
+}
+
 // Google Cloud Datastore options
 message DatastoreOptions {
   // Datastore kind name
@@ -275,4 +320,25 @@ message DatastoreOptions {
 
   // Source message fully qualified name (e.g., "library.v1.Book")
   string source = 5;
+}
+
+// Firestore target options
+message FirestoreOptions {
+  // Source message fully qualified name
+  string source = 1;
+
+  // Collection name
+  string collection = 2;
+}
+
+// MongoDB target options
+message MongoDBOptions {
+  // Source message fully qualified name
+  string source = 1;
+
+  // Collection name
+  string collection = 2;
+
+  // Database name
+  string database = 3;
 }

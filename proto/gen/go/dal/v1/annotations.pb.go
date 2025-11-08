@@ -566,6 +566,132 @@ func (x *GormOptions) GetSource() string {
 	return ""
 }
 
+// PostgreSQL target options
+type PostgresOptions struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Source message fully qualified name (e.g., "library.v1.Book")
+	Source string `protobuf:"bytes,1,opt,name=source,proto3" json:"source,omitempty"`
+	// Table name in PostgreSQL
+	Table string `protobuf:"bytes,2,opt,name=table,proto3" json:"table,omitempty"`
+	// Schema name (default: "public")
+	Schema string `protobuf:"bytes,3,opt,name=schema,proto3" json:"schema,omitempty"`
+	// GORM-specific hints (optional)
+	Gorm          *GormHints `protobuf:"bytes,10,opt,name=gorm,proto3" json:"gorm,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PostgresOptions) Reset() {
+	*x = PostgresOptions{}
+	mi := &file_dal_v1_annotations_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PostgresOptions) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PostgresOptions) ProtoMessage() {}
+
+func (x *PostgresOptions) ProtoReflect() protoreflect.Message {
+	mi := &file_dal_v1_annotations_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PostgresOptions.ProtoReflect.Descriptor instead.
+func (*PostgresOptions) Descriptor() ([]byte, []int) {
+	return file_dal_v1_annotations_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *PostgresOptions) GetSource() string {
+	if x != nil {
+		return x.Source
+	}
+	return ""
+}
+
+func (x *PostgresOptions) GetTable() string {
+	if x != nil {
+		return x.Table
+	}
+	return ""
+}
+
+func (x *PostgresOptions) GetSchema() string {
+	if x != nil {
+		return x.Schema
+	}
+	return ""
+}
+
+func (x *PostgresOptions) GetGorm() *GormHints {
+	if x != nil {
+		return x.Gorm
+	}
+	return nil
+}
+
+// GORM-specific hints for PostgreSQL
+type GormHints struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	DisableSoftDelete bool                   `protobuf:"varint,1,opt,name=disable_soft_delete,json=disableSoftDelete,proto3" json:"disable_soft_delete,omitempty"`
+	Embedded          []string               `protobuf:"bytes,2,rep,name=embedded,proto3" json:"embedded,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *GormHints) Reset() {
+	*x = GormHints{}
+	mi := &file_dal_v1_annotations_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GormHints) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GormHints) ProtoMessage() {}
+
+func (x *GormHints) ProtoReflect() protoreflect.Message {
+	mi := &file_dal_v1_annotations_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GormHints.ProtoReflect.Descriptor instead.
+func (*GormHints) Descriptor() ([]byte, []int) {
+	return file_dal_v1_annotations_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *GormHints) GetDisableSoftDelete() bool {
+	if x != nil {
+		return x.DisableSoftDelete
+	}
+	return false
+}
+
+func (x *GormHints) GetEmbedded() []string {
+	if x != nil {
+		return x.Embedded
+	}
+	return nil
+}
+
 // Google Cloud Datastore options
 type DatastoreOptions struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -585,7 +711,7 @@ type DatastoreOptions struct {
 
 func (x *DatastoreOptions) Reset() {
 	*x = DatastoreOptions{}
-	mi := &file_dal_v1_annotations_proto_msgTypes[5]
+	mi := &file_dal_v1_annotations_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -597,7 +723,7 @@ func (x *DatastoreOptions) String() string {
 func (*DatastoreOptions) ProtoMessage() {}
 
 func (x *DatastoreOptions) ProtoReflect() protoreflect.Message {
-	mi := &file_dal_v1_annotations_proto_msgTypes[5]
+	mi := &file_dal_v1_annotations_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -610,7 +736,7 @@ func (x *DatastoreOptions) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DatastoreOptions.ProtoReflect.Descriptor instead.
 func (*DatastoreOptions) Descriptor() ([]byte, []int) {
-	return file_dal_v1_annotations_proto_rawDescGZIP(), []int{5}
+	return file_dal_v1_annotations_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *DatastoreOptions) GetKind() string {
@@ -644,6 +770,125 @@ func (x *DatastoreOptions) GetAncestor() string {
 func (x *DatastoreOptions) GetSource() string {
 	if x != nil {
 		return x.Source
+	}
+	return ""
+}
+
+// Firestore target options
+type FirestoreOptions struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Source message fully qualified name
+	Source string `protobuf:"bytes,1,opt,name=source,proto3" json:"source,omitempty"`
+	// Collection name
+	Collection    string `protobuf:"bytes,2,opt,name=collection,proto3" json:"collection,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FirestoreOptions) Reset() {
+	*x = FirestoreOptions{}
+	mi := &file_dal_v1_annotations_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FirestoreOptions) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FirestoreOptions) ProtoMessage() {}
+
+func (x *FirestoreOptions) ProtoReflect() protoreflect.Message {
+	mi := &file_dal_v1_annotations_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FirestoreOptions.ProtoReflect.Descriptor instead.
+func (*FirestoreOptions) Descriptor() ([]byte, []int) {
+	return file_dal_v1_annotations_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *FirestoreOptions) GetSource() string {
+	if x != nil {
+		return x.Source
+	}
+	return ""
+}
+
+func (x *FirestoreOptions) GetCollection() string {
+	if x != nil {
+		return x.Collection
+	}
+	return ""
+}
+
+// MongoDB target options
+type MongoDBOptions struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Source message fully qualified name
+	Source string `protobuf:"bytes,1,opt,name=source,proto3" json:"source,omitempty"`
+	// Collection name
+	Collection string `protobuf:"bytes,2,opt,name=collection,proto3" json:"collection,omitempty"`
+	// Database name
+	Database      string `protobuf:"bytes,3,opt,name=database,proto3" json:"database,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MongoDBOptions) Reset() {
+	*x = MongoDBOptions{}
+	mi := &file_dal_v1_annotations_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MongoDBOptions) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MongoDBOptions) ProtoMessage() {}
+
+func (x *MongoDBOptions) ProtoReflect() protoreflect.Message {
+	mi := &file_dal_v1_annotations_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MongoDBOptions.ProtoReflect.Descriptor instead.
+func (*MongoDBOptions) Descriptor() ([]byte, []int) {
+	return file_dal_v1_annotations_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *MongoDBOptions) GetSource() string {
+	if x != nil {
+		return x.Source
+	}
+	return ""
+}
+
+func (x *MongoDBOptions) GetCollection() string {
+	if x != nil {
+		return x.Collection
+	}
+	return ""
+}
+
+func (x *MongoDBOptions) GetDatabase() string {
+	if x != nil {
+		return x.Database
 	}
 	return ""
 }
@@ -707,18 +952,42 @@ var file_dal_v1_annotations_proto_extTypes = []protoimpl.ExtensionInfo{
 	},
 	{
 		ExtendedType:  (*descriptorpb.MessageOptions)(nil),
-		ExtensionType: (*GormOptions)(nil),
+		ExtensionType: (*PostgresOptions)(nil),
 		Field:         60008,
+		Name:          "dal.v1.postgres",
+		Tag:           "bytes,60008,opt,name=postgres",
+		Filename:      "dal/v1/annotations.proto",
+	},
+	{
+		ExtendedType:  (*descriptorpb.MessageOptions)(nil),
+		ExtensionType: (*GormOptions)(nil),
+		Field:         60009,
 		Name:          "dal.v1.gorm_options",
-		Tag:           "bytes,60008,opt,name=gorm_options",
+		Tag:           "bytes,60009,opt,name=gorm_options",
 		Filename:      "dal/v1/annotations.proto",
 	},
 	{
 		ExtendedType:  (*descriptorpb.MessageOptions)(nil),
 		ExtensionType: (*DatastoreOptions)(nil),
-		Field:         60009,
+		Field:         60010,
 		Name:          "dal.v1.datastore_options",
-		Tag:           "bytes,60009,opt,name=datastore_options",
+		Tag:           "bytes,60010,opt,name=datastore_options",
+		Filename:      "dal/v1/annotations.proto",
+	},
+	{
+		ExtendedType:  (*descriptorpb.MessageOptions)(nil),
+		ExtensionType: (*FirestoreOptions)(nil),
+		Field:         60011,
+		Name:          "dal.v1.firestore",
+		Tag:           "bytes,60011,opt,name=firestore",
+		Filename:      "dal/v1/annotations.proto",
+	},
+	{
+		ExtendedType:  (*descriptorpb.MessageOptions)(nil),
+		ExtensionType: (*MongoDBOptions)(nil),
+		Field:         60012,
+		Name:          "dal.v1.mongodb",
+		Tag:           "bytes,60012,opt,name=mongodb",
 		Filename:      "dal/v1/annotations.proto",
 	},
 }
@@ -731,10 +1000,16 @@ var (
 	E_Index = &file_dal_v1_annotations_proto_extTypes[2]
 	// optional bool skip_dal = 60006;
 	E_SkipDal = &file_dal_v1_annotations_proto_extTypes[5]
-	// optional dal.v1.GormOptions gorm_options = 60008;
-	E_GormOptions = &file_dal_v1_annotations_proto_extTypes[7]
-	// optional dal.v1.DatastoreOptions datastore_options = 60009;
-	E_DatastoreOptions = &file_dal_v1_annotations_proto_extTypes[8]
+	// optional dal.v1.PostgresOptions postgres = 60008;
+	E_Postgres = &file_dal_v1_annotations_proto_extTypes[7]
+	// optional dal.v1.GormOptions gorm_options = 60009;
+	E_GormOptions = &file_dal_v1_annotations_proto_extTypes[8]
+	// optional dal.v1.DatastoreOptions datastore_options = 60010;
+	E_DatastoreOptions = &file_dal_v1_annotations_proto_extTypes[9]
+	// optional dal.v1.FirestoreOptions firestore = 60011;
+	E_Firestore = &file_dal_v1_annotations_proto_extTypes[10]
+	// optional dal.v1.MongoDBOptions mongodb = 60012;
+	E_Mongodb = &file_dal_v1_annotations_proto_extTypes[11]
 )
 
 // Extension fields to descriptorpb.FieldOptions.
@@ -796,13 +1071,33 @@ const file_dal_v1_annotations_proto_rawDesc = "" +
 	"\n" +
 	"table_name\x18\x04 \x01(\tR\ttableName\x12\x1a\n" +
 	"\bembedded\x18\x05 \x03(\tR\bembedded\x12\x16\n" +
-	"\x06source\x18\x06 \x01(\tR\x06source\"\x9f\x01\n" +
+	"\x06source\x18\x06 \x01(\tR\x06source\"~\n" +
+	"\x0fPostgresOptions\x12\x16\n" +
+	"\x06source\x18\x01 \x01(\tR\x06source\x12\x14\n" +
+	"\x05table\x18\x02 \x01(\tR\x05table\x12\x16\n" +
+	"\x06schema\x18\x03 \x01(\tR\x06schema\x12%\n" +
+	"\x04gorm\x18\n" +
+	" \x01(\v2\x11.dal.v1.GormHintsR\x04gorm\"W\n" +
+	"\tGormHints\x12.\n" +
+	"\x13disable_soft_delete\x18\x01 \x01(\bR\x11disableSoftDelete\x12\x1a\n" +
+	"\bembedded\x18\x02 \x03(\tR\bembedded\"\x9f\x01\n" +
 	"\x10DatastoreOptions\x12\x12\n" +
 	"\x04kind\x18\x01 \x01(\tR\x04kind\x12\x1c\n" +
 	"\tnamespace\x18\x02 \x01(\tR\tnamespace\x12%\n" +
 	"\x0eincomplete_key\x18\x03 \x01(\bR\rincompleteKey\x12\x1a\n" +
 	"\bancestor\x18\x04 \x01(\tR\bancestor\x12\x16\n" +
-	"\x06source\x18\x05 \x01(\tR\x06source*\\\n" +
+	"\x06source\x18\x05 \x01(\tR\x06source\"J\n" +
+	"\x10FirestoreOptions\x12\x16\n" +
+	"\x06source\x18\x01 \x01(\tR\x06source\x12\x1e\n" +
+	"\n" +
+	"collection\x18\x02 \x01(\tR\n" +
+	"collection\"d\n" +
+	"\x0eMongoDBOptions\x12\x16\n" +
+	"\x06source\x18\x01 \x01(\tR\x06source\x12\x1e\n" +
+	"\n" +
+	"collection\x18\x02 \x01(\tR\n" +
+	"collection\x12\x1a\n" +
+	"\bdatabase\x18\x03 \x01(\tR\bdatabase*\\\n" +
 	"\x11ReferentialAction\x12\r\n" +
 	"\tNO_ACTION\x10\x00\x12\f\n" +
 	"\bRESTRICT\x10\x01\x12\v\n" +
@@ -818,9 +1113,12 @@ const file_dal_v1_annotations_proto_rawDesc = "" +
 	"foreignKey:<\n" +
 	"\bskip_dal\x12\x1f.google.protobuf.MessageOptions\x18\xe6\xd4\x03 \x01(\bR\askipDal:>\n" +
 	"\n" +
-	"skip_field\x12\x1d.google.protobuf.FieldOptions\x18\xe7\xd4\x03 \x01(\bR\tskipField:Y\n" +
-	"\fgorm_options\x12\x1f.google.protobuf.MessageOptions\x18\xe8\xd4\x03 \x01(\v2\x13.dal.v1.GormOptionsR\vgormOptions:h\n" +
-	"\x11datastore_options\x12\x1f.google.protobuf.MessageOptions\x18\xe9\xd4\x03 \x01(\v2\x18.dal.v1.DatastoreOptionsR\x10datastoreOptionsB9Z7github.com/panyam/protoc-gen-go-dal/proto/gen/go/dal/v1b\x06proto3"
+	"skip_field\x12\x1d.google.protobuf.FieldOptions\x18\xe7\xd4\x03 \x01(\bR\tskipField:V\n" +
+	"\bpostgres\x12\x1f.google.protobuf.MessageOptions\x18\xe8\xd4\x03 \x01(\v2\x17.dal.v1.PostgresOptionsR\bpostgres:Y\n" +
+	"\fgorm_options\x12\x1f.google.protobuf.MessageOptions\x18\xe9\xd4\x03 \x01(\v2\x13.dal.v1.GormOptionsR\vgormOptions:h\n" +
+	"\x11datastore_options\x12\x1f.google.protobuf.MessageOptions\x18\xea\xd4\x03 \x01(\v2\x18.dal.v1.DatastoreOptionsR\x10datastoreOptions:Y\n" +
+	"\tfirestore\x12\x1f.google.protobuf.MessageOptions\x18\xeb\xd4\x03 \x01(\v2\x18.dal.v1.FirestoreOptionsR\tfirestore:S\n" +
+	"\amongodb\x12\x1f.google.protobuf.MessageOptions\x18\xec\xd4\x03 \x01(\v2\x16.dal.v1.MongoDBOptionsR\amongodbB9Z7github.com/panyam/protoc-gen-go-dal/proto/gen/go/dal/v1b\x06proto3"
 
 var (
 	file_dal_v1_annotations_proto_rawDescOnce sync.Once
@@ -835,7 +1133,7 @@ func file_dal_v1_annotations_proto_rawDescGZIP() []byte {
 }
 
 var file_dal_v1_annotations_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_dal_v1_annotations_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_dal_v1_annotations_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_dal_v1_annotations_proto_goTypes = []any{
 	(ReferentialAction)(0),              // 0: dal.v1.ReferentialAction
 	(*TableOptions)(nil),                // 1: dal.v1.TableOptions
@@ -843,34 +1141,45 @@ var file_dal_v1_annotations_proto_goTypes = []any{
 	(*IndexOptions)(nil),                // 3: dal.v1.IndexOptions
 	(*ForeignKeyOptions)(nil),           // 4: dal.v1.ForeignKeyOptions
 	(*GormOptions)(nil),                 // 5: dal.v1.GormOptions
-	(*DatastoreOptions)(nil),            // 6: dal.v1.DatastoreOptions
-	(*descriptorpb.MessageOptions)(nil), // 7: google.protobuf.MessageOptions
-	(*descriptorpb.FieldOptions)(nil),   // 8: google.protobuf.FieldOptions
+	(*PostgresOptions)(nil),             // 6: dal.v1.PostgresOptions
+	(*GormHints)(nil),                   // 7: dal.v1.GormHints
+	(*DatastoreOptions)(nil),            // 8: dal.v1.DatastoreOptions
+	(*FirestoreOptions)(nil),            // 9: dal.v1.FirestoreOptions
+	(*MongoDBOptions)(nil),              // 10: dal.v1.MongoDBOptions
+	(*descriptorpb.MessageOptions)(nil), // 11: google.protobuf.MessageOptions
+	(*descriptorpb.FieldOptions)(nil),   // 12: google.protobuf.FieldOptions
 }
 var file_dal_v1_annotations_proto_depIdxs = []int32{
 	0,  // 0: dal.v1.ForeignKeyOptions.on_delete:type_name -> dal.v1.ReferentialAction
 	0,  // 1: dal.v1.ForeignKeyOptions.on_update:type_name -> dal.v1.ReferentialAction
-	7,  // 2: dal.v1.table:extendee -> google.protobuf.MessageOptions
-	8,  // 3: dal.v1.column:extendee -> google.protobuf.FieldOptions
-	7,  // 4: dal.v1.index:extendee -> google.protobuf.MessageOptions
-	8,  // 5: dal.v1.field_index:extendee -> google.protobuf.FieldOptions
-	8,  // 6: dal.v1.foreign_key:extendee -> google.protobuf.FieldOptions
-	7,  // 7: dal.v1.skip_dal:extendee -> google.protobuf.MessageOptions
-	8,  // 8: dal.v1.skip_field:extendee -> google.protobuf.FieldOptions
-	7,  // 9: dal.v1.gorm_options:extendee -> google.protobuf.MessageOptions
-	7,  // 10: dal.v1.datastore_options:extendee -> google.protobuf.MessageOptions
-	1,  // 11: dal.v1.table:type_name -> dal.v1.TableOptions
-	2,  // 12: dal.v1.column:type_name -> dal.v1.ColumnOptions
-	3,  // 13: dal.v1.index:type_name -> dal.v1.IndexOptions
-	3,  // 14: dal.v1.field_index:type_name -> dal.v1.IndexOptions
-	4,  // 15: dal.v1.foreign_key:type_name -> dal.v1.ForeignKeyOptions
-	5,  // 16: dal.v1.gorm_options:type_name -> dal.v1.GormOptions
-	6,  // 17: dal.v1.datastore_options:type_name -> dal.v1.DatastoreOptions
-	18, // [18:18] is the sub-list for method output_type
-	18, // [18:18] is the sub-list for method input_type
-	11, // [11:18] is the sub-list for extension type_name
-	2,  // [2:11] is the sub-list for extension extendee
-	0,  // [0:2] is the sub-list for field type_name
+	7,  // 2: dal.v1.PostgresOptions.gorm:type_name -> dal.v1.GormHints
+	11, // 3: dal.v1.table:extendee -> google.protobuf.MessageOptions
+	12, // 4: dal.v1.column:extendee -> google.protobuf.FieldOptions
+	11, // 5: dal.v1.index:extendee -> google.protobuf.MessageOptions
+	12, // 6: dal.v1.field_index:extendee -> google.protobuf.FieldOptions
+	12, // 7: dal.v1.foreign_key:extendee -> google.protobuf.FieldOptions
+	11, // 8: dal.v1.skip_dal:extendee -> google.protobuf.MessageOptions
+	12, // 9: dal.v1.skip_field:extendee -> google.protobuf.FieldOptions
+	11, // 10: dal.v1.postgres:extendee -> google.protobuf.MessageOptions
+	11, // 11: dal.v1.gorm_options:extendee -> google.protobuf.MessageOptions
+	11, // 12: dal.v1.datastore_options:extendee -> google.protobuf.MessageOptions
+	11, // 13: dal.v1.firestore:extendee -> google.protobuf.MessageOptions
+	11, // 14: dal.v1.mongodb:extendee -> google.protobuf.MessageOptions
+	1,  // 15: dal.v1.table:type_name -> dal.v1.TableOptions
+	2,  // 16: dal.v1.column:type_name -> dal.v1.ColumnOptions
+	3,  // 17: dal.v1.index:type_name -> dal.v1.IndexOptions
+	3,  // 18: dal.v1.field_index:type_name -> dal.v1.IndexOptions
+	4,  // 19: dal.v1.foreign_key:type_name -> dal.v1.ForeignKeyOptions
+	6,  // 20: dal.v1.postgres:type_name -> dal.v1.PostgresOptions
+	5,  // 21: dal.v1.gorm_options:type_name -> dal.v1.GormOptions
+	8,  // 22: dal.v1.datastore_options:type_name -> dal.v1.DatastoreOptions
+	9,  // 23: dal.v1.firestore:type_name -> dal.v1.FirestoreOptions
+	10, // 24: dal.v1.mongodb:type_name -> dal.v1.MongoDBOptions
+	25, // [25:25] is the sub-list for method output_type
+	25, // [25:25] is the sub-list for method input_type
+	15, // [15:25] is the sub-list for extension type_name
+	3,  // [3:15] is the sub-list for extension extendee
+	0,  // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_dal_v1_annotations_proto_init() }
@@ -884,8 +1193,8 @@ func file_dal_v1_annotations_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_dal_v1_annotations_proto_rawDesc), len(file_dal_v1_annotations_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   6,
-			NumExtensions: 9,
+			NumMessages:   10,
+			NumExtensions: 12,
 			NumServices:   0,
 		},
 		GoTypes:           file_dal_v1_annotations_proto_goTypes,

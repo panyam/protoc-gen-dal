@@ -15,10 +15,12 @@
 package collector
 
 import (
+	"strings"
 	"testing"
 
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/descriptorpb"
 	"google.golang.org/protobuf/types/pluginpb"
 
 	dalv1 "github.com/panyam/protoc-gen-go-dal/proto/gen/go/dal/v1"
@@ -207,37 +209,53 @@ func TestCollectMessages_HandlesMultipleMessages(t *testing.T) {
 
 // Test helpers
 
+// testProtoSet represents a complete set of proto files for testing.
+// This is a simplified structure that captures just what we need for tests.
 type testProtoSet struct {
 	files []testFile
 }
 
+// testFile represents a single proto file with messages.
 type testFile struct {
-	name     string
-	pkg      string
+	name     string          // e.g., "library/v1/book.proto"
+	pkg      string          // e.g., "library.v1"
 	messages []testMessage
 }
 
+// testMessage represents a proto message definition.
+// It can have optional postgres annotation to mark it as a DAL schema.
 type testMessage struct {
-	name         string
-	postgresOpts *dalv1.PostgresOptions
+	name         string                   // e.g., "Book" or "BookPostgres"
+	postgresOpts *dalv1.PostgresOptions  // If present, this is a DAL schema message
 	fields       []testField
 }
 
+// testField represents a simple proto field.
+// For tests, we only support basic types (string, int32, int64).
 type testField struct {
-	name     string
-	number   int32
-	typeName string
+	name     string  // Field name
+	number   int32   // Field number
+	typeName string  // "string", "int32", or "int64"
 }
 
-// createTestPlugin creates a protogen.Plugin from test data
-// This is a placeholder - will need proper implementation
+// createTestPlugin creates a protogen.Plugin from test data.
+//
+// Why is this needed?
+// protogen.Plugin normally comes from protoc, but in tests we need to
+// construct one manually. This helper builds the necessary proto descriptors
+// from our simplified test data structure.
+//
+// Process:
+// 1. Convert testProtoSet -> CodeGeneratorRequest (what protoc would send)
+// 2. Create protogen.Plugin from the request
+// 3. Plugin now contains proto files that can be analyzed
 func createTestPlugin(t *testing.T, protoSet *testProtoSet) *protogen.Plugin {
 	t.Helper()
 
-	// TODO: Implement proper test plugin creation
-	// For now, this will make the test compile but fail when run
-	req := &pluginpb.CodeGeneratorRequest{}
+	// Build the CodeGeneratorRequest (what protoc would send)
+	req := buildCodeGeneratorRequest(t, protoSet)
 
+	// Create plugin from request
 	opts := protogen.Options{}
 	plugin, err := opts.New(req)
 	if err != nil {
@@ -245,4 +263,100 @@ func createTestPlugin(t *testing.T, protoSet *testProtoSet) *protogen.Plugin {
 	}
 
 	return plugin
+}
+
+// buildCodeGeneratorRequest constructs a CodeGeneratorRequest from test data.
+//
+// This is what protoc normally sends to the plugin. We're building it manually
+// for testing purposes. The request contains:
+// - ProtoFile: All proto file descriptors
+// - FileToGenerate: Which files should be generated (all of them in tests)
+func buildCodeGeneratorRequest(t *testing.T, protoSet *testProtoSet) *pluginpb.CodeGeneratorRequest {
+	t.Helper()
+
+	req := &pluginpb.CodeGeneratorRequest{
+		FileToGenerate: []string{},
+		ProtoFile:      []*descriptorpb.FileDescriptorProto{},
+	}
+
+	// Convert each test file to a FileDescriptorProto
+	for _, file := range protoSet.files {
+		fileDesc := buildFileDescriptor(t, file)
+		req.ProtoFile = append(req.ProtoFile, fileDesc)
+		req.FileToGenerate = append(req.FileToGenerate, file.name)
+	}
+
+	return req
+}
+
+// buildFileDescriptor creates a FileDescriptorProto from test file data.
+//
+// FileDescriptorProto is protobuf's self-description of a .proto file.
+// It contains all the messages, enums, services, etc. defined in that file.
+func buildFileDescriptor(t *testing.T, file testFile) *descriptorpb.FileDescriptorProto {
+	t.Helper()
+
+	// Convert package name to go_package path
+	// e.g., "library.v1" -> "github.com/test/gen/go/library/v1"
+	goPackage := "github.com/test/gen/go/" + strings.ReplaceAll(file.pkg, ".", "/")
+
+	fileDesc := &descriptorpb.FileDescriptorProto{
+		Name:    proto.String(file.name),
+		Package: proto.String(file.pkg),
+		Syntax:  proto.String("proto3"),
+		Options: &descriptorpb.FileOptions{
+			GoPackage: proto.String(goPackage),
+		},
+	}
+
+	// Add all messages to the file descriptor
+	for _, msg := range file.messages {
+		msgDesc := buildMessageDescriptor(t, msg)
+		fileDesc.MessageType = append(fileDesc.MessageType, msgDesc)
+	}
+
+	return fileDesc
+}
+
+// buildMessageDescriptor creates a DescriptorProto from test message data.
+//
+// DescriptorProto describes a single message type including:
+// - Fields
+// - Options (annotations like postgres)
+// - Nested types (not used in our tests)
+func buildMessageDescriptor(t *testing.T, msg testMessage) *descriptorpb.DescriptorProto {
+	t.Helper()
+
+	msgDesc := &descriptorpb.DescriptorProto{
+		Name: proto.String(msg.name),
+	}
+
+	// Add all fields
+	for _, field := range msg.fields {
+		fieldDesc := &descriptorpb.FieldDescriptorProto{
+			Name:   proto.String(field.name),
+			Number: proto.Int32(field.number),
+		}
+
+		// Map simple type names to protobuf field types
+		switch field.typeName {
+		case "string":
+			fieldDesc.Type = descriptorpb.FieldDescriptorProto_TYPE_STRING.Enum()
+		case "int32":
+			fieldDesc.Type = descriptorpb.FieldDescriptorProto_TYPE_INT32.Enum()
+		case "int64":
+			fieldDesc.Type = descriptorpb.FieldDescriptorProto_TYPE_INT64.Enum()
+		}
+
+		msgDesc.Field = append(msgDesc.Field, fieldDesc)
+	}
+
+	// Add postgres options if present (this marks it as a DAL schema message)
+	if msg.postgresOpts != nil {
+		opts := &descriptorpb.MessageOptions{}
+		proto.SetExtension(opts, dalv1.E_Postgres, msg.postgresOpts)
+		msgDesc.Options = opts
+	}
+
+	return msgDesc
 }
