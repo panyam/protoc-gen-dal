@@ -27,7 +27,7 @@ var templatesFS embed.FS
 type TemplateData struct {
 	PackageName string
 	Imports     []string
-	Struct      StructData
+	Structs     []StructData // Multiple structs per file
 }
 
 // StructData contains data for generating a GORM struct.

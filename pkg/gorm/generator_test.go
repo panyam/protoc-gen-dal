@@ -24,7 +24,7 @@ import (
 	"google.golang.org/protobuf/types/descriptorpb"
 	"google.golang.org/protobuf/types/pluginpb"
 
-	dalv1 "github.com/panyam/protoc-gen-dal/proto/gen/dal/v1"
+	dalv1 "github.com/panyam/protoc-gen-dal/protos/gen/dal/v1"
 )
 
 // TestGenerateGORM_SimpleMessage tests that a simple message generates

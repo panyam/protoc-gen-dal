@@ -6,7 +6,10 @@ import (
 {{ range .Imports }}	{{ . }}
 {{ end }})
 {{ end }}
+{{ range .Structs }}
+{{ template "struct" . }}
+{{ if .TableName }}
 
-{{ template "struct" .Struct }}
-
-{{ template "table_name" .Struct }}
+{{ template "table_name" . }}
+{{ end }}
+{{ end }}

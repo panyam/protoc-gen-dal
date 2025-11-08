@@ -32,7 +32,7 @@ There are three types of targets:
 **Keep API protos clean** - No database concerns in API definitions!
 
 ```
-proto/
+protos/
 ├── api/
 │   └── library/v1/
 │       └── book.proto          # Clean API - no DB pollution!
@@ -196,7 +196,7 @@ protoc-gen-dal/                    # Monorepo
 │   └── mongodb/
 │       └── generator_go.go
 │
-└── proto/
+└── protos/
     └── dal/v1/
         └── annotations.proto         # Shared annotations
 ```
@@ -458,3 +458,4 @@ const BookTableDDL = `CREATE TABLE IF NOT EXISTS books (...)`
 | TDD workflow | Prevent over-engineering, ensure correctness |
 | GORM as target (not vehicle) | GORM is database-agnostic; database chosen at runtime via dialects. Same generated code works for postgres/mysql/sqlite. Users specify DB-specific types if needed (e.g., `type: "jsonb"`). Simpler mental model than postgres-gorm, mysql-gorm, etc. |
 | No abstraction layer for tags | Use native target syntax directly (e.g., `gorm_tags: ["primaryKey", "autoCreateTime"]`). Don't create another language on top of what users already know. Pass through tags verbatim. Reduces learning curve and maintains full feature access. |
+| One file per proto file | Generate one Go file per proto file (not per message). All GORM messages in `gorm/user.proto` → `user_gorm.go`. Embedded types automatically included in same file. Users control organization via proto file structure. Simpler mental model and better for Go compilation. |

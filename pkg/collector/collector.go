@@ -18,7 +18,7 @@ import (
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
 
-	dalv1 "github.com/panyam/protoc-gen-dal/proto/gen/dal/v1"
+	dalv1 "github.com/panyam/protoc-gen-dal/protos/gen/dal/v1"
 )
 
 // Target identifies a datastore target
@@ -175,25 +175,31 @@ func extractMessageInfo(msg *protogen.Message, target Target, index map[string]*
 // We return nil to skip this message rather than crash.
 func extractGormInfo(msg *protogen.Message, opts proto.Message, index map[string]*protogen.Message) *MessageInfo {
 	// Check if message has gorm annotation
-	if v := proto.GetExtension(opts, dalv1.E_Gorm); v != nil {
-		if gormOpts, ok := v.(*dalv1.GormOptions); ok && gormOpts != nil {
-			// Look up source message by fully qualified name
-			sourceMsg := index[gormOpts.Source]
-			if sourceMsg == nil {
-				// Source message not found - skip this DAL schema
-				return nil
-			}
-
-			return &MessageInfo{
-				SourceMessage: sourceMsg,
-				TargetMessage: msg,
-				SourceName:    gormOpts.Source,
-				TableName:     gormOpts.Table,
-				SchemaName:    "", // GORM doesn't use schema
-			}
-		}
+	v := proto.GetExtension(opts, dalv1.E_Gorm)
+	if v == nil {
+		return nil
 	}
-	return nil
+
+	gormOpts, ok := v.(*dalv1.GormOptions)
+	if !ok || gormOpts == nil {
+		return nil
+	}
+
+	// Look up source message by fully qualified name
+	sourceMsg := index[gormOpts.Source]
+	if sourceMsg == nil {
+		// Source message not found - skip this DAL schema
+		// TODO: Consider logging warning for broken reference
+		return nil
+	}
+
+	return &MessageInfo{
+		SourceMessage: sourceMsg,
+		TargetMessage: msg,
+		SourceName:    gormOpts.Source,
+		TableName:     gormOpts.Table,
+		SchemaName:    "", // GORM doesn't use schema
+	}
 }
 
 // extractPostgresInfo extracts PostgreSQL message info.

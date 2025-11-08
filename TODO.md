@@ -34,11 +34,14 @@
 - [ ] **TEST**: Generates BookFromGORM converter
 - [ ] Implement reverse converter generation
 
-### 1.4 First Binary: protoc-gen-dal-gorm
-- [ ] **TEST**: Binary collects and generates from test protos
-- [ ] Create thin main.go that delegates to collector + generator
-- [ ] **TEST**: Integration test with buf generate
-- [ ] Wire up end-to-end flow
+### 1.4 First Binary: protoc-gen-dal-gorm ✅
+- [x] **TEST**: Binary collects and generates from test protos
+- [x] Create thin main.go that delegates to collector + generator
+- [x] **TEST**: Integration test with buf generate
+- [x] Wire up end-to-end flow
+- [x] Generate one file per proto file (not per message)
+- [x] Automatic collection of embedded message types
+- [x] Package name extraction from buf-managed go_package
 
 ## Phase 2: Core Features
 
@@ -180,17 +183,24 @@
 
 ## Current Sprint
 
-**Focus:** Phase 1.3 - GORM Generator (Converters) or Phase 1.4 - First Binary
+**Focus:** Phase 1.3 - GORM Generator (Converters)
 
 **Recently Completed:**
-- ✅ Phase 1.3 basic GORM struct and TableName() generation
-- ✅ Template-based code generation architecture
-- ✅ GORM tag pass-through (no abstraction layer)
-- ✅ Collector support for TargetGorm
+- ✅ Phase 1.4 - protoc-gen-dal-gorm binary end-to-end working
+- ✅ One file per proto file generation strategy
+- ✅ Automatic embedded type collection (e.g., AuthorGORM in BlogGORM)
+- ✅ Package name extraction from buf-managed go_package paths
+- ✅ Template-based multi-struct file generation
+- ✅ Full integration with buf generate
 
-**Options for Next:**
-1. **Phase 1.4**: Create protoc-gen-dal-gorm binary for end-to-end testing
-2. **Phase 1.3 (converters)**: Implement BookToGORM/BookFromGORM converters
+**Generated Code Example:**
+From `tests/protos/gorm/user.proto` → `tests/gen/gorm/user_gorm.go` containing:
+- 6 GORM-annotated structs (UserGORM, BlogGORM, etc.)
+- 1 embedded type (AuthorGORM) automatically included
+- All structs compile and have correct package names
+
+**Next:**
+1. **Phase 1.3 (converters)**: Implement BookToGORM/BookFromGORM typed converters with decorator support
 
 ## Notes
 

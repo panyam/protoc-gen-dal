@@ -18,7 +18,7 @@ package dal.v1;
 
 import "google/protobuf/descriptor.proto";
 
-option go_package = "github.com/panyam/protoc-gen-dal/proto/gen/dal/v1";
+option go_package = "github.com/panyam/protoc-gen-dal/protos/gen/dal/v1";
 
 // table specifies database table options for a message.
 // Use this to customize how a message maps to a database table.

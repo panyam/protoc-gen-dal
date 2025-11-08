@@ -15,7 +15,7 @@
 package ir
 
 import (
-	dalv1 "github.com/panyam/protoc-gen-dal/proto/gen/dal/v1"
+	dalv1 "github.com/panyam/protoc-gen-dal/protos/gen/dal/v1"
 	"google.golang.org/protobuf/compiler/protogen"
 )
 

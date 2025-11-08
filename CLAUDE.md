@@ -15,7 +15,7 @@ When developing features always:
 Few available commands:
 
 `make buf`: For generating protos from spec
-`make test`: Runs ALL tests if you want to do it in one go.
+`make tests`: Runs ALL tests if you want to do it in one go.
 `make build`: Builds all binaries and puts them in the ./bin folder so you can access them from there and only there
 
 A few things about style:

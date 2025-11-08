@@ -23,7 +23,7 @@ import (
 
 	"github.com/panyam/protoc-gen-dal/pkg/builders"
 	"github.com/panyam/protoc-gen-dal/pkg/filters"
-	dalv1 "github.com/panyam/protoc-gen-dal/proto/gen/dal/v1"
+	dalv1 "github.com/panyam/protoc-gen-dal/protos/gen/dal/v1"
 )
 
 // DALGenerator generates Data Access Layer converters for protobuf messages

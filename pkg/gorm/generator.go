@@ -22,7 +22,7 @@ import (
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
 
-	dalv1 "github.com/panyam/protoc-gen-dal/proto/gen/dal/v1"
+	dalv1 "github.com/panyam/protoc-gen-dal/protos/gen/dal/v1"
 )
 
 // GeneratedFile represents a single generated file.
@@ -60,17 +60,24 @@ func Generate(messages []*collector.MessageInfo) (*GenerateResult, error) {
 		return &GenerateResult{Files: []*GeneratedFile{}}, nil
 	}
 
+	// Group messages by their source proto file
+	fileGroups := groupMessagesByFile(messages)
+
 	var files []*GeneratedFile
 
-	// Generate code for each message
-	for _, msg := range messages {
-		content, err := generateMessageCode(msg)
+	// Generate one file per proto file
+	for protoFile, msgs := range fileGroups {
+		content, err := generateFileCode(msgs)
 		if err != nil {
-			return nil, fmt.Errorf("failed to generate code for %s: %w", msg.TargetMessage.Desc.Name(), err)
+			return nil, fmt.Errorf("failed to generate code for %s: %w", protoFile, err)
 		}
 
+		// Generate filename based on the proto file
+		// e.g., gorm/user.proto -> user_gorm.go
+		filename := generateFilenameFromProto(protoFile)
+
 		files = append(files, &GeneratedFile{
-			Path:    "generated.go", // TODO: Proper path generation
+			Path:    filename,
 			Content: content,
 		})
 	}
@@ -78,24 +85,122 @@ func Generate(messages []*collector.MessageInfo) (*GenerateResult, error) {
 	return &GenerateResult{Files: files}, nil
 }
 
-// generateMessageCode generates the complete Go code for a single message
-// by building template data and rendering the file template.
-func generateMessageCode(msg *collector.MessageInfo) (string, error) {
-	// Build struct data from the message
-	structData, err := buildStructData(msg)
-	if err != nil {
-		return "", err
+// groupMessagesByFile groups messages by their source proto file path.
+func groupMessagesByFile(messages []*collector.MessageInfo) map[string][]*collector.MessageInfo {
+	groups := make(map[string][]*collector.MessageInfo)
+	for _, msg := range messages {
+		// Get the proto file path from the target message
+		protoFile := msg.TargetMessage.Desc.ParentFile().Path()
+		groups[protoFile] = append(groups[protoFile], msg)
+	}
+	return groups
+}
+
+// generateFilenameFromProto creates the output filename from a proto file path.
+// e.g., "gorm/user.proto" -> "user_gorm.go"
+func generateFilenameFromProto(protoPath string) string {
+	// Extract base name without extension
+	// e.g., "gorm/user.proto" -> "user"
+	baseName := protoPath
+	if idx := strings.LastIndex(baseName, "/"); idx != -1 {
+		baseName = baseName[idx+1:]
+	}
+	if idx := strings.LastIndex(baseName, ".proto"); idx != -1 {
+		baseName = baseName[:idx]
+	}
+	return baseName + "_gorm.go"
+}
+
+// generateFileCode generates the complete Go code for all messages in a proto file.
+func generateFileCode(messages []*collector.MessageInfo) (string, error) {
+	if len(messages) == 0 {
+		return "", fmt.Errorf("no messages to generate")
+	}
+
+	// Extract package name from the first message's target
+	packageName := extractPackageName(messages[0].TargetMessage)
+
+	// Build struct data for all messages with GORM annotations
+	var structs []StructData
+	embeddedTypes := make(map[string]*protogen.Message)
+
+	for _, msg := range messages {
+		structData, err := buildStructData(msg)
+		if err != nil {
+			return "", err
+		}
+		structs = append(structs, structData)
+
+		// Collect embedded message types
+		collectEmbeddedTypes(msg.TargetMessage, embeddedTypes)
+	}
+
+	// Add structs for embedded types that aren't already GORM messages
+	for _, embMsg := range embeddedTypes {
+		// Check if this message is already in our GORM messages
+		isGormMsg := false
+		for _, msg := range messages {
+			if msg.TargetMessage == embMsg {
+				isGormMsg = true
+				break
+			}
+		}
+
+		if !isGormMsg {
+			// Build a simple struct for this embedded type (no table name)
+			fields, err := buildFields(embMsg)
+			if err != nil {
+				return "", err
+			}
+			structs = append(structs, StructData{
+				Name:      buildStructName(embMsg),
+				TableName: "", // No table for embedded types
+				Fields:    fields,
+			})
+		}
 	}
 
 	// Build template data
 	data := TemplateData{
-		PackageName: "dal", // TODO: Extract from proto package
+		PackageName: packageName,
 		Imports:     []string{}, // TODO: Determine required imports
-		Struct:      structData,
+		Structs:     structs,
 	}
 
 	// Render the file template
 	return renderTemplate("file.go.tmpl", data)
+}
+
+// collectEmbeddedTypes collects all message-type fields from a message.
+func collectEmbeddedTypes(msg *protogen.Message, types map[string]*protogen.Message) {
+	for _, field := range msg.Fields {
+		if field.Desc.Kind().String() == "message" && field.Message != nil {
+			// Add to map (using full name as key to avoid duplicates)
+			fullName := string(field.Message.Desc.FullName())
+			if _, exists := types[fullName]; !exists {
+				types[fullName] = field.Message
+			}
+		}
+	}
+}
+
+// extractPackageName extracts the Go package name from a protogen message.
+// For example, "github.com/panyam/protoc-gen-dal/test/gen/dal;testdal" -> "testdal"
+func extractPackageName(msg *protogen.Message) string {
+	// GoImportPath format is "path/to/package" or "path/to/package;packagename"
+	importPath := string(msg.GoIdent.GoImportPath)
+
+	// Check if there's a package override (after semicolon)
+	if idx := strings.LastIndex(importPath, ";"); idx != -1 {
+		return importPath[idx+1:]
+	}
+
+	// Otherwise use the last part of the path
+	if idx := strings.LastIndex(importPath, "/"); idx != -1 {
+		return importPath[idx+1:]
+	}
+
+	return importPath
 }
 
 // buildStructData extracts struct information from a MessageInfo.
@@ -165,13 +270,25 @@ func buildField(field *protogen.Field) (FieldData, error) {
 
 // protoToGoType converts a proto field type to a Go type string.
 func protoToGoType(field *protogen.Field) string {
-	// Handle repeated fields
+	kind := field.Desc.Kind().String()
+
+	// Handle message types (embedded structs, etc.)
+	if kind == "message" {
+		// For repeated message fields
+		if field.Desc.Cardinality().String() == "repeated" {
+			return "[]" + buildStructName(field.Message)
+		}
+		// For singular message fields, use the GORM struct name
+		return buildStructName(field.Message)
+	}
+
+	// Handle repeated scalar fields
 	if field.Desc.Cardinality().String() == "repeated" {
-		elemType := protoScalarToGo(field.Desc.Kind().String())
+		elemType := protoScalarToGo(kind)
 		return "[]" + elemType
 	}
 
-	return protoScalarToGo(field.Desc.Kind().String())
+	return protoScalarToGo(kind)
 }
 
 // protoScalarToGo maps proto scalar types to Go types.
