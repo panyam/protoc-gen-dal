@@ -16,7 +16,7 @@ type UserGORM struct {
 }
 
 // TableName returns the table name for UserGORM
-func (UserGORM) TableName() string {
+func (*UserGORM) TableName() string {
 	return "users"
 }
 
@@ -30,7 +30,7 @@ type UserWithPermissions struct {
 }
 
 // TableName returns the table name for UserWithPermissions
-func (UserWithPermissions) TableName() string {
+func (*UserWithPermissions) TableName() string {
 	return "users_with_perms"
 }
 
@@ -44,7 +44,7 @@ type UserWithCustomTimestamps struct {
 }
 
 // TableName returns the table name for UserWithCustomTimestamps
-func (UserWithCustomTimestamps) TableName() string {
+func (*UserWithCustomTimestamps) TableName() string {
 	return "users_custom_time"
 }
 
@@ -59,7 +59,7 @@ type UserWithIndexes struct {
 }
 
 // TableName returns the table name for UserWithIndexes
-func (UserWithIndexes) TableName() string {
+func (*UserWithIndexes) TableName() string {
 	return "users_indexed"
 }
 
@@ -72,8 +72,14 @@ type UserWithDefaults struct {
 }
 
 // TableName returns the table name for UserWithDefaults
-func (UserWithDefaults) TableName() string {
+func (*UserWithDefaults) TableName() string {
 	return "users_defaults"
+}
+
+// AuthorGORM is the GORM model for api.Author
+type AuthorGORM struct {
+	Name  string
+	Email string
 }
 
 // BlogGORM is the GORM model for api.Blog
@@ -85,12 +91,6 @@ type BlogGORM struct {
 }
 
 // TableName returns the table name for BlogGORM
-func (BlogGORM) TableName() string {
+func (*BlogGORM) TableName() string {
 	return "blogs"
-}
-
-// AuthorGORM
-type AuthorGORM struct {
-	Name  string
-	Email string
 }

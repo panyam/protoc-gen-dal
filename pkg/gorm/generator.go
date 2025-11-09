@@ -16,6 +16,7 @@ package gorm
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/panyam/protoc-gen-dal/pkg/collector"
@@ -410,96 +411,138 @@ func buildConverterData(msg *collector.MessageInfo, registry *converterRegistry)
 		sourceFields[field.GoName] = field
 	}
 
-	for _, gormField := range msg.TargetMessage.Fields {
+	for _, targetField := range msg.TargetMessage.Fields {
 		// Check if source has a field with the same name
-		sourceField, exists := sourceFields[gormField.GoName]
+		sourceField, exists := sourceFields[targetField.GoName]
 		if !exists {
-			// Field only exists in GORM (e.g., DeletedAt) - skip, decorator will handle
+			// Field only exists in target (e.g., DeletedAt) - skip, decorator will handle
 			continue
 		}
 
 		// Generate conversion code based on type compatibility
-		toGormCode, fromGormCode := buildFieldConversion(sourceField, gormField, registry)
-		if toGormCode == "" {
+		mapping := buildFieldConversion(sourceField, targetField, registry)
+		if mapping == nil {
 			// No conversion possible - skip, decorator must handle
 			continue
 		}
 
-		fieldMappings = append(fieldMappings, FieldMappingData{
-			SourceField:  gormField.GoName,
-			GormField:    gormField.GoName,
-			ToGormCode:   toGormCode,
-			FromGormCode: fromGormCode,
-		})
+		fieldMappings = append(fieldMappings, *mapping)
 	}
 
 	return ConverterData{
-		SourceType:     sourceTypeName,
-		SourcePkgName:  sourcePkgName,
-		GormType:       gormTypeName,
-		FieldMappings:  fieldMappings,
+		SourceType:    sourceTypeName,
+		SourcePkgName: sourcePkgName,
+		TargetType:    gormTypeName,
+		FieldMappings: fieldMappings,
 	}
 }
 
 // buildFieldConversion generates conversion code for a field pair.
-// Returns toGormCode and fromGormCode. Empty string means no conversion possible.
-func buildFieldConversion(sourceField, gormField *protogen.Field, registry *converterRegistry) (toGormCode, fromGormCode string) {
+// Returns FieldMappingData with conversion type and pointer information.
+func buildFieldConversion(sourceField, targetField *protogen.Field, registry *converterRegistry) *FieldMappingData {
 	sourceKind := sourceField.Desc.Kind().String()
-	gormKind := gormField.Desc.Kind().String()
+	targetKind := targetField.Desc.Kind().String()
 	fieldName := sourceField.GoName
 
-	// Check for custom converter functions in column options (highest priority)
-	toGormCode, fromGormCode = extractCustomConverters(gormField, fieldName)
-	if toGormCode != "" {
-		return toGormCode, fromGormCode
+	// Determine if fields are pointers
+	// Source (proto): message fields are always pointers, scalars are pointers only if optional
+	sourceIsPointer := sourceKind == "message" || sourceField.Desc.HasPresence()
+
+	// Target (GORM): only pointers if explicitly marked with 'optional' keyword
+	// Non-optional message fields become value types in GORM
+	// HasOptionalKeyword() returns true only for fields with explicit 'optional' in proto
+	targetIsPointer := targetField.Desc.HasOptionalKeyword()
+
+	mapping := &FieldMappingData{
+		SourceField:     sourceField.GoName,
+		TargetField:     targetField.GoName,
+		SourceIsPointer: sourceIsPointer,
+		TargetIsPointer: targetIsPointer,
 	}
 
-	// Same types - direct assignment
-	if sourceKind == gormKind {
-		return fmt.Sprintf("api.%s", fieldName), fmt.Sprintf("gorm.%s", fieldName)
+	// Step 1: Set default conversion type based on field kind
+	// Scalars default to assignment, messages default to transformer with error
+
+	if sourceKind == "message" || targetKind == "message" {
+		mapping.ToTargetConversionType = ConvertByTransformerWithError
+		mapping.FromTargetConversionType = ConvertByTransformerWithError
+	} else {
+		// Scalar types default to assignment
+		mapping.ToTargetConversionType = ConvertByAssignment
+		mapping.FromTargetConversionType = ConvertByAssignment
 	}
 
-	// Timestamp (message) to int64 (Unix seconds)
-	if sourceKind == "message" && gormKind == "int64" {
+	// Step 2: Check for custom converter functions (highest priority - overrides defaults)
+	toTargetCode, fromTargetCode := extractCustomConverters(targetField, fieldName)
+	if toTargetCode != "" {
+		mapping.ToTargetCode = toTargetCode
+		mapping.FromTargetCode = fromTargetCode
+		mapping.ToTargetConversionType = ConvertByTransformer
+		mapping.FromTargetConversionType = ConvertByTransformer
+		return mapping
+	}
+
+	// Step 3: Handle specific conversion patterns
+
+	// Same types - direct assignment (override message default)
+	if sourceKind == targetKind && sourceKind != "message" {
+		mapping.ToTargetCode = fmt.Sprintf("src.%s", fieldName)
+		mapping.FromTargetCode = fmt.Sprintf("src.%s", fieldName)
+		mapping.ToTargetConversionType = ConvertByAssignment
+		mapping.FromTargetConversionType = ConvertByAssignment
+		return mapping
+	}
+
+	// Timestamp (message) to int64 - built-in transformer without error
+	if sourceKind == "message" && targetKind == "int64" {
 		if sourceField.Message != nil && string(sourceField.Message.Desc.FullName()) == "google.protobuf.Timestamp" {
-			return fmt.Sprintf("timestampToInt64(api.%s)", fieldName),
-				fmt.Sprintf("int64ToTimestamp(gorm.%s)", fieldName)
+			mapping.ToTargetCode = fmt.Sprintf("timestampToInt64(src.%s)", fieldName)
+			mapping.FromTargetCode = fmt.Sprintf("int64ToTimestamp(src.%s)", fieldName)
+			mapping.ToTargetConversionType = ConvertByTransformer
+			mapping.FromTargetConversionType = ConvertByTransformer
+			return mapping
 		}
 	}
 
-	// Both are messages - check if nested converter exists
-	if sourceKind == "message" && gormKind == "message" {
-		if sourceField.Message != nil && gormField.Message != nil {
+	// Both are messages - use nested converter if available
+	if sourceKind == "message" && targetKind == "message" {
+		if sourceField.Message != nil && targetField.Message != nil {
 			sourceTypeName := string(sourceField.Message.Desc.Name())
-			gormTypeName := buildStructName(gormField.Message)
+			targetTypeName := buildStructName(targetField.Message)
 
 			// Check if converter exists for this nested type
-			if registry.hasConverter(sourceTypeName, gormTypeName) {
-				// Generate converter function calls with nil decorator
-				// ToGORM: mustConvertAuthorToAuthorGORM(api.Author)
-				// FromGORM: mustConvertAuthorFromAuthorGORM(&gorm.Author)
-				toGormCode = fmt.Sprintf("mustConvert%sTo%s(api.%s)", sourceTypeName, gormTypeName, fieldName)
-				fromGormCode = fmt.Sprintf("mustConvert%sFrom%s(&gorm.%s)", sourceTypeName, gormTypeName, fieldName)
-				return toGormCode, fromGormCode
+			if registry.hasConverter(sourceTypeName, targetTypeName) {
+				mapping.ToTargetConverterFunc = fmt.Sprintf("%sTo%s", sourceTypeName, targetTypeName)
+				mapping.FromTargetConverterFunc = fmt.Sprintf("%sFrom%s", sourceTypeName, targetTypeName)
+				// Keep default ConvertByTransformerWithError (already set in Step 1)
+				return mapping
 			}
-			// No converter available - skip, decorator must handle
-			return "", ""
+			// No converter available - warn user and skip (decorator must handle)
+			log.Printf("WARNING: Field '%s' has matching message types (%s → %s) but no converter found.\n",
+				fieldName, sourceTypeName, targetTypeName)
+			log.Printf("         If you want automatic conversion, add 'source' annotation to %s message.\n",
+				targetField.Message.Desc.Name())
+			log.Printf("         Skipping field - handle in decorator function.\n\n")
+			return nil
 		}
 	}
 
-	// Numeric conversions
-	if isNumericKind(sourceKind) && isNumericKind(gormKind) {
-		return fmt.Sprintf("%s(api.%s)", protoKindToGoType(gormKind), fieldName),
-			fmt.Sprintf("%s(gorm.%s)", protoKindToGoType(sourceKind), fieldName)
+	// Numeric conversions - use casting
+	if isNumericKind(sourceKind) && isNumericKind(targetKind) {
+		mapping.ToTargetCode = fmt.Sprintf("%s(src.%s)", protoKindToGoType(targetKind), fieldName)
+		mapping.FromTargetCode = fmt.Sprintf("%s(src.%s)", protoKindToGoType(sourceKind), fieldName)
+		mapping.ToTargetConversionType = ConvertByAssignment
+		mapping.FromTargetConversionType = ConvertByAssignment
+		return mapping
 	}
 
 	// No built-in conversion available
-	return "", ""
+	return nil
 }
 
 // extractCustomConverters extracts custom converter functions from column options.
 // Returns conversion code for to_func and from_func if specified.
-func extractCustomConverters(field *protogen.Field, fieldName string) (toGormCode, fromGormCode string) {
+func extractCustomConverters(field *protogen.Field, fieldName string) (toTargetCode, fromTargetCode string) {
 	opts := field.Desc.Options()
 	if opts == nil {
 		return "", ""
@@ -523,7 +566,7 @@ func extractCustomConverters(field *protogen.Field, fieldName string) (toGormCod
 			// Use last segment of package path as alias
 			pkgAlias = getPackageAlias(colOpts.ToFunc.Package)
 		}
-		toGormCode = fmt.Sprintf("%s.%s(api.%s)", pkgAlias, colOpts.ToFunc.Function, fieldName)
+		toTargetCode = fmt.Sprintf("%s.%s(src.%s)", pkgAlias, colOpts.ToFunc.Function, fieldName)
 	}
 
 	// Extract from_func
@@ -532,10 +575,10 @@ func extractCustomConverters(field *protogen.Field, fieldName string) (toGormCod
 		if pkgAlias == "" {
 			pkgAlias = getPackageAlias(colOpts.FromFunc.Package)
 		}
-		fromGormCode = fmt.Sprintf("%s.%s(gorm.%s)", pkgAlias, colOpts.FromFunc.Function, fieldName)
+		fromTargetCode = fmt.Sprintf("%s.%s(src.%s)", pkgAlias, colOpts.FromFunc.Function, fieldName)
 	}
 
-	return toGormCode, fromGormCode
+	return toTargetCode, fromTargetCode
 }
 
 // getPackageAlias returns the default alias for a package path.
@@ -550,18 +593,18 @@ func getPackageAlias(pkgPath string) string {
 // isNumericKind checks if a proto kind is numeric.
 func isNumericKind(kind string) bool {
 	numericKinds := map[string]bool{
-		"int32":  true,
-		"int64":  true,
-		"uint32": true,
-		"uint64": true,
-		"sint32": true,
-		"sint64": true,
-		"fixed32": true,
-		"fixed64": true,
+		"int32":    true,
+		"int64":    true,
+		"uint32":   true,
+		"uint64":   true,
+		"sint32":   true,
+		"sint64":   true,
+		"fixed32":  true,
+		"fixed64":  true,
 		"sfixed32": true,
 		"sfixed64": true,
-		"float":  true,
-		"double": true,
+		"float":    true,
+		"double":   true,
 	}
 	return numericKinds[kind]
 }
@@ -697,4 +740,32 @@ func extractGormTags(field *protogen.Field) string {
 	}
 
 	return ""
+}
+
+// isEmbeddedField checks if a field is marked as embedded in GORM tags.
+// Embedded fields are generated as value types, not pointers.
+func isEmbeddedField(field *protogen.Field) bool {
+	opts := field.Desc.Options()
+	if opts == nil {
+		return false
+	}
+
+	v := proto.GetExtension(opts, dalv1.E_Column)
+	if v == nil {
+		return false
+	}
+
+	colOpts, ok := v.(*dalv1.ColumnOptions)
+	if !ok || colOpts == nil {
+		return false
+	}
+
+	// Check if "embedded" is in the gorm_tags
+	for _, tag := range colOpts.GormTags {
+		if tag == "embedded" || strings.HasPrefix(tag, "embedded:") {
+			return true
+		}
+	}
+
+	return false
 }

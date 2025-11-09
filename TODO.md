@@ -34,7 +34,12 @@
 - [x] Implement built-in type converters (Timestamp ↔ int64, numeric types)
 - [x] Implement custom converter annotations (to_func/from_func with ConverterFunc)
 - [x] Implement converter registry for nested message conversions
-- [x] Generate mustConvert helper functions for recursive conversions
+- [x] Refactor to ConversionType system (Assignment, Transformer, TransformerWithError, etc.)
+- [x] Add Source/Target naming convention throughout codebase
+- [x] Implement in-place conversion with dest parameter
+- [x] Add fieldRef template helper for clean pointer/value handling
+- [x] Implement optional keyword detection for GORM pointer generation
+- [x] Add warnings for missing nested message converters
 
 ### 1.4 First Binary: protoc-gen-dal-gorm ✅
 - [x] **TEST**: Binary collects and generates from test protos
@@ -185,33 +190,40 @@
 
 ## Current Sprint
 
-**Focus:** Phase 2 - Core Features or Additional Targets
+**Focus:** Phase 2 - Core Features (Complex Types, Foreign Keys)
 
 **Recently Completed:**
-- ✅ Phase 1.3 & 1.4 - Complete GORM generator with converters
+- ✅ Phase 1.3 & 1.4 - Complete GORM generator with advanced converter system
 - ✅ Struct generation with pointer receiver TableName() methods
-- ✅ Converter functions with decorator pattern
+- ✅ Converter functions with decorator pattern and in-place conversion
 - ✅ Built-in type converters (Timestamp ↔ int64, numeric types)
 - ✅ Custom converter annotations (to_func/from_func with ConverterFunc message)
 - ✅ Converter registry for nested message conversions
-- ✅ Automatic recursive conversion via mustConvert helpers
+- ✅ ConversionType system with clear categorization (Assignment, Transformer, TransformerWithError)
+- ✅ Source/Target naming convention for cross-target consistency
+- ✅ Template helpers (fieldRef) for clean pointer/value handling
+- ✅ Optional keyword detection for proper GORM pointer generation
+- ✅ Warning system for missing nested converters
 - ✅ One file per proto file: `user_gorm.go` (structs) + `user_converters.go` (converters)
 
 **Generated Code:**
 From `tests/protos/gorm/user.proto`:
 - `user_gorm.go`: 6 GORM structs + 1 embedded type (AuthorGORM)
-- `user_converters.go`: 12 converter functions (To/From for each type) + mustConvert helpers
+- `user_converters.go`: 12 converter functions (To/From for each type)
 
 **Converter Features:**
-- Smart field mapping (only converts compatible types)
+- Smart field mapping with ConversionType categorization
 - Priority: custom converters > built-in > skip (decorator handles)
-- Nested conversions: `Blog.Author` automatically converts via `mustConvertAuthorToAuthorGORM`
-- Skips incompatible fields (e.g., `DeletedAt` only in GORM) - decorator handles them
+- Nested conversions: Automatic via registry, requires explicit `source` annotation
+- In-place conversion via dest parameter (avoids allocations)
+- Pointer vs value handling: `optional` keyword → pointer, otherwise value
+- Helpful warnings when converters missing for nested types
 
 **Next:**
-1. **Phase 2.1**: Field transformations for complex types (repeated fields, maps)
-2. **Phase 2.2**: Foreign key support
-3. **Phase 3**: Additional targets (postgres-raw, firestore)
+1. **Phase 2.1**: Field transformations for complex types (repeated fields, maps as JSON/arrays)
+2. **Phase 2.2**: Foreign key support with cross-file resolution
+3. **Phase 2.3**: Composite keys
+4. **Phase 3**: Additional targets (postgres-raw, firestore)
 
 ## Notes
 

@@ -1,11 +1,12 @@
 # Default: production mode using new split generators
 
-buf: ensureenv clean parent 
+all: buf
+
+buf: ensureenv clean
 	buf dep update
 	buf generate
 	goimports -w `find gen | grep "\.go"`
-
-all: buf
+	cd gen/gorm && go build -o /dev/null .
 
 ensureenv:
 	@test -f buf.yaml && echo "buf.yaml does not exist.  Run 'make setupdev' or 'make setupprod' to setup your environment..."

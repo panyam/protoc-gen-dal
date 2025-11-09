@@ -651,11 +651,13 @@ const file_gorm_user_proto_rawDesc = "" +
 	"\x06active\x18\x03 \x01(\bB\x12\x92\xa6\x1d\x0eR\fdefault:trueR\x06active\x12>\n" +
 	"\n" +
 	"created_at\x18\x04 \x01(\x03B\x1f\x92\xa6\x1d\x1bR\x19default:CURRENT_TIMESTAMPR\tcreatedAt:\x1eʦ\x1d\x1a\n" +
-	"\bapi.User\x12\x0eusers_defaults\"6\n" +
+	"\bapi.User\x12\x0eusers_defaults\"H\n" +
 	"\n" +
 	"AuthorGorm\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
-	"\x05email\x18\x02 \x01(\tR\x05email\"\x88\x02\n" +
+	"\x05email\x18\x02 \x01(\tR\x05email:\x10ʦ\x1d\f\n" +
+	"\n" +
+	"api.Author\"\x88\x02\n" +
 	"\bBlogGorm\x12/\n" +
 	"\x02id\x18\x01 \x01(\rB\x1f\x92\xa6\x1d\x1bR\n" +
 	"primaryKeyR\rautoIncrementR\x02id\x12P\n" +

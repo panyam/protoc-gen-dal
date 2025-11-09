@@ -30,76 +30,126 @@ func int64ToTimestamp(seconds int64) *timestamppb.Timestamp {
 	}
 	return timestamppb.New(time.Unix(seconds, 0))
 }
-{{ range .Converters }}
-// mustConvert{{ .SourceType }}To{{ .GormType }} is a helper that calls {{ .SourceType }}To{{ .GormType }} and panics on error.
-// Used for nested conversions where error handling is done at the top level.
-func mustConvert{{ .SourceType }}To{{ .GormType }}(api *{{ .SourcePkgName }}.{{ .SourceType }}) {{ .GormType }} {
-	result, err := {{ .SourceType }}To{{ .GormType }}(api, nil)
-	if err != nil {
-		panic(fmt.Sprintf("failed to convert {{ .SourceType }} to {{ .GormType }}: %v", err))
-	}
-	if result == nil {
-		return {{ .GormType }}{}
-	}
-	return *result
-}
 
-// mustConvert{{ .SourceType }}From{{ .GormType }} is a helper that calls {{ .SourceType }}From{{ .GormType }} and panics on error.
-// Used for nested conversions where error handling is done at the top level.
-func mustConvert{{ .SourceType }}From{{ .GormType }}(gorm *{{ .GormType }}) *{{ .SourcePkgName }}.{{ .SourceType }} {
-	result, err := {{ .SourceType }}From{{ .GormType }}(gorm, nil)
-	if err != nil {
-		panic(fmt.Sprintf("failed to convert {{ .GormType }} to {{ .SourceType }}: %v", err))
-	}
-	return result
-}
-{{ end }}
 {{ range .Converters }}
-// {{ .SourceType }}To{{ .GormType }} converts a {{ .SourcePkgName }}.{{ .SourceType }} to {{ .GormType }}.
+// {{ .SourceType }}To{{ .TargetType }} converts a {{ .SourcePkgName }}.{{ .SourceType }} to {{ .TargetType }}.
 // The optional decorator function allows custom field transformations.
-func {{ .SourceType }}To{{ .GormType }}(
-	api *{{ .SourcePkgName }}.{{ .SourceType }},
-	decorator func(*{{ .SourcePkgName }}.{{ .SourceType }}, *{{ .GormType }}) error,
-) (*{{ .GormType }}, error) {
-	if api == nil {
+func {{ .SourceType }}To{{ .TargetType }}(
+	src *{{ .SourcePkgName }}.{{ .SourceType }},
+	dest *{{ .TargetType }},
+	decorator func(*{{ .SourcePkgName }}.{{ .SourceType }}, *{{ .TargetType }}) error,
+) (out *{{ .TargetType }}, err error) {
+	if src == nil {
 		return nil, nil
 	}
+	if dest == nil {
+		dest = &{{ .TargetType }}{}
+	}
+	out = dest
 
-	gorm := &{{ .GormType }}{
-{{ range .FieldMappings }}		{{ .GormField }}: {{ .ToGormCode }},
-{{ end }}	}
+	{{/* Process fields by conversion type */}}
+	{{ range .FieldMappings }}
+		{{/* ConvertByAssignment */}}
+		{{ if eq .ToTargetConversionType 1 }}
+			{{ if .SourceIsPointer }}
+	if src.{{ .SourceField }} != nil {
+		out.{{ .TargetField }} = {{ .ToTargetCode }}
+	}
+			{{ else }}
+	out.{{ .TargetField }} = {{ .ToTargetCode }}
+			{{ end }}
+
+		{{/* ConvertByTransformer (no error) */}}
+		{{ else if eq .ToTargetConversionType 2 }}
+			{{ if .SourceIsPointer }}
+	      if src.{{ .SourceField }} != nil {
+		      out.{{ .TargetField }} = {{ .ToTargetCode }}
+	      }
+			{{ else }}
+	      out.{{ .TargetField }} = {{ .ToTargetCode }}
+			{{ end }}
+
+		{{/* ConvertByTransformerWithError */}}
+		{{ else if or (eq .ToTargetConversionType 3) (eq .ToTargetConversionType 4)}}
+			{{ if .SourceIsPointer }} if src.{{ .SourceField }} != nil { {{ end }}
+      _, err = {{ .ToTargetConverterFunc }}(src.{{ .SourceField }}, {{ fieldRef "out" .TargetField .TargetIsPointer }}, nil)
+		  {{ if eq .ToTargetConversionType 3 }}
+      if err != nil {
+        return nil, fmt.Errorf("converting {{ .SourceField }}: %w", err)
+      }
+      {{ end }}
+			{{ if .SourceIsPointer }} } {{ end }}
+		{{ end }}
+	{{ end }}
 
 	// Apply decorator if provided
 	if decorator != nil {
-		if err := decorator(api, gorm); err != nil {
+		if err := decorator(src, dest); err != nil {
 			return nil, err
 		}
 	}
 
-	return gorm, nil
+	return dest, nil
 }
 
-// {{ .SourceType }}From{{ .GormType }} converts a {{ .GormType }} back to {{ .SourcePkgName }}.{{ .SourceType }}.
+// {{ .SourceType }}From{{ .TargetType }} converts a {{ .TargetType }} back to {{ .SourcePkgName }}.{{ .SourceType }}.
 // The optional decorator function allows custom field transformations.
-func {{ .SourceType }}From{{ .GormType }}(
-	gorm *{{ .GormType }},
-	decorator func(*{{ .GormType }}, *{{ .SourcePkgName }}.{{ .SourceType }}) error,
-) (*{{ .SourcePkgName }}.{{ .SourceType }}, error) {
-	if gorm == nil {
+func {{ .SourceType }}From{{ .TargetType }}(
+	dest *{{ .SourcePkgName }}.{{ .SourceType }},
+	src *{{ .TargetType }},
+	decorator func(dest *{{ .SourcePkgName }}.{{ .SourceType }}, src *{{ .TargetType }}) error,
+) (out *{{ .SourcePkgName }}.{{ .SourceType }}, err error) {
+	if src == nil {
 		return nil, nil
 	}
+	if dest == nil {
+		dest = &{{ .SourcePkgName }}.{{ .SourceType }}{}
+	}
+	out = dest
 
-	api := &{{ .SourcePkgName }}.{{ .SourceType }}{
-{{ range .FieldMappings }}		{{ .SourceField }}: {{ .FromGormCode }},
-{{ end }}	}
+	{{/* Process fields by conversion type */}}
+	{{ range .FieldMappings }}
+		{{/* ConvertByAssignment */}}
+		{{ if eq .FromTargetConversionType 1 }}
+			{{ if .TargetIsPointer }}
+	if src.{{ .TargetField }} != nil {
+		out.{{ .SourceField }} = {{ .FromTargetCode }}
+	}
+			{{ else }}
+	out.{{ .SourceField }} = {{ .FromTargetCode }}
+			{{ end }}
+
+		{{/* ConvertByTransformer (no error) */}}
+		{{ else if eq .FromTargetConversionType 2 }}
+			{{ if .TargetIsPointer }}
+	if src.{{ .TargetField }} != nil {
+		out.{{ .SourceField }} = {{ .FromTargetCode }}
+	}
+			{{ else }}
+	out.{{ .SourceField }} = {{ .FromTargetCode }}
+			{{ end }}
+
+		{{/* ConvertByTransformerWithError */}}
+		{{/* ConvertByTransformerWithIgnorableError */}}
+		{{ else if or (eq .FromTargetConversionType 3) (eq .FromTargetConversionType 4)}}
+			{{ if .TargetIsPointer }} if src.{{ .SourceField }} != nil { {{ end }}
+      _, err = {{ .FromTargetConverterFunc }}(out.{{ .SourceField }}, {{ fieldRef "src" .TargetField .TargetIsPointer }}, nil)
+		  {{ if eq .FromTargetConversionType 3 }}
+      if err != nil {
+        return nil, fmt.Errorf("converting {{ .SourceField }}: %w", err)
+      }
+      {{ end }}
+			{{ if .TargetIsPointer }} } {{ end }}
+		{{ end }}
+	{{ end }}
 
 	// Apply decorator if provided
 	if decorator != nil {
-		if err := decorator(gorm, api); err != nil {
+		if err := decorator(dest, src); err != nil {
 			return nil, err
 		}
 	}
 
-	return api, nil
+	return out, nil
 }
 {{ end }}

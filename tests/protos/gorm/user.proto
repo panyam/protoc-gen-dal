@@ -187,6 +187,10 @@ message UserWithDefaults {
 
 // AuthorGorm for embedded struct (no table - just embedded in Blog)
 message AuthorGorm {
+  option (dal.v1.gorm) = {
+    source: "api.Author"
+  };
+
   string name = 1;
   string email = 2;
 }

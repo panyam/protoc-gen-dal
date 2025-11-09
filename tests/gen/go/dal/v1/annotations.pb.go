@@ -172,6 +172,30 @@ type ColumnOptions struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Column name override (optional - defaults to field name)
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// Custom conversion function for API -> Target conversion
+	// Overrides built-in converters (e.g., Timestamp -> int64)
+	// Example:
+	//
+	//	to_func: {
+	//	  package: "github.com/myapp/converters"
+	//	  alias: "myconv"
+	//	  function: "TimestampToMillis"
+	//	}
+	//
+	// Generates: import myconv "github.com/myapp/converters"
+	//
+	//	gorm.Field = myconv.TimestampToMillis(api.Field)
+	ToFunc *ConverterFunc `protobuf:"bytes,2,opt,name=to_func,json=toFunc,proto3" json:"to_func,omitempty"`
+	// Custom conversion function for Target -> API conversion
+	// Example:
+	//
+	//	from_func: {
+	//	  package: "github.com/myapp/converters"
+	//	  function: "MillisToTimestamp"
+	//	}
+	//
+	// Generates: api.Field = converters.MillisToTimestamp(gorm.Field)
+	FromFunc *ConverterFunc `protobuf:"bytes,3,opt,name=from_func,json=fromFunc,proto3" json:"from_func,omitempty"`
 	// GORM-specific tags (for GORM target)
 	// Example: ["primaryKey", "type:uuid", "default:gen_random_uuid()"]
 	// Generates: `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
@@ -224,6 +248,20 @@ func (x *ColumnOptions) GetName() string {
 	return ""
 }
 
+func (x *ColumnOptions) GetToFunc() *ConverterFunc {
+	if x != nil {
+		return x.ToFunc
+	}
+	return nil
+}
+
+func (x *ColumnOptions) GetFromFunc() *ConverterFunc {
+	if x != nil {
+		return x.FromFunc
+	}
+	return nil
+}
+
 func (x *ColumnOptions) GetGormTags() []string {
 	if x != nil {
 		return x.GormTags
@@ -252,6 +290,75 @@ func (x *ColumnOptions) GetMongodbTags() []string {
 	return nil
 }
 
+// Specification for a custom converter function
+type ConverterFunc struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Go package import path
+	// Example: "github.com/myapp/converters"
+	Package string `protobuf:"bytes,1,opt,name=package,proto3" json:"package,omitempty"`
+	// Optional import alias
+	// If not specified, uses the last segment of package path
+	// Example: "myconv" -> import myconv "github.com/myapp/converters"
+	Alias string `protobuf:"bytes,2,opt,name=alias,proto3" json:"alias,omitempty"`
+	// Function name to call
+	// Example: "TimestampToMillis"
+	// Generates call: alias.TimestampToMillis(value)
+	Function      string `protobuf:"bytes,3,opt,name=function,proto3" json:"function,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ConverterFunc) Reset() {
+	*x = ConverterFunc{}
+	mi := &file_dal_v1_annotations_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ConverterFunc) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ConverterFunc) ProtoMessage() {}
+
+func (x *ConverterFunc) ProtoReflect() protoreflect.Message {
+	mi := &file_dal_v1_annotations_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ConverterFunc.ProtoReflect.Descriptor instead.
+func (*ConverterFunc) Descriptor() ([]byte, []int) {
+	return file_dal_v1_annotations_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *ConverterFunc) GetPackage() string {
+	if x != nil {
+		return x.Package
+	}
+	return ""
+}
+
+func (x *ConverterFunc) GetAlias() string {
+	if x != nil {
+		return x.Alias
+	}
+	return ""
+}
+
+func (x *ConverterFunc) GetFunction() string {
+	if x != nil {
+		return x.Function
+	}
+	return ""
+}
+
 // Configuration for indexes
 type IndexOptions struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -271,7 +378,7 @@ type IndexOptions struct {
 
 func (x *IndexOptions) Reset() {
 	*x = IndexOptions{}
-	mi := &file_dal_v1_annotations_proto_msgTypes[2]
+	mi := &file_dal_v1_annotations_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -283,7 +390,7 @@ func (x *IndexOptions) String() string {
 func (*IndexOptions) ProtoMessage() {}
 
 func (x *IndexOptions) ProtoReflect() protoreflect.Message {
-	mi := &file_dal_v1_annotations_proto_msgTypes[2]
+	mi := &file_dal_v1_annotations_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -296,7 +403,7 @@ func (x *IndexOptions) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IndexOptions.ProtoReflect.Descriptor instead.
 func (*IndexOptions) Descriptor() ([]byte, []int) {
-	return file_dal_v1_annotations_proto_rawDescGZIP(), []int{2}
+	return file_dal_v1_annotations_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *IndexOptions) GetName() string {
@@ -351,7 +458,7 @@ type ForeignKeyOptions struct {
 
 func (x *ForeignKeyOptions) Reset() {
 	*x = ForeignKeyOptions{}
-	mi := &file_dal_v1_annotations_proto_msgTypes[3]
+	mi := &file_dal_v1_annotations_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -363,7 +470,7 @@ func (x *ForeignKeyOptions) String() string {
 func (*ForeignKeyOptions) ProtoMessage() {}
 
 func (x *ForeignKeyOptions) ProtoReflect() protoreflect.Message {
-	mi := &file_dal_v1_annotations_proto_msgTypes[3]
+	mi := &file_dal_v1_annotations_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -376,7 +483,7 @@ func (x *ForeignKeyOptions) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ForeignKeyOptions.ProtoReflect.Descriptor instead.
 func (*ForeignKeyOptions) Descriptor() ([]byte, []int) {
-	return file_dal_v1_annotations_proto_rawDescGZIP(), []int{3}
+	return file_dal_v1_annotations_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *ForeignKeyOptions) GetReferences() string {
@@ -422,7 +529,7 @@ type GormOptions struct {
 
 func (x *GormOptions) Reset() {
 	*x = GormOptions{}
-	mi := &file_dal_v1_annotations_proto_msgTypes[4]
+	mi := &file_dal_v1_annotations_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -434,7 +541,7 @@ func (x *GormOptions) String() string {
 func (*GormOptions) ProtoMessage() {}
 
 func (x *GormOptions) ProtoReflect() protoreflect.Message {
-	mi := &file_dal_v1_annotations_proto_msgTypes[4]
+	mi := &file_dal_v1_annotations_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -447,7 +554,7 @@ func (x *GormOptions) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GormOptions.ProtoReflect.Descriptor instead.
 func (*GormOptions) Descriptor() ([]byte, []int) {
-	return file_dal_v1_annotations_proto_rawDescGZIP(), []int{4}
+	return file_dal_v1_annotations_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *GormOptions) GetSource() string {
@@ -486,7 +593,7 @@ type PostgresOptions struct {
 
 func (x *PostgresOptions) Reset() {
 	*x = PostgresOptions{}
-	mi := &file_dal_v1_annotations_proto_msgTypes[5]
+	mi := &file_dal_v1_annotations_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -498,7 +605,7 @@ func (x *PostgresOptions) String() string {
 func (*PostgresOptions) ProtoMessage() {}
 
 func (x *PostgresOptions) ProtoReflect() protoreflect.Message {
-	mi := &file_dal_v1_annotations_proto_msgTypes[5]
+	mi := &file_dal_v1_annotations_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -511,7 +618,7 @@ func (x *PostgresOptions) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PostgresOptions.ProtoReflect.Descriptor instead.
 func (*PostgresOptions) Descriptor() ([]byte, []int) {
-	return file_dal_v1_annotations_proto_rawDescGZIP(), []int{5}
+	return file_dal_v1_annotations_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *PostgresOptions) GetSource() string {
@@ -554,7 +661,7 @@ type DatastoreOptions struct {
 
 func (x *DatastoreOptions) Reset() {
 	*x = DatastoreOptions{}
-	mi := &file_dal_v1_annotations_proto_msgTypes[6]
+	mi := &file_dal_v1_annotations_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -566,7 +673,7 @@ func (x *DatastoreOptions) String() string {
 func (*DatastoreOptions) ProtoMessage() {}
 
 func (x *DatastoreOptions) ProtoReflect() protoreflect.Message {
-	mi := &file_dal_v1_annotations_proto_msgTypes[6]
+	mi := &file_dal_v1_annotations_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -579,7 +686,7 @@ func (x *DatastoreOptions) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DatastoreOptions.ProtoReflect.Descriptor instead.
 func (*DatastoreOptions) Descriptor() ([]byte, []int) {
-	return file_dal_v1_annotations_proto_rawDescGZIP(), []int{6}
+	return file_dal_v1_annotations_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *DatastoreOptions) GetKind() string {
@@ -630,7 +737,7 @@ type FirestoreOptions struct {
 
 func (x *FirestoreOptions) Reset() {
 	*x = FirestoreOptions{}
-	mi := &file_dal_v1_annotations_proto_msgTypes[7]
+	mi := &file_dal_v1_annotations_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -642,7 +749,7 @@ func (x *FirestoreOptions) String() string {
 func (*FirestoreOptions) ProtoMessage() {}
 
 func (x *FirestoreOptions) ProtoReflect() protoreflect.Message {
-	mi := &file_dal_v1_annotations_proto_msgTypes[7]
+	mi := &file_dal_v1_annotations_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -655,7 +762,7 @@ func (x *FirestoreOptions) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FirestoreOptions.ProtoReflect.Descriptor instead.
 func (*FirestoreOptions) Descriptor() ([]byte, []int) {
-	return file_dal_v1_annotations_proto_rawDescGZIP(), []int{7}
+	return file_dal_v1_annotations_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *FirestoreOptions) GetSource() string {
@@ -687,7 +794,7 @@ type MongoDBOptions struct {
 
 func (x *MongoDBOptions) Reset() {
 	*x = MongoDBOptions{}
-	mi := &file_dal_v1_annotations_proto_msgTypes[8]
+	mi := &file_dal_v1_annotations_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -699,7 +806,7 @@ func (x *MongoDBOptions) String() string {
 func (*MongoDBOptions) ProtoMessage() {}
 
 func (x *MongoDBOptions) ProtoReflect() protoreflect.Message {
-	mi := &file_dal_v1_annotations_proto_msgTypes[8]
+	mi := &file_dal_v1_annotations_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -712,7 +819,7 @@ func (x *MongoDBOptions) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MongoDBOptions.ProtoReflect.Descriptor instead.
 func (*MongoDBOptions) Descriptor() ([]byte, []int) {
-	return file_dal_v1_annotations_proto_rawDescGZIP(), []int{8}
+	return file_dal_v1_annotations_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *MongoDBOptions) GetSource() string {
@@ -876,14 +983,20 @@ const file_dal_v1_annotations_proto_rawDesc = "" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x16\n" +
 	"\x06schema\x18\x02 \x01(\tR\x06schema\x12\x18\n" +
 	"\acomment\x18\x03 \x01(\tR\acomment\x12\x16\n" +
-	"\x06source\x18\x04 \x01(\tR\x06source\"\xa5\x01\n" +
+	"\x06source\x18\x04 \x01(\tR\x06source\"\x89\x02\n" +
 	"\rColumnOptions\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1b\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12.\n" +
+	"\ato_func\x18\x02 \x01(\v2\x15.dal.v1.ConverterFuncR\x06toFunc\x122\n" +
+	"\tfrom_func\x18\x03 \x01(\v2\x15.dal.v1.ConverterFuncR\bfromFunc\x12\x1b\n" +
 	"\tgorm_tags\x18\n" +
 	" \x03(\tR\bgormTags\x12\x19\n" +
 	"\bsql_tags\x18\v \x03(\tR\asqlTags\x12%\n" +
 	"\x0efirestore_tags\x18\f \x03(\tR\rfirestoreTags\x12!\n" +
-	"\fmongodb_tags\x18\r \x03(\tR\vmongodbTags\"|\n" +
+	"\fmongodb_tags\x18\r \x03(\tR\vmongodbTags\"[\n" +
+	"\rConverterFunc\x12\x18\n" +
+	"\apackage\x18\x01 \x01(\tR\apackage\x12\x14\n" +
+	"\x05alias\x18\x02 \x01(\tR\x05alias\x12\x1a\n" +
+	"\bfunction\x18\x03 \x01(\tR\bfunction\"|\n" +
 	"\fIndexOptions\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x16\n" +
 	"\x06fields\x18\x02 \x01(\tR\x06fields\x12\x16\n" +
@@ -959,51 +1072,54 @@ func file_dal_v1_annotations_proto_rawDescGZIP() []byte {
 }
 
 var file_dal_v1_annotations_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_dal_v1_annotations_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_dal_v1_annotations_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_dal_v1_annotations_proto_goTypes = []any{
 	(ReferentialAction)(0),              // 0: dal.v1.ReferentialAction
 	(*TableOptions)(nil),                // 1: dal.v1.TableOptions
 	(*ColumnOptions)(nil),               // 2: dal.v1.ColumnOptions
-	(*IndexOptions)(nil),                // 3: dal.v1.IndexOptions
-	(*ForeignKeyOptions)(nil),           // 4: dal.v1.ForeignKeyOptions
-	(*GormOptions)(nil),                 // 5: dal.v1.GormOptions
-	(*PostgresOptions)(nil),             // 6: dal.v1.PostgresOptions
-	(*DatastoreOptions)(nil),            // 7: dal.v1.DatastoreOptions
-	(*FirestoreOptions)(nil),            // 8: dal.v1.FirestoreOptions
-	(*MongoDBOptions)(nil),              // 9: dal.v1.MongoDBOptions
-	(*descriptorpb.MessageOptions)(nil), // 10: google.protobuf.MessageOptions
-	(*descriptorpb.FieldOptions)(nil),   // 11: google.protobuf.FieldOptions
+	(*ConverterFunc)(nil),               // 3: dal.v1.ConverterFunc
+	(*IndexOptions)(nil),                // 4: dal.v1.IndexOptions
+	(*ForeignKeyOptions)(nil),           // 5: dal.v1.ForeignKeyOptions
+	(*GormOptions)(nil),                 // 6: dal.v1.GormOptions
+	(*PostgresOptions)(nil),             // 7: dal.v1.PostgresOptions
+	(*DatastoreOptions)(nil),            // 8: dal.v1.DatastoreOptions
+	(*FirestoreOptions)(nil),            // 9: dal.v1.FirestoreOptions
+	(*MongoDBOptions)(nil),              // 10: dal.v1.MongoDBOptions
+	(*descriptorpb.MessageOptions)(nil), // 11: google.protobuf.MessageOptions
+	(*descriptorpb.FieldOptions)(nil),   // 12: google.protobuf.FieldOptions
 }
 var file_dal_v1_annotations_proto_depIdxs = []int32{
-	0,  // 0: dal.v1.ForeignKeyOptions.on_delete:type_name -> dal.v1.ReferentialAction
-	0,  // 1: dal.v1.ForeignKeyOptions.on_update:type_name -> dal.v1.ReferentialAction
-	10, // 2: dal.v1.table:extendee -> google.protobuf.MessageOptions
-	11, // 3: dal.v1.column:extendee -> google.protobuf.FieldOptions
-	10, // 4: dal.v1.index:extendee -> google.protobuf.MessageOptions
-	11, // 5: dal.v1.field_index:extendee -> google.protobuf.FieldOptions
-	11, // 6: dal.v1.foreign_key:extendee -> google.protobuf.FieldOptions
-	10, // 7: dal.v1.skip_dal:extendee -> google.protobuf.MessageOptions
-	11, // 8: dal.v1.skip_field:extendee -> google.protobuf.FieldOptions
-	10, // 9: dal.v1.postgres:extendee -> google.protobuf.MessageOptions
-	10, // 10: dal.v1.gorm:extendee -> google.protobuf.MessageOptions
-	10, // 11: dal.v1.datastore_options:extendee -> google.protobuf.MessageOptions
-	10, // 12: dal.v1.firestore:extendee -> google.protobuf.MessageOptions
-	10, // 13: dal.v1.mongodb:extendee -> google.protobuf.MessageOptions
-	1,  // 14: dal.v1.table:type_name -> dal.v1.TableOptions
-	2,  // 15: dal.v1.column:type_name -> dal.v1.ColumnOptions
-	3,  // 16: dal.v1.index:type_name -> dal.v1.IndexOptions
-	3,  // 17: dal.v1.field_index:type_name -> dal.v1.IndexOptions
-	4,  // 18: dal.v1.foreign_key:type_name -> dal.v1.ForeignKeyOptions
-	6,  // 19: dal.v1.postgres:type_name -> dal.v1.PostgresOptions
-	5,  // 20: dal.v1.gorm:type_name -> dal.v1.GormOptions
-	7,  // 21: dal.v1.datastore_options:type_name -> dal.v1.DatastoreOptions
-	8,  // 22: dal.v1.firestore:type_name -> dal.v1.FirestoreOptions
-	9,  // 23: dal.v1.mongodb:type_name -> dal.v1.MongoDBOptions
-	24, // [24:24] is the sub-list for method output_type
-	24, // [24:24] is the sub-list for method input_type
-	14, // [14:24] is the sub-list for extension type_name
-	2,  // [2:14] is the sub-list for extension extendee
-	0,  // [0:2] is the sub-list for field type_name
+	3,  // 0: dal.v1.ColumnOptions.to_func:type_name -> dal.v1.ConverterFunc
+	3,  // 1: dal.v1.ColumnOptions.from_func:type_name -> dal.v1.ConverterFunc
+	0,  // 2: dal.v1.ForeignKeyOptions.on_delete:type_name -> dal.v1.ReferentialAction
+	0,  // 3: dal.v1.ForeignKeyOptions.on_update:type_name -> dal.v1.ReferentialAction
+	11, // 4: dal.v1.table:extendee -> google.protobuf.MessageOptions
+	12, // 5: dal.v1.column:extendee -> google.protobuf.FieldOptions
+	11, // 6: dal.v1.index:extendee -> google.protobuf.MessageOptions
+	12, // 7: dal.v1.field_index:extendee -> google.protobuf.FieldOptions
+	12, // 8: dal.v1.foreign_key:extendee -> google.protobuf.FieldOptions
+	11, // 9: dal.v1.skip_dal:extendee -> google.protobuf.MessageOptions
+	12, // 10: dal.v1.skip_field:extendee -> google.protobuf.FieldOptions
+	11, // 11: dal.v1.postgres:extendee -> google.protobuf.MessageOptions
+	11, // 12: dal.v1.gorm:extendee -> google.protobuf.MessageOptions
+	11, // 13: dal.v1.datastore_options:extendee -> google.protobuf.MessageOptions
+	11, // 14: dal.v1.firestore:extendee -> google.protobuf.MessageOptions
+	11, // 15: dal.v1.mongodb:extendee -> google.protobuf.MessageOptions
+	1,  // 16: dal.v1.table:type_name -> dal.v1.TableOptions
+	2,  // 17: dal.v1.column:type_name -> dal.v1.ColumnOptions
+	4,  // 18: dal.v1.index:type_name -> dal.v1.IndexOptions
+	4,  // 19: dal.v1.field_index:type_name -> dal.v1.IndexOptions
+	5,  // 20: dal.v1.foreign_key:type_name -> dal.v1.ForeignKeyOptions
+	7,  // 21: dal.v1.postgres:type_name -> dal.v1.PostgresOptions
+	6,  // 22: dal.v1.gorm:type_name -> dal.v1.GormOptions
+	8,  // 23: dal.v1.datastore_options:type_name -> dal.v1.DatastoreOptions
+	9,  // 24: dal.v1.firestore:type_name -> dal.v1.FirestoreOptions
+	10, // 25: dal.v1.mongodb:type_name -> dal.v1.MongoDBOptions
+	26, // [26:26] is the sub-list for method output_type
+	26, // [26:26] is the sub-list for method input_type
+	16, // [16:26] is the sub-list for extension type_name
+	4,  // [4:16] is the sub-list for extension extendee
+	0,  // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_dal_v1_annotations_proto_init() }
@@ -1017,7 +1133,7 @@ func file_dal_v1_annotations_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_dal_v1_annotations_proto_rawDesc), len(file_dal_v1_annotations_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   9,
+			NumMessages:   10,
 			NumExtensions: 12,
 			NumServices:   0,
 		},

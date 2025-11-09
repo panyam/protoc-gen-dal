@@ -197,9 +197,14 @@ func TestGenerateConverters(t *testing.T) {
 		t.Error("Expected BookToBookGORM function")
 	}
 
-	// Should accept API message pointer
-	if !strings.Contains(converterCode, "*Book") {
-		t.Error("Expected *Book parameter in ToGORM")
+	// Should accept API message pointer as src
+	if !strings.Contains(converterCode, "src *") {
+		t.Error("Expected src parameter in ToGORM")
+	}
+
+	// Should accept dest parameter for in-place conversion
+	if !strings.Contains(converterCode, "dest *BookGORM") {
+		t.Error("Expected dest *BookGORM parameter in ToGORM")
 	}
 
 	// Should accept decorator function
@@ -207,24 +212,29 @@ func TestGenerateConverters(t *testing.T) {
 		t.Error("Expected decorator parameter in ToGORM")
 	}
 
-	// Should return GORM struct pointer and error
-	if !strings.Contains(converterCode, "(*BookGORM, error)") {
-		t.Error("Expected (*BookGORM, error) return in ToGORM")
+	// Should return named GORM struct pointer and error
+	if !strings.Contains(converterCode, "(out *BookGORM, err error)") {
+		t.Error("Expected (out *BookGORM, err error) return in ToGORM")
 	}
 
-	// Then: Should generate FromGORM function with full name (SourceFromGormType)
+	// Then: Should generate FromGORM function with full name (SourceFromTargetType)
 	if !strings.Contains(converterCode, "func BookFromBookGORM(") {
 		t.Error("Expected BookFromBookGORM function")
 	}
 
-	// Should accept GORM struct pointer
-	if !strings.Contains(converterCode, "gorm *BookGORM") {
-		t.Error("Expected *BookGORM parameter in FromGORM")
+	// Should accept dest parameter (for proto message)
+	if !strings.Contains(converterCode, "dest *") {
+		t.Error("Expected dest parameter in FromGORM")
 	}
 
-	// Should return API message pointer and error (with package qualifier)
-	if !strings.Contains(converterCode, ".Book") || !strings.Contains(converterCode, ", error)") {
-		t.Error("Expected qualified Book type and error in FromGORM return")
+	// Should accept GORM struct pointer as src
+	if !strings.Contains(converterCode, "src *BookGORM") {
+		t.Error("Expected src *BookGORM parameter in FromGORM")
+	}
+
+	// Should return named API message pointer and error (with package qualifier)
+	if !strings.Contains(converterCode, ".Book") || !strings.Contains(converterCode, "(out *") {
+		t.Error("Expected qualified Book type and named return in FromGORM")
 	}
 }
 

@@ -40,9 +40,10 @@ type StructData struct {
 
 // FieldData contains data for a single struct field.
 type FieldData struct {
-	Name    string // Go field name (e.g., "ID", "Title")
-	Type    string // Go type (e.g., "string", "int64", "[]string")
-	GormTag string // GORM tag content (e.g., "primaryKey;type:uuid")
+	Name       string // Go field name (e.g., "ID", "Title")
+	Type       string // Go type (e.g., "string", "int64", "[]string")
+	GormTag    string // GORM tag content (e.g., "primaryKey;type:uuid")
+	IsOptional bool   // Whether field is marked optional in proto (affects pointer generation)
 }
 
 // ConverterFileData contains all data needed to render a converter file.
@@ -56,16 +57,33 @@ type ConverterFileData struct {
 type ConverterData struct {
 	SourceType    string             // Source API type (e.g., "User")
 	SourcePkgName string             // Source package name (e.g., "testapi")
-	GormType      string             // GORM type (e.g., "UserGORM", "UserWithPermissions")
+	TargetType    string             // Target type (e.g., "UserGORM", "UserWithPermissions")
 	FieldMappings []FieldMappingData // Field conversion mappings
 }
 
-// FieldMappingData contains data for mapping a single field between API and GORM.
+// ConversionType represents how a field should be converted.
+type ConversionType int
+
+const (
+	ConvertIgnore                          ConversionType = iota // Field only in target, skip conversion
+	ConvertByAssignment                                          // Direct assignment: out.Field = src.Field
+	ConvertByTransformer                                         // No-error transformer: out.Field = converter(src.Field)
+	ConvertByTransformerWithError                                // Error-returning transformer: out.Field, err = converter(src.Field)
+	ConvertByTransformerWithIgnorableError                       // Error-ignoring transformer: out.Field, _ = converter(src.Field)
+)
+
+// FieldMappingData contains data for mapping a single field between API and target.
 type FieldMappingData struct {
-	SourceField  string // Source field name (e.g., "Birthday")
-	GormField    string // GORM field name (e.g., "Birthday")
-	ToGormCode   string // Code to convert source to GORM (e.g., "api.Id" or "timestampToInt64(api.Birthday)")
-	FromGormCode string // Code to convert GORM to source (e.g., "gorm.Id" or "int64ToTimestamp(gorm.Birthday)")
+	SourceField             string         // Source field name (e.g., "Birthday")
+	TargetField             string         // Target field name (e.g., "Birthday")
+	ToTargetConversionType  ConversionType // How to convert source → target
+	FromTargetConversionType ConversionType // How to convert target → source
+	ToTargetCode            string         // Code to convert source to target (for assignment/transformer)
+	FromTargetCode          string         // Code to convert target to source (for assignment/transformer)
+	ToTargetConverterFunc   string         // Converter function name for ToTarget (e.g., "AuthorToAuthorGORM")
+	FromTargetConverterFunc string         // Converter function name for FromTarget (e.g., "AuthorFromAuthorGORM")
+	SourceIsPointer         bool           // Whether source field is a pointer type (needs nil check)
+	TargetIsPointer         bool           // Whether target field is a pointer type (affects assignment)
 }
 
 var tmpl *template.Template
@@ -77,8 +95,21 @@ func loadTemplates() (*template.Template, error) {
 		return tmpl, nil
 	}
 
+	// Create template with helper functions
+	t := template.New("").Funcs(template.FuncMap{
+		// fieldRef generates the correct field reference expression for converter parameters.
+		// For pointer fields: returns "varName.fieldName" (pass pointer as-is)
+		// For value fields: returns "&varName.fieldName" (take address for in-place modification)
+		"fieldRef": func(varName, fieldName string, isPointer bool) string {
+			if isPointer {
+				return varName + "." + fieldName
+			}
+			return "&" + varName + "." + fieldName
+		},
+	})
+
 	// Parse all template files
-	t, err := template.ParseFS(templatesFS, "templates/*.tmpl")
+	t, err := t.ParseFS(templatesFS, "templates/*.tmpl")
 	if err != nil {
 		return nil, err
 	}
