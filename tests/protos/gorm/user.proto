@@ -219,3 +219,39 @@ message BlogGorm {
     gorm_tags: ["type:varchar(255)", "not null"]
   }];
 }
+
+// ProductGorm demonstrates repeated and map field storage strategies
+message ProductGorm {
+  option (dal.v1.gorm) = {
+    source: "api.Product"
+    table: "products"
+  };
+
+  uint32 id = 1 [(dal.v1.column) = {
+    gorm_tags: ["primaryKey", "autoIncrement"]
+  }];
+
+  string name = 2 [(dal.v1.column) = {
+    gorm_tags: ["type:varchar(255)", "not null"]
+  }];
+
+  // Repeated string as JSONB (PostgreSQL-specific)
+  repeated string tags = 3 [(dal.v1.column) = {
+    gorm_tags: ["type:jsonb"]
+  }];
+
+  // Repeated string as PostgreSQL TEXT[] array
+  repeated string categories = 4 [(dal.v1.column) = {
+    gorm_tags: ["type:text[]"]
+  }];
+
+  // Map as JSONB
+  map<string, string> metadata = 5 [(dal.v1.column) = {
+    gorm_tags: ["type:jsonb"]
+  }];
+
+  // Repeated int as JSONB
+  repeated int32 ratings = 6 [(dal.v1.column) = {
+    gorm_tags: ["type:jsonb"]
+  }];
+}

@@ -254,6 +254,91 @@ func (x *Blog) GetTitle() string {
 	return ""
 }
 
+// Product demonstrates repeated and map fields
+type Product struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            uint32                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Tags          []string               `protobuf:"bytes,3,rep,name=tags,proto3" json:"tags,omitempty"`                                                                                   // e.g., ["electronics", "smartphone"]
+	Categories    []string               `protobuf:"bytes,4,rep,name=categories,proto3" json:"categories,omitempty"`                                                                       // e.g., ["tech", "gadgets"]
+	Metadata      map[string]string      `protobuf:"bytes,5,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // e.g., {"color": "black", "storage": "128GB"}
+	Ratings       []int32                `protobuf:"varint,6,rep,packed,name=ratings,proto3" json:"ratings,omitempty"`                                                                     // e.g., [5, 4, 5, 3]
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Product) Reset() {
+	*x = Product{}
+	mi := &file_api_user_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Product) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Product) ProtoMessage() {}
+
+func (x *Product) ProtoReflect() protoreflect.Message {
+	mi := &file_api_user_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Product.ProtoReflect.Descriptor instead.
+func (*Product) Descriptor() ([]byte, []int) {
+	return file_api_user_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *Product) GetId() uint32 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *Product) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *Product) GetTags() []string {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
+func (x *Product) GetCategories() []string {
+	if x != nil {
+		return x.Categories
+	}
+	return nil
+}
+
+func (x *Product) GetMetadata() map[string]string {
+	if x != nil {
+		return x.Metadata
+	}
+	return nil
+}
+
+func (x *Product) GetRatings() []int32 {
+	if x != nil {
+		return x.Ratings
+	}
+	return nil
+}
+
 var File_api_user_proto protoreflect.FileDescriptor
 
 const file_api_user_proto_rawDesc = "" +
@@ -278,7 +363,19 @@ const file_api_user_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\rR\x02id\x12#\n" +
 	"\x06author\x18\x02 \x01(\v2\v.api.AuthorR\x06author\x12\x18\n" +
 	"\aupvotes\x18\x03 \x01(\x05R\aupvotes\x12\x14\n" +
-	"\x05title\x18\x04 \x01(\tR\x05titleBs\n" +
+	"\x05title\x18\x04 \x01(\tR\x05title\"\xf0\x01\n" +
+	"\aProduct\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\rR\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x12\n" +
+	"\x04tags\x18\x03 \x03(\tR\x04tags\x12\x1e\n" +
+	"\n" +
+	"categories\x18\x04 \x03(\tR\n" +
+	"categories\x126\n" +
+	"\bmetadata\x18\x05 \x03(\v2\x1a.api.Product.MetadataEntryR\bmetadata\x12\x18\n" +
+	"\aratings\x18\x06 \x03(\x05R\aratings\x1a;\n" +
+	"\rMetadataEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01Bs\n" +
 	"\acom.apiB\tUserProtoP\x01Z1github.com/panyam/protoc-gen-dal/tests/gen/go/api\xa2\x02\x03AXX\xaa\x02\x03Api\xca\x02\x03Api\xe2\x02\x0fApi\\GPBMetadata\xea\x02\x03Apib\x06proto3"
 
 var (
@@ -293,24 +390,27 @@ func file_api_user_proto_rawDescGZIP() []byte {
 	return file_api_user_proto_rawDescData
 }
 
-var file_api_user_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_api_user_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_api_user_proto_goTypes = []any{
 	(*User)(nil),                  // 0: api.User
 	(*Author)(nil),                // 1: api.Author
 	(*Blog)(nil),                  // 2: api.Blog
-	(*timestamppb.Timestamp)(nil), // 3: google.protobuf.Timestamp
+	(*Product)(nil),               // 3: api.Product
+	nil,                           // 4: api.Product.MetadataEntry
+	(*timestamppb.Timestamp)(nil), // 5: google.protobuf.Timestamp
 }
 var file_api_user_proto_depIdxs = []int32{
-	3, // 0: api.User.birthday:type_name -> google.protobuf.Timestamp
-	3, // 1: api.User.activated_at:type_name -> google.protobuf.Timestamp
-	3, // 2: api.User.created_at:type_name -> google.protobuf.Timestamp
-	3, // 3: api.User.updated_at:type_name -> google.protobuf.Timestamp
+	5, // 0: api.User.birthday:type_name -> google.protobuf.Timestamp
+	5, // 1: api.User.activated_at:type_name -> google.protobuf.Timestamp
+	5, // 2: api.User.created_at:type_name -> google.protobuf.Timestamp
+	5, // 3: api.User.updated_at:type_name -> google.protobuf.Timestamp
 	1, // 4: api.Blog.author:type_name -> api.Author
-	5, // [5:5] is the sub-list for method output_type
-	5, // [5:5] is the sub-list for method input_type
-	5, // [5:5] is the sub-list for extension type_name
-	5, // [5:5] is the sub-list for extension extendee
-	0, // [0:5] is the sub-list for field type_name
+	4, // 5: api.Product.metadata:type_name -> api.Product.MetadataEntry
+	6, // [6:6] is the sub-list for method output_type
+	6, // [6:6] is the sub-list for method input_type
+	6, // [6:6] is the sub-list for extension type_name
+	6, // [6:6] is the sub-list for extension extendee
+	0, // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_api_user_proto_init() }
@@ -324,7 +424,7 @@ func file_api_user_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_user_proto_rawDesc), len(file_api_user_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

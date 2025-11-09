@@ -32,3 +32,13 @@ message Blog {
   int32 upvotes = 3;
   string title = 4;
 }
+
+// Product demonstrates repeated and map fields
+message Product {
+  uint32 id = 1;
+  string name = 2;
+  repeated string tags = 3;           // e.g., ["electronics", "smartphone"]
+  repeated string categories = 4;     // e.g., ["tech", "gadgets"]
+  map<string, string> metadata = 5;   // e.g., {"color": "black", "storage": "128GB"}
+  repeated int32 ratings = 6;         // e.g., [5, 4, 5, 3]
+}

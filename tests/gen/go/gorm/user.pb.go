@@ -592,6 +592,95 @@ func (x *BlogGorm) GetTitle() string {
 	return ""
 }
 
+// ProductGorm demonstrates repeated and map field storage strategies
+type ProductGorm struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Id    uint32                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name  string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	// Repeated string as JSONB (PostgreSQL-specific)
+	Tags []string `protobuf:"bytes,3,rep,name=tags,proto3" json:"tags,omitempty"`
+	// Repeated string as PostgreSQL TEXT[] array
+	Categories []string `protobuf:"bytes,4,rep,name=categories,proto3" json:"categories,omitempty"`
+	// Map as JSONB
+	Metadata map[string]string `protobuf:"bytes,5,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// Repeated int as JSONB
+	Ratings       []int32 `protobuf:"varint,6,rep,packed,name=ratings,proto3" json:"ratings,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ProductGorm) Reset() {
+	*x = ProductGorm{}
+	mi := &file_gorm_user_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ProductGorm) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ProductGorm) ProtoMessage() {}
+
+func (x *ProductGorm) ProtoReflect() protoreflect.Message {
+	mi := &file_gorm_user_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ProductGorm.ProtoReflect.Descriptor instead.
+func (*ProductGorm) Descriptor() ([]byte, []int) {
+	return file_gorm_user_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *ProductGorm) GetId() uint32 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *ProductGorm) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *ProductGorm) GetTags() []string {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
+func (x *ProductGorm) GetCategories() []string {
+	if x != nil {
+		return x.Categories
+	}
+	return nil
+}
+
+func (x *ProductGorm) GetMetadata() map[string]string {
+	if x != nil {
+		return x.Metadata
+	}
+	return nil
+}
+
+func (x *ProductGorm) GetRatings() []int32 {
+	if x != nil {
+		return x.Ratings
+	}
+	return nil
+}
+
 var File_gorm_user_proto protoreflect.FileDescriptor
 
 const file_gorm_user_proto_rawDesc = "" +
@@ -664,7 +753,24 @@ const file_gorm_user_proto_rawDesc = "" +
 	"\x06author\x18\x02 \x01(\v2\x10.gorm.AuthorGormB&\x92\xa6\x1d\"R\bembeddedR\x16embeddedPrefix:author_R\x06author\x12)\n" +
 	"\aupvotes\x18\x03 \x01(\x05B\x0f\x92\xa6\x1d\vR\tdefault:0R\aupvotes\x127\n" +
 	"\x05title\x18\x04 \x01(\tB!\x92\xa6\x1d\x1dR\x11type:varchar(255)R\bnot nullR\x05title:\x15ʦ\x1d\x11\n" +
-	"\bapi.Blog\x12\x05blogsBy\n" +
+	"\bapi.Blog\x12\x05blogs\"\xa3\x03\n" +
+	"\vProductGorm\x12/\n" +
+	"\x02id\x18\x01 \x01(\rB\x1f\x92\xa6\x1d\x1bR\n" +
+	"primaryKeyR\rautoIncrementR\x02id\x125\n" +
+	"\x04name\x18\x02 \x01(\tB!\x92\xa6\x1d\x1dR\x11type:varchar(255)R\bnot nullR\x04name\x12$\n" +
+	"\x04tags\x18\x03 \x03(\tB\x10\x92\xa6\x1d\fR\n" +
+	"type:jsonbR\x04tags\x121\n" +
+	"\n" +
+	"categories\x18\x04 \x03(\tB\x11\x92\xa6\x1d\rR\vtype:text[]R\n" +
+	"categories\x12M\n" +
+	"\bmetadata\x18\x05 \x03(\v2\x1f.gorm.ProductGorm.MetadataEntryB\x10\x92\xa6\x1d\fR\n" +
+	"type:jsonbR\bmetadata\x12*\n" +
+	"\aratings\x18\x06 \x03(\x05B\x10\x92\xa6\x1d\fR\n" +
+	"type:jsonbR\aratings\x1a;\n" +
+	"\rMetadataEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01:\x1bʦ\x1d\x17\n" +
+	"\vapi.Product\x12\bproductsBy\n" +
 	"\bcom.gormB\tUserProtoP\x01Z2github.com/panyam/protoc-gen-dal/tests/gen/go/gorm\xa2\x02\x03GXX\xaa\x02\x04Gorm\xca\x02\x04Gorm\xe2\x02\x10Gorm\\GPBMetadata\xea\x02\x04Gormb\x06proto3"
 
 var (
@@ -679,7 +785,7 @@ func file_gorm_user_proto_rawDescGZIP() []byte {
 	return file_gorm_user_proto_rawDescData
 }
 
-var file_gorm_user_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_gorm_user_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_gorm_user_proto_goTypes = []any{
 	(*UserGorm)(nil),                 // 0: gorm.UserGorm
 	(*UserWithPermissions)(nil),      // 1: gorm.UserWithPermissions
@@ -688,14 +794,17 @@ var file_gorm_user_proto_goTypes = []any{
 	(*UserWithDefaults)(nil),         // 4: gorm.UserWithDefaults
 	(*AuthorGorm)(nil),               // 5: gorm.AuthorGorm
 	(*BlogGorm)(nil),                 // 6: gorm.BlogGorm
+	(*ProductGorm)(nil),              // 7: gorm.ProductGorm
+	nil,                              // 8: gorm.ProductGorm.MetadataEntry
 }
 var file_gorm_user_proto_depIdxs = []int32{
 	5, // 0: gorm.BlogGorm.author:type_name -> gorm.AuthorGorm
-	1, // [1:1] is the sub-list for method output_type
-	1, // [1:1] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	8, // 1: gorm.ProductGorm.metadata:type_name -> gorm.ProductGorm.MetadataEntry
+	2, // [2:2] is the sub-list for method output_type
+	2, // [2:2] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_gorm_user_proto_init() }
@@ -709,7 +818,7 @@ func file_gorm_user_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_gorm_user_proto_rawDesc), len(file_gorm_user_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

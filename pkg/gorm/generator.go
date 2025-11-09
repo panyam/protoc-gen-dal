@@ -462,8 +462,49 @@ func buildFieldConversion(sourceField, targetField *protogen.Field, registry *co
 
 	// Step 1: Set default conversion type based on field kind
 	// Scalars default to assignment, messages default to transformer with error
+	// Maps and repeated fields apply "applicative" style - check contained type
 
-	if sourceKind == "message" || targetKind == "message" {
+	// Check if this is a map field
+	if sourceField.Desc.IsMap() {
+		// Map fields: check the value type to determine conversion
+		mapEntry := sourceField.Message
+		valueField := mapEntry.Fields[1] // value field is always index 1
+		valueKind := valueField.Desc.Kind().String()
+
+		if valueKind == "message" {
+			// map<K, MessageType> - needs converter for values
+			// TODO: Implement loop-based conversion for map values
+			mapping.ToTargetConversionType = ConvertByTransformerWithError
+			mapping.FromTargetConversionType = ConvertByTransformerWithError
+		} else {
+			// map<K, primitive> - direct assignment
+			mapping.ToTargetCode = fmt.Sprintf("src.%s", fieldName)
+			mapping.FromTargetCode = fmt.Sprintf("src.%s", fieldName)
+			mapping.ToTargetConversionType = ConvertByAssignment
+			mapping.FromTargetConversionType = ConvertByAssignment
+			// Return early - no further processing needed for primitive maps
+			return mapping
+		}
+	} else if sourceField.Desc.IsList() {
+		// Repeated fields: check the element type to determine conversion
+		elementKind := sourceKind // The field's own kind is the element kind for repeated
+
+		if elementKind == "message" {
+			// []MessageType - needs converter for elements
+			// TODO: Implement loop-based conversion for repeated message elements
+			mapping.ToTargetConversionType = ConvertByTransformerWithError
+			mapping.FromTargetConversionType = ConvertByTransformerWithError
+		} else {
+			// []primitive - direct assignment
+			mapping.ToTargetCode = fmt.Sprintf("src.%s", fieldName)
+			mapping.FromTargetCode = fmt.Sprintf("src.%s", fieldName)
+			mapping.ToTargetConversionType = ConvertByAssignment
+			mapping.FromTargetConversionType = ConvertByAssignment
+			// Return early - no further processing needed for primitive slices
+			return mapping
+		}
+	} else if sourceKind == "message" || targetKind == "message" {
+		// Regular message fields (not map or repeated) default to transformer with error
 		mapping.ToTargetConversionType = ConvertByTransformerWithError
 		mapping.FromTargetConversionType = ConvertByTransformerWithError
 	} else {
@@ -676,6 +717,19 @@ func buildField(field *protogen.Field) (FieldData, error) {
 // protoToGoType converts a proto field type to a Go type string.
 func protoToGoType(field *protogen.Field) string {
 	kind := field.Desc.Kind().String()
+
+	// Handle map fields (proto maps generate as message types with IsMap() == true)
+	if field.Desc.IsMap() {
+		// Extract key and value types from the map entry message
+		mapEntry := field.Message
+		keyField := mapEntry.Fields[0]   // maps always have key at index 0
+		valueField := mapEntry.Fields[1] // maps always have value at index 1
+
+		keyType := protoScalarToGo(keyField.Desc.Kind().String())
+		valueType := protoScalarToGo(valueField.Desc.Kind().String())
+
+		return fmt.Sprintf("map[%s]%s", keyType, valueType)
+	}
 
 	// Handle message types (embedded structs, etc.)
 	if kind == "message" {

@@ -94,3 +94,24 @@ type BlogGORM struct {
 func (*BlogGORM) TableName() string {
 	return "blogs"
 }
+
+// ProductGORM is the GORM model for api.Product
+type ProductGORM struct {
+	Id         uint32            `gorm:"primaryKey;autoIncrement"`
+	Name       string            `gorm:"type:varchar(255);not null"`
+	Tags       []string          `gorm:"type:jsonb"`
+	Categories []string          `gorm:"type:text[]"`
+	Metadata   map[string]string `gorm:"type:jsonb"`
+	Ratings    []int32           `gorm:"type:jsonb"`
+}
+
+// TableName returns the table name for ProductGORM
+func (*ProductGORM) TableName() string {
+	return "products"
+}
+
+// MetadataEntry
+type MetadataEntry struct {
+	Key   string
+	Value string
+}

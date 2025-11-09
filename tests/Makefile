@@ -7,6 +7,7 @@ buf: ensureenv clean
 	buf generate
 	goimports -w `find gen | grep "\.go"`
 	cd gen/gorm && go build -o /dev/null .
+	go test -v
 
 ensureenv:
 	@test -f buf.yaml && echo "buf.yaml does not exist.  Run 'make setupdev' or 'make setupprod' to setup your environment..."

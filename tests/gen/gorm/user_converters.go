@@ -522,3 +522,79 @@ func BlogFromBlogGORM(
 
 	return out, nil
 }
+
+// ProductToProductGORM converts a api.Product to ProductGORM.
+// The optional decorator function allows custom field transformations.
+func ProductToProductGORM(
+	src *api.Product,
+	dest *ProductGORM,
+	decorator func(*api.Product, *ProductGORM) error,
+) (out *ProductGORM, err error) {
+	if src == nil {
+		return nil, nil
+	}
+	if dest == nil {
+		dest = &ProductGORM{}
+	}
+	out = dest
+
+	out.Id = src.Id
+
+	out.Name = src.Name
+
+	out.Tags = src.Tags
+
+	out.Categories = src.Categories
+
+	if src.Metadata != nil {
+		out.Metadata = src.Metadata
+	}
+
+	out.Ratings = src.Ratings
+
+	// Apply decorator if provided
+	if decorator != nil {
+		if err := decorator(src, dest); err != nil {
+			return nil, err
+		}
+	}
+
+	return dest, nil
+}
+
+// ProductFromProductGORM converts a ProductGORM back to api.Product.
+// The optional decorator function allows custom field transformations.
+func ProductFromProductGORM(
+	dest *api.Product,
+	src *ProductGORM,
+	decorator func(dest *api.Product, src *ProductGORM) error,
+) (out *api.Product, err error) {
+	if src == nil {
+		return nil, nil
+	}
+	if dest == nil {
+		dest = &api.Product{}
+	}
+	out = dest
+
+	out.Id = src.Id
+
+	out.Name = src.Name
+
+	out.Tags = src.Tags
+
+	out.Categories = src.Categories
+
+	out.Metadata = src.Metadata
+
+	out.Ratings = src.Ratings
+
+	// Apply decorator if provided
+	if decorator != nil {
+		if err := decorator(dest, src); err != nil {
+			return nil, err
+		}
+	}
+
+	return out, nil
+}

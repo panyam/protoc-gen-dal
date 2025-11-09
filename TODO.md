@@ -61,12 +61,16 @@
 - [ ] Implement JSON serialization for complex types
 
 ### 2.2 Repeated/Map Fields
-- [ ] **TEST**: Repeated primitive as JSONB
-- [ ] Implement JSON storage strategy
-- [ ] **TEST**: Repeated primitive as array (TEXT[])
-- [ ] Implement array storage strategy
-- [ ] **TEST**: Map field as JSONB
-- [ ] Implement map to JSONB conversion
+- [x] **TEST**: Repeated primitive as JSONB (Tags: []string with jsonb tag)
+- [x] Implement applicative conversion for repeated primitives (direct assignment)
+- [x] **TEST**: Repeated primitive as array (Categories: []string with text[] tag)
+- [x] Implement applicative conversion for repeated primitives (direct assignment)
+- [x] **TEST**: Map field as JSONB (Metadata: map[string]string with jsonb tag)
+- [x] Implement applicative conversion for primitive maps (direct assignment)
+- [ ] **TEST**: Repeated message type with loop-based conversion
+- [ ] Implement loop-based converter application for []MessageType
+- [ ] **TEST**: Map with message value type with loop-based conversion
+- [ ] Implement loop-based converter application for map<K, MessageType>
 
 ### 2.3 Foreign Keys
 - [ ] **TEST**: Foreign key annotation generates correct GORM tag
@@ -205,11 +209,17 @@
 - ✅ Optional keyword detection for proper GORM pointer generation
 - ✅ Warning system for missing nested converters
 - ✅ One file per proto file: `user_gorm.go` (structs) + `user_converters.go` (converters)
+- ✅ **Phase 2.2 (Partial)**: Applicative conversion for primitive maps and repeated fields
+  - ✅ `map<K, primitive>` uses direct assignment (e.g., `map[string]string`)
+  - ✅ `[]primitive` uses direct assignment (e.g., `[]string`, `[]int32`)
+  - ✅ Added Product proto with Tags, Categories, Metadata, Ratings fields
+  - ✅ Tests verify round-trip conversion, nil handling, empty collections
+  - ✅ Early return prevents incorrect message converter lookup for primitives
 
 **Generated Code:**
 From `tests/protos/gorm/user.proto`:
-- `user_gorm.go`: 6 GORM structs + 1 embedded type (AuthorGORM)
-- `user_converters.go`: 12 converter functions (To/From for each type)
+- `user_gorm.go`: 7 GORM structs (including ProductGORM with collections)
+- `user_converters.go`: 14 converter functions (To/From for each type)
 
 **Converter Features:**
 - Smart field mapping with ConversionType categorization
@@ -218,11 +228,14 @@ From `tests/protos/gorm/user.proto`:
 - In-place conversion via dest parameter (avoids allocations)
 - Pointer vs value handling: `optional` keyword → pointer, otherwise value
 - Helpful warnings when converters missing for nested types
+- **NEW**: Applicative conversion - check contained types in maps/repeated fields
+  - Primitive values → direct assignment
+  - Message values → loop-based conversion (TODO)
 
 **Next:**
-1. **Phase 2.1**: Field transformations for complex types (repeated fields, maps as JSON/arrays)
-2. **Phase 2.2**: Foreign key support with cross-file resolution
-3. **Phase 2.3**: Composite keys
+1. **Phase 2.2 (Complete)**: Loop-based conversion for `[]MessageType` and `map<K, MessageType>`
+2. **Phase 2.3**: Foreign key support with cross-file resolution
+3. **Phase 2.4**: Composite keys
 4. **Phase 3**: Additional targets (postgres-raw, firestore)
 
 ## Notes
