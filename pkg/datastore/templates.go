@@ -99,6 +99,24 @@ type FieldMapping struct {
 
 	// FromTargetCode is the conversion code for Datastore → API (empty string = simple assignment)
 	FromTargetCode string
+
+	// IsRepeated indicates this is a repeated field (slice/array)
+	IsRepeated bool
+
+	// IsMap indicates this is a map field
+	IsMap bool
+
+	// TargetElementType is the element type for repeated fields or value type for maps
+	TargetElementType string
+
+	// SourceElementType is the source element type for repeated fields or value type for maps
+	SourceElementType string
+
+	// ToTargetConverterFunc is the converter function name for nested message conversions (API → Datastore)
+	ToTargetConverterFunc string
+
+	// FromTargetConverterFunc is the converter function name for nested message conversions (Datastore → API)
+	FromTargetConverterFunc string
 }
 
 // Embedded templates

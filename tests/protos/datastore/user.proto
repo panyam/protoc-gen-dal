@@ -72,3 +72,64 @@ message UserSimple {
   string id = 1;
   string name = 2;
 }
+
+// AuthorDatastore for embedded/nested message testing
+message AuthorDatastore {
+  option (dal.v1.datastore_options) = {
+    source: "api.Author"
+  };
+
+  string name = 1;
+  string email = 2;
+}
+
+// ProductDatastore demonstrates repeated and map fields
+// Datastore natively supports repeated scalar values as array properties
+message ProductDatastore {
+  option (dal.v1.datastore_options) = {
+    source: "api.Product"
+    kind: "Product"
+  };
+
+  string id = 1;
+  string name = 2;
+
+  // Repeated scalars - Datastore stores as array properties
+  repeated string tags = 3;           // Native Datastore array
+  repeated string categories = 4;     // Native Datastore array
+
+  // Map - no native support, but Go datastore library handles it
+  map<string, string> metadata = 5;   // Datastore will serialize this
+
+  // Repeated numbers - Datastore array
+  repeated int32 ratings = 6;
+}
+
+// LibraryDatastore demonstrates repeated message types
+// Datastore can store repeated Entity values
+message LibraryDatastore {
+  option (dal.v1.datastore_options) = {
+    source: "api.Library"
+    kind: "Library"
+  };
+
+  string id = 1;
+  string name = 2;
+
+  // Repeated message type - stored as nested entities
+  repeated AuthorDatastore contributors = 3;
+}
+
+// OrganizationDatastore demonstrates map with message values
+message OrganizationDatastore {
+  option (dal.v1.datastore_options) = {
+    source: "api.Organization"
+    kind: "Organization"
+  };
+
+  string id = 1;
+  string name = 2;
+
+  // Map with message values - Datastore will serialize
+  map<string, AuthorDatastore> departments = 3;
+}

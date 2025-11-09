@@ -5,6 +5,7 @@ import (
 {{ range .Imports }}
 	"{{ . }}"
 {{ end }}
+	"fmt"
 	"strconv"
 	"time"
 
@@ -39,6 +40,7 @@ func mustParseUint(s string) uint64 {
 }
 
 {{ range .Converters }}
+{{- $converter := . -}}
 // {{ .SourceType }}To{{ .TargetType }} converts a {{ .SourceType }} to {{ .TargetType }}.
 //
 // The optional decorator function allows custom field transformations after conversion.
@@ -66,10 +68,55 @@ func {{ .SourceType }}To{{ .TargetType }}(
 
 	// Convert fields
 {{ range .FieldMappings }}
-{{ if .ToTargetCode }}
+{{ if .IsRepeated }}
+	{{/* Repeated message field - loop-based conversion */}}
+	{{ if .ToTargetConverterFunc }}
+	if src.{{ .SourceField }} != nil {
+		out.{{ .TargetField }} = make([]{{ .TargetElementType }}, len(src.{{ .SourceField }}))
+		for i, item := range src.{{ .SourceField }} {
+			_, err = {{ .ToTargetConverterFunc }}(item, &out.{{ .TargetField }}[i], nil)
+			if err != nil {
+				return nil, fmt.Errorf("converting {{ .SourceField }}[%d]: %w", i, err)
+			}
+		}
+	}
+	{{ else if .ToTargetCode }}
+	{{/* Repeated primitive - direct assignment */}}
 	out.{{ .TargetField }} = {{ .ToTargetCode }}
-{{ else }}
+	{{ else }}
 	out.{{ .TargetField }} = src.{{ .SourceField }}
+	{{ end }}
+{{ else if .IsMap }}
+	{{/* Map with message values - loop-based conversion */}}
+	{{ if .ToTargetConverterFunc }}
+	if src.{{ .SourceField }} != nil {
+		out.{{ .TargetField }} = make(map[string]{{ .TargetElementType }}, len(src.{{ .SourceField }}))
+		for key, value := range src.{{ .SourceField }} {
+			var converted {{ .TargetElementType }}
+			_, err = {{ .ToTargetConverterFunc }}(value, &converted, nil)
+			if err != nil {
+				return nil, fmt.Errorf("converting {{ .SourceField }}[%s]: %w", key, err)
+			}
+			out.{{ .TargetField }}[key] = converted
+		}
+	}
+	{{ else if .ToTargetCode }}
+	{{/* Map with primitives - direct assignment */}}
+	if src.{{ .SourceField }} != nil {
+		out.{{ .TargetField }} = {{ .ToTargetCode }}
+	}
+	{{ else }}
+	if src.{{ .SourceField }} != nil {
+		out.{{ .TargetField }} = src.{{ .SourceField }}
+	}
+	{{ end }}
+{{ else }}
+	{{/* Regular scalar or converted field */}}
+	{{ if .ToTargetCode }}
+	out.{{ .TargetField }} = {{ .ToTargetCode }}
+	{{ else }}
+	out.{{ .TargetField }} = src.{{ .SourceField }}
+	{{ end }}
 {{ end }}
 {{ end }}
 
@@ -110,10 +157,53 @@ func {{ .SourceType }}From{{ .TargetType }}(
 
 	// Convert fields (reverse direction)
 {{ range .FieldMappings }}
-{{ if .FromTargetCode }}
+{{ if .IsRepeated }}
+	{{/* Repeated message field - loop-based conversion */}}
+	{{ if .FromTargetConverterFunc }}
+	if src.{{ .TargetField }} != nil {
+		out.{{ .SourceField }} = make([]*{{ $converter.SourcePkgName }}.{{ .SourceElementType }}, len(src.{{ .TargetField }}))
+		for i, item := range src.{{ .TargetField }} {
+			out.{{ .SourceField }}[i], err = {{ .FromTargetConverterFunc }}(nil, &item, nil)
+			if err != nil {
+				return nil, fmt.Errorf("converting {{ .TargetField }}[%d]: %w", i, err)
+			}
+		}
+	}
+	{{ else if .FromTargetCode }}
+	{{/* Repeated primitive - direct assignment */}}
 	out.{{ .SourceField }} = {{ .FromTargetCode }}
-{{ else }}
+	{{ else }}
 	out.{{ .SourceField }} = src.{{ .TargetField }}
+	{{ end }}
+{{ else if .IsMap }}
+	{{/* Map with message values - loop-based conversion */}}
+	{{ if .FromTargetConverterFunc }}
+	if src.{{ .TargetField }} != nil {
+		out.{{ .SourceField }} = make(map[string]*{{ $converter.SourcePkgName }}.{{ .SourceElementType }}, len(src.{{ .TargetField }}))
+		for key, value := range src.{{ .TargetField }} {
+			out.{{ .SourceField }}[key], err = {{ .FromTargetConverterFunc }}(nil, &value, nil)
+			if err != nil {
+				return nil, fmt.Errorf("converting {{ .TargetField }}[%s]: %w", key, err)
+			}
+		}
+	}
+	{{ else if .FromTargetCode }}
+	{{/* Map with primitives - direct assignment */}}
+	if src.{{ .TargetField }} != nil {
+		out.{{ .SourceField }} = {{ .FromTargetCode }}
+	}
+	{{ else }}
+	if src.{{ .TargetField }} != nil {
+		out.{{ .SourceField }} = src.{{ .TargetField }}
+	}
+	{{ end }}
+{{ else }}
+	{{/* Regular scalar or converted field */}}
+	{{ if .FromTargetCode }}
+	out.{{ .SourceField }} = {{ .FromTargetCode }}
+	{{ else }}
+	out.{{ .SourceField }} = src.{{ .TargetField }}
+	{{ end }}
 {{ end }}
 {{ end }}
 

@@ -203,9 +203,52 @@ func fieldName(field *protogen.Field) string {
 
 // fieldType returns the Go type for a proto field.
 func fieldType(field *protogen.Field) string {
-	// For now, use simple type mapping
-	// This will be enhanced later for complex types
-	switch field.Desc.Kind().String() {
+	kind := field.Desc.Kind().String()
+
+	// Handle map fields (proto maps generate as message types with IsMap() == true)
+	if field.Desc.IsMap() {
+		// Extract key and value types from the map entry message
+		mapEntry := field.Message
+		keyField := mapEntry.Fields[0]   // maps always have key at index 0
+		valueField := mapEntry.Fields[1] // maps always have value at index 1
+
+		keyType := protoScalarToGo(keyField.Desc.Kind().String())
+
+		// Check if value is a message type or scalar
+		var valueType string
+		if valueField.Desc.Kind().String() == "message" {
+			// Map value is a message type - use the struct name
+			valueType = string(valueField.Message.Desc.Name())
+		} else {
+			// Map value is a scalar type
+			valueType = protoScalarToGo(valueField.Desc.Kind().String())
+		}
+
+		return fmt.Sprintf("map[%s]%s", keyType, valueType)
+	}
+
+	// Handle message types (embedded structs, etc.)
+	if kind == "message" {
+		// For repeated message fields
+		if field.Desc.Cardinality().String() == "repeated" {
+			return "[]" + string(field.Message.Desc.Name())
+		}
+		// For singular message fields, use the struct name
+		return string(field.Message.Desc.Name())
+	}
+
+	// Handle repeated scalar fields
+	if field.Desc.Cardinality().String() == "repeated" {
+		elemType := protoScalarToGo(kind)
+		return "[]" + elemType
+	}
+
+	return protoScalarToGo(kind)
+}
+
+// protoScalarToGo maps proto scalar types to Go types.
+func protoScalarToGo(protoType string) string {
+	switch protoType {
 	case "string":
 		return "string"
 	case "int32":
@@ -218,14 +261,14 @@ func fieldType(field *protogen.Field) string {
 		return "uint64"
 	case "bool":
 		return "bool"
-	case "bytes":
-		return "[]byte"
 	case "float":
 		return "float32"
 	case "double":
 		return "float64"
+	case "bytes":
+		return "[]byte"
 	default:
-		return "interface{}" // Fallback for complex types
+		return "interface{}" // Fallback for unknown types
 	}
 }
 
@@ -321,6 +364,9 @@ func generateConverterFileCode(messages []*collector.MessageInfo) (string, error
 	// Extract package name from the first message's target
 	packageName := extractPackageName(messages[0].TargetMessage)
 
+	// Build converter registry for nested message conversions
+	registry := newConverterRegistry(messages)
+
 	// Build converter data for each Datastore message
 	var converters []*ConverterData
 	imports := make(map[string]bool)
@@ -331,7 +377,7 @@ func generateConverterFileCode(messages []*collector.MessageInfo) (string, error
 			continue
 		}
 
-		converterData := buildConverterData(msg)
+		converterData := buildConverterData(msg, registry)
 		converters = append(converters, converterData)
 
 		// Add import for source message package
@@ -361,8 +407,39 @@ func generateConverterFileCode(messages []*collector.MessageInfo) (string, error
 	return content, nil
 }
 
+// converterRegistry tracks which converter functions are being generated.
+// Used to determine if nested converter calls are available.
+type converterRegistry struct {
+	converters map[string]bool // key: "SourceType:DatastoreType"
+}
+
+// newConverterRegistry creates a new converter registry from messages.
+func newConverterRegistry(messages []*collector.MessageInfo) *converterRegistry {
+	reg := &converterRegistry{
+		converters: make(map[string]bool),
+	}
+
+	for _, msg := range messages {
+		if msg.SourceMessage == nil {
+			continue
+		}
+		sourceType := string(msg.SourceMessage.Desc.Name())
+		datastoreType := string(msg.TargetMessage.Desc.Name())
+		key := fmt.Sprintf("%s:%s", sourceType, datastoreType)
+		reg.converters[key] = true
+	}
+
+	return reg
+}
+
+// hasConverter checks if a converter exists for the given source and datastore types.
+func (r *converterRegistry) hasConverter(sourceType, datastoreType string) bool {
+	key := fmt.Sprintf("%s:%s", sourceType, datastoreType)
+	return r.converters[key]
+}
+
 // buildConverterData builds converter metadata for a single message.
-func buildConverterData(msgInfo *collector.MessageInfo) *ConverterData {
+func buildConverterData(msgInfo *collector.MessageInfo, registry *converterRegistry) *ConverterData {
 	sourceMsg := msgInfo.SourceMessage
 	targetMsg := msgInfo.TargetMessage
 
@@ -389,7 +466,7 @@ func buildConverterData(msgInfo *collector.MessageInfo) *ConverterData {
 			continue
 		}
 
-		mapping := buildFieldMapping(sourceField, targetField)
+		mapping := buildFieldMapping(sourceField, targetField, registry)
 		fieldMappings = append(fieldMappings, mapping)
 	}
 
@@ -402,7 +479,7 @@ func buildConverterData(msgInfo *collector.MessageInfo) *ConverterData {
 }
 
 // buildFieldMapping creates a field mapping with type conversion if needed.
-func buildFieldMapping(sourceField, targetField *protogen.Field) *FieldMapping {
+func buildFieldMapping(sourceField, targetField *protogen.Field, registry *converterRegistry) *FieldMapping {
 	sourceFieldName := fieldName(sourceField)
 	targetFieldName := fieldName(targetField)
 
@@ -412,6 +489,71 @@ func buildFieldMapping(sourceField, targetField *protogen.Field) *FieldMapping {
 	mapping := &FieldMapping{
 		SourceField: sourceFieldName,
 		TargetField: targetFieldName,
+	}
+
+	// Check if this is a map field
+	if sourceField.Desc.IsMap() {
+		mapping.IsMap = true
+		// Map fields: check the value type to determine conversion
+		mapEntry := sourceField.Message
+		valueField := mapEntry.Fields[1] // value field is always index 1
+		valueKind := valueField.Desc.Kind().String()
+
+		if valueKind == "message" {
+			// map<K, MessageType> - needs loop-based converter for values
+			sourceMsg := valueField.Message
+			targetMapEntry := targetField.Message
+			targetValueField := targetMapEntry.Fields[1]
+			targetMsg := targetValueField.Message
+
+			if sourceMsg != nil && targetMsg != nil {
+				sourceTypeName := string(sourceMsg.Desc.Name())
+				targetTypeName := string(targetMsg.Desc.Name())
+
+				// Check if converter exists for this nested type
+				if registry.hasConverter(sourceTypeName, targetTypeName) {
+					mapping.ToTargetConverterFunc = fmt.Sprintf("%sTo%s", sourceTypeName, targetTypeName)
+					mapping.FromTargetConverterFunc = fmt.Sprintf("%sFrom%s", sourceTypeName, targetTypeName)
+					mapping.TargetElementType = targetTypeName
+					mapping.SourceElementType = sourceTypeName
+				}
+			}
+			return mapping
+		} else {
+			// map<K, primitive> - direct assignment (copy entire map)
+			mapping.ToTargetCode = fmt.Sprintf("src.%s", sourceFieldName)
+			mapping.FromTargetCode = fmt.Sprintf("src.%s", targetFieldName)
+			return mapping
+		}
+	} else if sourceField.Desc.IsList() {
+		mapping.IsRepeated = true
+		// Repeated fields: check the element type to determine conversion
+		elementKind := sourceKind // The field's own kind is the element kind for repeated
+
+		if elementKind == "message" {
+			// []MessageType - needs loop-based converter for elements
+			sourceMsg := sourceField.Message
+			targetMsg := targetField.Message
+
+			if sourceMsg != nil && targetMsg != nil {
+				sourceTypeName := string(sourceMsg.Desc.Name())
+				targetTypeName := string(targetMsg.Desc.Name())
+
+				// Check if converter exists for this nested type
+				if registry.hasConverter(sourceTypeName, targetTypeName) {
+					mapping.ToTargetConverterFunc = fmt.Sprintf("%sTo%s", sourceTypeName, targetTypeName)
+					mapping.FromTargetConverterFunc = fmt.Sprintf("%sFrom%s", sourceTypeName, targetTypeName)
+					mapping.TargetElementType = targetTypeName
+					mapping.SourceElementType = sourceTypeName
+				}
+			}
+			return mapping
+		} else {
+			// []primitive - direct assignment (copy entire slice)
+			mapping.ToTargetCode = fmt.Sprintf("src.%s", sourceFieldName)
+			mapping.FromTargetCode = fmt.Sprintf("src.%s", targetFieldName)
+			return mapping
+		}
 	}
 
 	// Check if types match - if so, simple assignment
