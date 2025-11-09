@@ -124,7 +124,7 @@ func loadTemplates() (*template.Template, error) {
 }
 
 // renderTemplate executes a template with the given data.
-func renderTemplate(name string, data interface{}) (string, error) {
+func renderTemplate(name string, data any) (string, error) {
 	t, err := loadTemplates()
 	if err != nil {
 		return "", err

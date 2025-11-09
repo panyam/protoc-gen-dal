@@ -819,7 +819,7 @@ func protoScalarToGo(protoType string) string {
 	case "bytes":
 		return "[]byte"
 	default:
-		return "interface{}" // Fallback for unknown types
+		return "any" // Fallback for unknown types
 	}
 }
 
