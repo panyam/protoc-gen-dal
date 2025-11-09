@@ -15,7 +15,12 @@ plugins:
     out: ./gen/go
     opt: paths=source_relative
 
-  # Local binary for testing
+  # Local binary for GORM testing
   - local: ../bin/protoc-gen-dal-gorm
     out: ./gen/gorm
+    opt: paths=source_relative
+
+  # Local binary for Datastore testing
+  - local: ../bin/protoc-gen-dal-datastore
+    out: ./gen/datastore
     opt: paths=source_relative

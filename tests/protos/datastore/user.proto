@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+package datastore;
+
+import "dal/v1/annotations.proto";
+import "api/user.proto";  // Import API protos so they're available for source references
+
+option go_package = "github.com/panyam/protoc-gen-dal/tests/gen/datastore;testdatastore";
+
+// UserDatastore demonstrates basic Datastore entity
+message UserDatastore {
+  option (dal.v1.datastore_options) = {
+    source: "api.User"
+    kind: "User"
+  };
+
+  // ID field - stored in Key, excluded from properties
+  string id = 1;
+
+  // Regular string field
+  string name = 2;
+
+  // Email field
+  string email = 3;
+
+  // Age field
+  uint32 age = 4;
+
+  // Timestamps stored as int64 (Unix time)
+  int64 birthday = 5;
+  int64 created_at = 6;
+  int64 updated_at = 7;
+}
+
+// UserWithNamespace demonstrates namespace support
+message UserWithNamespace {
+  option (dal.v1.datastore_options) = {
+    source: "api.User"
+    kind: "User"
+    namespace: "production"
+  };
+
+  string id = 1;
+  string name = 2;
+  string email = 3;
+}
+
+// UserWithLargeText demonstrates noindex for large text fields
+// Note: For MVP, we're using simple field mapping without datastore_tags
+// This can be enhanced later to support noindex via tags
+message UserWithLargeText {
+  option (dal.v1.datastore_options) = {
+    source: "api.User"
+    kind: "UserProfile"
+  };
+
+  string id = 1;
+  string name = 2;
+
+  // Biography - large text that shouldn't be indexed
+  // TODO: Add support for datastore_tags: ["noindex"] in future enhancement
+  string email = 3;  // Using email as proxy for now
+}
+
+// UserSimple - minimal test case
+message UserSimple {
+  option (dal.v1.datastore_options) = {
+    source: "api.User"
+    kind: "SimpleUser"
+  };
+
+  string id = 1;
+  string name = 2;
+}

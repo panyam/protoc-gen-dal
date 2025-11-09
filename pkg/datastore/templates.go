@@ -93,6 +93,12 @@ type FieldMapping struct {
 
 	// TargetField is the target field name
 	TargetField string
+
+	// ToTargetCode is the conversion code for API → Datastore (empty string = simple assignment)
+	ToTargetCode string
+
+	// FromTargetCode is the conversion code for Datastore → API (empty string = simple assignment)
+	FromTargetCode string
 }
 
 // Embedded templates

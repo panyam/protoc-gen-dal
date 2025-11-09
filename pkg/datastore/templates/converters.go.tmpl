@@ -5,7 +5,38 @@ import (
 {{ range .Imports }}
 	"{{ . }}"
 {{ end }}
+	"strconv"
+	"time"
+
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
+
+// Helper functions for type conversions
+
+// timestampToInt64 converts a protobuf Timestamp to Unix seconds (int64).
+func timestampToInt64(ts *timestamppb.Timestamp) int64 {
+	if ts == nil {
+		return 0
+	}
+	return ts.AsTime().Unix()
+}
+
+// int64ToTimestamp converts Unix seconds to a protobuf Timestamp.
+func int64ToTimestamp(seconds int64) *timestamppb.Timestamp {
+	if seconds == 0 {
+		return nil
+	}
+	return timestamppb.New(time.Unix(seconds, 0))
+}
+
+// mustParseUint parses a string to uint64, panics on error (for generated code).
+func mustParseUint(s string) uint64 {
+	val, err := strconv.ParseUint(s, 10, 32)
+	if err != nil {
+		panic("failed to parse uint: " + err.Error())
+	}
+	return val
+}
 
 {{ range .Converters }}
 // {{ .SourceType }}To{{ .TargetType }} converts a {{ .SourceType }} to {{ .TargetType }}.
@@ -35,7 +66,11 @@ func {{ .SourceType }}To{{ .TargetType }}(
 
 	// Convert fields
 {{ range .FieldMappings }}
+{{ if .ToTargetCode }}
+	out.{{ .TargetField }} = {{ .ToTargetCode }}
+{{ else }}
 	out.{{ .TargetField }} = src.{{ .SourceField }}
+{{ end }}
 {{ end }}
 
 	// Apply decorator if provided
@@ -73,9 +108,13 @@ func {{ .SourceType }}From{{ .TargetType }}(
 	}
 	out = dest
 
-	// Convert fields
+	// Convert fields (reverse direction)
 {{ range .FieldMappings }}
+{{ if .FromTargetCode }}
+	out.{{ .SourceField }} = {{ .FromTargetCode }}
+{{ else }}
 	out.{{ .SourceField }} = src.{{ .TargetField }}
+{{ end }}
 {{ end }}
 
 	// Apply decorator if provided

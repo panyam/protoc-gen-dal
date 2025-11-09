@@ -236,9 +236,23 @@ func buildFieldTags(field *protogen.Field) string {
 	return fmt.Sprintf("`datastore:\"%s\"`", propName)
 }
 
-// extractPackageName extracts the Go package name from a message.
+// extractPackageName extracts the Go package name from a protogen message.
+// For example, "github.com/panyam/protoc-gen-dal/test/gen/datastore;testdatastore" -> "testdatastore"
 func extractPackageName(msg *protogen.Message) string {
-	return string(msg.GoIdent.GoImportPath.Ident("").GoName)
+	// GoImportPath format is "path/to/package" or "path/to/package;packagename"
+	importPath := string(msg.GoIdent.GoImportPath)
+
+	// Check if there's a package override (after semicolon)
+	if idx := strings.LastIndex(importPath, ";"); idx != -1 {
+		return importPath[idx+1:]
+	}
+
+	// Otherwise use the last part of the path
+	if idx := strings.LastIndex(importPath, "/"); idx != -1 {
+		return importPath[idx+1:]
+	}
+
+	return importPath
 }
 
 // GenerateConverters generates converter functions for transforming between
@@ -355,8 +369,8 @@ func buildConverterData(msgInfo *collector.MessageInfo) *ConverterData {
 	sourceName := string(sourceMsg.Desc.Name())
 	targetName := string(targetMsg.Desc.Name())
 
-	// Extract source package name for imports
-	sourcePkgName := string(sourceMsg.GoIdent.GoImportPath.Ident("").GoName)
+	// Extract source package name for imports (use same logic as extractPackageName)
+	sourcePkgName := extractPackageName(sourceMsg)
 
 	// Build field mappings
 	var fieldMappings []*FieldMapping
@@ -375,10 +389,7 @@ func buildConverterData(msgInfo *collector.MessageInfo) *ConverterData {
 			continue
 		}
 
-		mapping := &FieldMapping{
-			SourceField: fieldName(sourceField),
-			TargetField: fieldName(targetField),
-		}
+		mapping := buildFieldMapping(sourceField, targetField)
 		fieldMappings = append(fieldMappings, mapping)
 	}
 
@@ -388,4 +399,45 @@ func buildConverterData(msgInfo *collector.MessageInfo) *ConverterData {
 		SourcePkgName: sourcePkgName,
 		FieldMappings: fieldMappings,
 	}
+}
+
+// buildFieldMapping creates a field mapping with type conversion if needed.
+func buildFieldMapping(sourceField, targetField *protogen.Field) *FieldMapping {
+	sourceFieldName := fieldName(sourceField)
+	targetFieldName := fieldName(targetField)
+
+	sourceKind := sourceField.Desc.Kind().String()
+	targetKind := targetField.Desc.Kind().String()
+
+	mapping := &FieldMapping{
+		SourceField: sourceFieldName,
+		TargetField: targetFieldName,
+	}
+
+	// Check if types match - if so, simple assignment
+	if sourceKind == targetKind {
+		return mapping
+	}
+
+	// Handle common type conversions
+	// Note: ToTargetCode is for API → Datastore, FromTargetCode is for Datastore → API
+
+	// uint32 (API) ↔ string (Datastore) for IDs
+	if sourceKind == "uint32" && targetKind == "string" {
+		mapping.ToTargetCode = fmt.Sprintf("strconv.FormatUint(uint64(src.%s), 10)", sourceFieldName)
+		mapping.FromTargetCode = fmt.Sprintf("uint32(mustParseUint(src.%s))", targetFieldName)
+		return mapping
+	}
+
+	// Timestamp (API) ↔ int64 (Datastore)
+	if sourceKind == "message" && sourceField.Message != nil &&
+		string(sourceField.Message.Desc.FullName()) == "google.protobuf.Timestamp" &&
+		targetKind == "int64" {
+		mapping.ToTargetCode = fmt.Sprintf("timestampToInt64(src.%s)", sourceFieldName)
+		mapping.FromTargetCode = fmt.Sprintf("int64ToTimestamp(src.%s)", targetFieldName)
+		return mapping
+	}
+
+	// Default: simple assignment (may fail at compile time if incompatible)
+	return mapping
 }
