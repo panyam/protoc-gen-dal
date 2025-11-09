@@ -207,6 +207,88 @@ func TestCollectMessages_HandlesMultipleMessages(t *testing.T) {
 	}
 }
 
+// TestCollectMessages_FindsDatastoreMessages tests that the collector finds
+// all messages with datastore annotations across multiple proto files
+func TestCollectMessages_FindsDatastoreMessages(t *testing.T) {
+	// Create a plugin with test proto files
+	plugin := createTestPlugin(t, &testProtoSet{
+		files: []testFile{
+			// File 1: API proto with User message
+			{
+				name: "api/v1/user.proto",
+				pkg:  "api.v1",
+				messages: []testMessage{
+					{
+						name: "User",
+						fields: []testField{
+							{name: "id", number: 1, typeName: "string"},
+							{name: "name", number: 2, typeName: "string"},
+							{name: "email", number: 3, typeName: "string"},
+						},
+					},
+				},
+			},
+			// File 2: DAL proto with UserDatastore message
+			{
+				name: "dal/v1/user_datastore.proto",
+				pkg:  "dal.v1",
+				messages: []testMessage{
+					{
+						name: "UserDatastore",
+						datastoreOpts: &dalv1.DatastoreOptions{
+							Source:    "api.v1.User",
+							Kind:      "User",
+							Namespace: "prod",
+						},
+						fields: []testField{
+							{name: "id", number: 1, typeName: "string"},
+							{name: "name", number: 2, typeName: "string"},
+							{name: "email", number: 3, typeName: "string"},
+						},
+					},
+				},
+			},
+		},
+	})
+
+	// Act: Collect datastore messages
+	messages := CollectMessages(plugin, TargetDatastore)
+
+	// Assert: Should find exactly one datastore message
+	if len(messages) != 1 {
+		t.Fatalf("Expected 1 datastore message, got %d", len(messages))
+	}
+
+	msg := messages[0]
+
+	// Assert: Source message should be User
+	if msg.SourceMessage == nil {
+		t.Fatal("SourceMessage should not be nil")
+	}
+	if string(msg.SourceMessage.Desc.Name()) != "User" {
+		t.Errorf("Expected source message 'User', got '%s'", msg.SourceMessage.Desc.Name())
+	}
+
+	// Assert: Target message should be UserDatastore
+	if msg.TargetMessage == nil {
+		t.Fatal("TargetMessage should not be nil")
+	}
+	if string(msg.TargetMessage.Desc.Name()) != "UserDatastore" {
+		t.Errorf("Expected target message 'UserDatastore', got '%s'", msg.TargetMessage.Desc.Name())
+	}
+
+	// Assert: Metadata should be extracted correctly
+	if msg.SourceName != "api.v1.User" {
+		t.Errorf("Expected SourceName 'api.v1.User', got '%s'", msg.SourceName)
+	}
+	if msg.TableName != "User" {
+		t.Errorf("Expected TableName (Kind) 'User', got '%s'", msg.TableName)
+	}
+	if msg.SchemaName != "prod" {
+		t.Errorf("Expected SchemaName (Namespace) 'prod', got '%s'", msg.SchemaName)
+	}
+}
+
 // Test helpers
 
 // testProtoSet represents a complete set of proto files for testing.
@@ -225,9 +307,10 @@ type testFile struct {
 // testMessage represents a proto message definition.
 // It can have optional postgres annotation to mark it as a DAL schema.
 type testMessage struct {
-	name         string                 // e.g., "Book" or "BookPostgres"
-	postgresOpts *dalv1.PostgresOptions // If present, this is a DAL schema message
-	fields       []testField
+	name          string                  // e.g., "Book" or "BookPostgres"
+	postgresOpts  *dalv1.PostgresOptions  // If present, this is a DAL schema message
+	datastoreOpts *dalv1.DatastoreOptions // If present, this is a Datastore schema message
+	fields        []testField
 }
 
 // testField represents a simple proto field.
@@ -355,6 +438,13 @@ func buildMessageDescriptor(t *testing.T, msg testMessage) *descriptorpb.Descrip
 	if msg.postgresOpts != nil {
 		opts := &descriptorpb.MessageOptions{}
 		proto.SetExtension(opts, dalv1.E_Postgres, msg.postgresOpts)
+		msgDesc.Options = opts
+	}
+
+	// Add datastore options if present (this marks it as a Datastore schema message)
+	if msg.datastoreOpts != nil {
+		opts := &descriptorpb.MessageOptions{}
+		proto.SetExtension(opts, dalv1.E_DatastoreOptions, msg.datastoreOpts)
 		msgDesc.Options = opts
 	}
 

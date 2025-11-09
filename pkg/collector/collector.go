@@ -33,6 +33,8 @@ const (
 	TargetFirestore
 	// TargetMongoDB identifies MongoDB target
 	TargetMongoDB
+	// TargetDatastore identifies Google Cloud Datastore target
+	TargetDatastore
 )
 
 // MessageInfo contains a DAL message and its metadata
@@ -152,6 +154,8 @@ func extractMessageInfo(msg *protogen.Message, target Target, index map[string]*
 		return extractFirestoreInfo(msg, opts, index)
 	case TargetMongoDB:
 		return extractMongoDBInfo(msg, opts, index)
+	case TargetDatastore:
+		return extractDatastoreInfo(msg, opts, index)
 	}
 
 	return nil
@@ -306,6 +310,45 @@ func extractMongoDBInfo(msg *protogen.Message, opts proto.Message, index map[str
 				SourceName:    mongoOpts.Source,
 				TableName:     mongoOpts.Collection, // MongoDB uses "collection"
 				SchemaName:    mongoOpts.Database,   // SchemaName repurposed for "database"
+			}
+		}
+	}
+	return nil
+}
+
+// extractDatastoreInfo extracts Google Cloud Datastore message info.
+//
+// Looks for the (dal.v1.datastore_options) annotation on the message.
+//
+// Example proto:
+//
+//	message UserDatastore {
+//	  option (dal.v1.datastore_options) = {
+//	    source: "api.v1.User"    // API message to convert from
+//	    kind: "User"              // Datastore kind name
+//	    namespace: "prod"         // Datastore namespace (optional)
+//	  };
+//	}
+//
+// Note: TableName is used for "kind" name and SchemaName for "namespace"
+// to keep MessageInfo generic across all targets.
+func extractDatastoreInfo(msg *protogen.Message, opts proto.Message, index map[string]*protogen.Message) *MessageInfo {
+	// Check if message has datastore_options annotation
+	if v := proto.GetExtension(opts, dalv1.E_DatastoreOptions); v != nil {
+		if dsOpts, ok := v.(*dalv1.DatastoreOptions); ok && dsOpts != nil {
+			// Look up source message by fully qualified name
+			sourceMsg := index[dsOpts.Source]
+			if sourceMsg == nil {
+				// Source message not found - skip this DAL schema
+				return nil
+			}
+
+			return &MessageInfo{
+				SourceMessage: sourceMsg,
+				TargetMessage: msg,
+				SourceName:    dsOpts.Source,
+				TableName:     dsOpts.Kind,      // Datastore uses "kind" instead of "table"
+				SchemaName:    dsOpts.Namespace, // SchemaName repurposed for "namespace"
 			}
 		}
 	}

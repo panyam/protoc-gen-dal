@@ -108,23 +108,44 @@
 
 ## Phase 3: Additional Targets
 
-### 3.1 postgres-raw (Go + database/sql)
+### 3.1 Google Cloud Datastore (Go) - In Progress
+- [x] **TEST**: Collector finds Datastore messages
+- [x] Add TargetDatastore constant and extractDatastoreInfo
+- [x] **TEST**: Generates UserDatastore entity struct
+- [x] Implement basic struct generation with datastore tags
+- [x] **TEST**: Kind() method returns correct kind name
+- [x] Implement Kind() method template
+- [x] Create `protoc-gen-dal-datastore` binary
+- [x] Update Makefile build targets
+- [ ] **TEST**: UserToUserDatastore converter
+- [ ] Implement converter generation (reuse GORM converter infrastructure)
+- [ ] **TEST**: Integration test with buf generate
+- [ ] End-to-end test with actual Datastore operations
+- ⏸️ LoadKey/SaveKey methods (deferred - not essential for MVP, can add later)
+
+**Design Decision**: Skipped LoadKey/SaveKey PropertyLoadSaver implementation for MVP
+- Not required for basic Datastore usage
+- Users can manually manage keys (simple and explicit)
+- PropertyLoadSaver only needed for advanced custom property transformations
+- Can be added later if users request it
+
+### 3.2 postgres-raw (Go + database/sql)
 - [ ] **TEST**: Generates BookToPostgresRow converter
 - [ ] Implement raw SQL converter (columns, values)
 - [ ] **TEST**: Generates BookFromPostgresRow converter
 - [ ] Implement row scanning
 - [ ] Create `protoc-gen-dal-postgres-raw` binary
 
-### 3.2 firestore (Go)
-- [ ] Add collector support for TargetFirestore
+### 3.3 firestore (Go)
+- [ ] Add collector support for TargetFirestore (annotation already exists)
 - [ ] **TEST**: Generates BookToFirestore converter
 - [ ] Implement Firestore document conversion
 - [ ] **TEST**: Generates BookFromFirestore converter
 - [ ] Implement reverse conversion
 - [ ] Create `protoc-gen-dal-firestore` binary
 
-### 3.3 mongodb (Go)
-- [ ] Add collector support for TargetMongoDB
+### 3.4 mongodb (Go)
+- [ ] Add collector support for TargetMongoDB (annotation already exists)
 - [ ] **TEST**: Generates BookToBSON converter
 - [ ] Implement BSON conversion
 - [ ] Create `protoc-gen-dal-mongodb` binary
@@ -256,10 +277,21 @@ From `tests/protos/gorm/user.proto`:
 - ✅ Phase 2.4 - Already supported via native gorm_tags (no abstraction needed)
 - ⏸️ Phase 2.5 - Repository Pattern (Optional - deferred)
 
+**Phase 3 Status:**
+- 🚧 Phase 3.1 - Google Cloud Datastore (In Progress)
+  - ✅ Collector support (TargetDatastore, extractDatastoreInfo)
+  - ✅ Basic struct generation with datastore tags
+  - ✅ Kind() method generation
+  - ✅ Binary created (protoc-gen-dal-datastore)
+  - ⏸️ LoadKey/SaveKey deferred (not essential for MVP)
+  - 🚧 TODO: Converter generation (reuse GORM infrastructure)
+  - 🚧 TODO: Integration test with buf generate
+
 **Next:**
-1. **Phase 3**: Additional targets (postgres-raw, firestore, mongodb)
-2. **Phase 4**: Multi-language support (Python, TypeScript)
-3. **Phase 5**: Advanced features (if needed after real-world usage)
+1. **Phase 3.1**: Complete Datastore converters and integration test
+2. **Phase 3.2-3.4**: Additional targets (postgres-raw, firestore, mongodb)
+3. **Phase 4**: Multi-language support (Python, TypeScript)
+4. **Phase 5**: Advanced features (if needed after real-world usage)
 
 ## Notes
 
