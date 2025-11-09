@@ -117,10 +117,16 @@
 - [x] Implement Kind() method template
 - [x] Create `protoc-gen-dal-datastore` binary
 - [x] Update Makefile build targets
-- [ ] **TEST**: UserToUserDatastore converter
-- [ ] Implement converter generation (reuse GORM converter infrastructure)
-- [ ] **TEST**: Integration test with buf generate
-- [ ] End-to-end test with actual Datastore operations
+- [x] **TEST**: UserToUserDatastore converter (scalar fields)
+- [x] Implement converter generation with type conversions (uint32↔string, Timestamp↔int64)
+- [x] **TEST**: Integration test with buf generate (basic scalar fields)
+- [x] Generated code compiles and passes all tests
+- [ ] Add test protos with repeated/map fields (mirror GORM test coverage)
+- [ ] **TEST**: Repeated scalar fields ([]string, []int32)
+- [ ] **TEST**: Repeated message fields ([]Author)
+- [ ] **TEST**: Map with scalar values (map[string]string)
+- [ ] **TEST**: Map with message values (map[string]Author)
+- [ ] Implement repeated/map field support in buildFieldMapping
 - ⏸️ LoadKey/SaveKey methods (deferred - not essential for MVP, can add later)
 
 **Design Decision**: Skipped LoadKey/SaveKey PropertyLoadSaver implementation for MVP
@@ -283,9 +289,10 @@ From `tests/protos/gorm/user.proto`:
   - ✅ Basic struct generation with datastore tags
   - ✅ Kind() method generation
   - ✅ Binary created (protoc-gen-dal-datastore)
+  - ✅ Converter generation with type conversions (uint32↔string, Timestamp↔int64)
+  - ✅ Integration test with buf generate (scalar fields work)
   - ⏸️ LoadKey/SaveKey deferred (not essential for MVP)
-  - 🚧 TODO: Converter generation (reuse GORM infrastructure)
-  - 🚧 TODO: Integration test with buf generate
+  - 🚧 TODO: Add repeated/map field support (mirror GORM approach)
 
 **Next:**
 1. **Phase 3.1**: Complete Datastore converters and integration test
