@@ -52,13 +52,12 @@
 
 ## Phase 2: Core Features
 
-### 2.1 Field Transformations
-- [ ] **TEST**: Timestamp field transforms to int64
-- [ ] Implement default transformations in converter
-- [ ] **TEST**: Decorator function allows custom transformation
-- [ ] Implement decorator parameter in converters
-- [ ] **TEST**: Nested message transforms to JSON
-- [ ] Implement JSON serialization for complex types
+### 2.1 Field Transformations ✅ (Already Complete)
+**SKIPPED - Already implemented in Phase 1.3**
+- ✅ Built-in converters handle Timestamp ↔ int64 and numeric transformations
+- ✅ Decorator pattern allows custom transformations
+- ✅ JSONB storage for complex types via gorm_tags: ["type:jsonb"]
+- No additional work needed - existing system covers all requirements
 
 ### 2.2 Repeated/Map Fields
 - [x] **TEST**: Repeated primitive as JSONB (Tags: []string with jsonb tag)
@@ -72,19 +71,30 @@
 - [x] **TEST**: Map with message value type with loop-based conversion (Organization.Departments)
 - [x] Implement loop-based converter application for map<K, MessageType>
 
-### 2.3 Foreign Keys
-- [ ] **TEST**: Foreign key annotation generates correct GORM tag
-- [ ] Implement foreign key tag generation
-- [ ] **TEST**: Cross-file foreign key resolution
-- [ ] Implement relationship analysis across messages
-- [ ] **TEST**: CASCADE/RESTRICT actions in GORM tags
-- [ ] Implement referential action mapping
+### 2.3 Foreign Keys ✅ (Already Supported)
+**SKIPPED - Use native GORM tags directly, no abstraction needed**
+- ✅ Foreign keys work via gorm_tags: `["foreignKey:AuthorID", "references:ID"]`
+- ✅ Constraints via gorm_tags: `["constraint:OnDelete:CASCADE,OnUpdate:CASCADE"]`
+- No special `foreign_key` annotation needed - violates "no abstraction layer" principle
+- Users already know GORM syntax - just pass it through
+- Example:
+  ```protobuf
+  uint32 author_id = 1 [(dal.v1.column) = {
+    gorm_tags: ["foreignKey:AuthorID", "references:ID", "constraint:OnDelete:CASCADE"]
+  }];
+  ```
 
-### 2.4 Composite Keys
-- [ ] **TEST**: Multiple primary_key fields generate composite key
-- [ ] Implement composite primary key tags
-- [ ] **TEST**: FindByCompositeKey method generation
-- [ ] Implement composite key finder methods
+### 2.4 Composite Keys ✅ (Already Supported)
+**SKIPPED - Use native GORM tags directly, no abstraction needed**
+- ✅ Composite keys work via multiple gorm_tags: `["primaryKey"]` on multiple fields
+- ✅ GORM handles composite keys automatically when multiple fields have primaryKey tag
+- No special implementation needed - already works with existing tag pass-through
+- Example:
+  ```protobuf
+  string book_id = 1 [(dal.v1.column) = { gorm_tags: ["primaryKey"] }];
+  int32 edition_number = 2 [(dal.v1.column) = { gorm_tags: ["primaryKey"] }];
+  ```
+- FindByCompositeKey method generation deferred to Phase 2.5 (Repository Pattern) if needed
 
 ### 2.5 Repository Pattern (Optional)
 - [ ] **TEST**: Generates BookRepository struct
@@ -239,10 +249,17 @@ From `tests/protos/gorm/user.proto`:
   - Message values in slices → loop-based conversion with element converter
   - Message values in maps → loop-based conversion with value converter
 
+**Phase 2 Status:**
+- ✅ Phase 2.1 - Already complete via built-in converters and decorators
+- ✅ Phase 2.2 - Complete (applicative conversion for collections)
+- ✅ Phase 2.3 - Already supported via native gorm_tags (no abstraction needed)
+- ✅ Phase 2.4 - Already supported via native gorm_tags (no abstraction needed)
+- ⏸️ Phase 2.5 - Repository Pattern (Optional - deferred)
+
 **Next:**
-1. **Phase 2.3**: Foreign key support with cross-file resolution
-2. **Phase 2.4**: Composite keys
-3. **Phase 3**: Additional targets (postgres-raw, firestore)
+1. **Phase 3**: Additional targets (postgres-raw, firestore, mongodb)
+2. **Phase 4**: Multi-language support (Python, TypeScript)
+3. **Phase 5**: Advanced features (if needed after real-world usage)
 
 ## Notes
 
