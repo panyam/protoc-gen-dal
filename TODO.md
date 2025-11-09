@@ -108,7 +108,7 @@
 
 ## Phase 3: Additional Targets
 
-### 3.1 Google Cloud Datastore (Go) - In Progress
+### 3.1 Google Cloud Datastore (Go) ✅ COMPLETE
 - [x] **TEST**: Collector finds Datastore messages
 - [x] Add TargetDatastore constant and extractDatastoreInfo
 - [x] **TEST**: Generates UserDatastore entity struct
@@ -121,12 +121,15 @@
 - [x] Implement converter generation with type conversions (uint32↔string, Timestamp↔int64)
 - [x] **TEST**: Integration test with buf generate (basic scalar fields)
 - [x] Generated code compiles and passes all tests
-- [ ] Add test protos with repeated/map fields (mirror GORM test coverage)
-- [ ] **TEST**: Repeated scalar fields ([]string, []int32)
-- [ ] **TEST**: Repeated message fields ([]Author)
-- [ ] **TEST**: Map with scalar values (map[string]string)
-- [ ] **TEST**: Map with message values (map[string]Author)
-- [ ] Implement repeated/map field support in buildFieldMapping
+- [x] Add test protos with repeated/map fields (mirror GORM test coverage)
+- [x] **TEST**: Repeated scalar fields ([]string, []int32)
+- [x] **TEST**: Repeated message fields ([]Author)
+- [x] **TEST**: Map with scalar values (map[string]string)
+- [x] **TEST**: Map with message values (map[string]Author)
+- [x] Implement repeated/map field support in buildFieldMapping
+- [x] Enhance fieldType() to handle repeated/map/message types
+- [x] Add converterRegistry for nested message lookups
+- [x] Template support for loop-based conversions
 - ⏸️ LoadKey/SaveKey methods (deferred - not essential for MVP, can add later)
 
 **Design Decision**: Skipped LoadKey/SaveKey PropertyLoadSaver implementation for MVP
@@ -284,21 +287,34 @@ From `tests/protos/gorm/user.proto`:
 - ⏸️ Phase 2.5 - Repository Pattern (Optional - deferred)
 
 **Phase 3 Status:**
-- 🚧 Phase 3.1 - Google Cloud Datastore (In Progress)
+- ✅ Phase 3.1 - Google Cloud Datastore (COMPLETE)
   - ✅ Collector support (TargetDatastore, extractDatastoreInfo)
   - ✅ Basic struct generation with datastore tags
   - ✅ Kind() method generation
   - ✅ Binary created (protoc-gen-dal-datastore)
   - ✅ Converter generation with type conversions (uint32↔string, Timestamp↔int64)
-  - ✅ Integration test with buf generate (scalar fields work)
+  - ✅ Integration test with buf generate (all tests pass)
+  - ✅ Full repeated/map field support (primitives and messages)
+  - ✅ Converter registry for nested message conversions
+  - ✅ Loop-based conversion for repeated/map message types
   - ⏸️ LoadKey/SaveKey deferred (not essential for MVP)
-  - 🚧 TODO: Add repeated/map field support (mirror GORM approach)
+
+**Generated Code Features:**
+From `tests/protos/datastore/user.proto`:
+- `user.go`: 8 Datastore entity structs (UserDatastore, UserWithNamespace, UserWithLargeText, UserSimple, AuthorDatastore, ProductDatastore, LibraryDatastore, OrganizationDatastore)
+- `user_converters.go`: 16 converter functions (To/From for each type except embedded AuthorDatastore)
+- Repeated scalars: Direct assignment ([]string, []int32)
+- Map with scalars: Direct assignment with nil check (map[string]string)
+- Repeated messages: Loop-based conversion ([]AuthorDatastore)
+- Map with messages: Loop-based conversion (map[string]AuthorDatastore)
+- Proper bidirectional handling of pointer types
 
 **Next:**
-1. **Phase 3.1**: Complete Datastore converters and integration test
-2. **Phase 3.2-3.4**: Additional targets (postgres-raw, firestore, mongodb)
-3. **Phase 4**: Multi-language support (Python, TypeScript)
-4. **Phase 5**: Advanced features (if needed after real-world usage)
+1. **Phase 3.2**: postgres-raw (Go + database/sql)
+2. **Phase 3.3**: firestore (Go)
+3. **Phase 3.4**: mongodb (Go)
+4. **Phase 4**: Multi-language support (Python, TypeScript)
+5. **Phase 5**: Advanced features (if needed after real-world usage)
 
 ## Notes
 
