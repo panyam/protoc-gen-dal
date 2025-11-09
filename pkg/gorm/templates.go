@@ -74,16 +74,21 @@ const (
 
 // FieldMappingData contains data for mapping a single field between API and target.
 type FieldMappingData struct {
-	SourceField             string         // Source field name (e.g., "Birthday")
-	TargetField             string         // Target field name (e.g., "Birthday")
-	ToTargetConversionType  ConversionType // How to convert source → target
-	FromTargetConversionType ConversionType // How to convert target → source
-	ToTargetCode            string         // Code to convert source to target (for assignment/transformer)
-	FromTargetCode          string         // Code to convert target to source (for assignment/transformer)
-	ToTargetConverterFunc   string         // Converter function name for ToTarget (e.g., "AuthorToAuthorGORM")
-	FromTargetConverterFunc string         // Converter function name for FromTarget (e.g., "AuthorFromAuthorGORM")
-	SourceIsPointer         bool           // Whether source field is a pointer type (needs nil check)
-	TargetIsPointer         bool           // Whether target field is a pointer type (affects assignment)
+	SourceField              string         // Source field name (e.g., "Birthday")
+	TargetField              string         // Target field name (e.g., "Birthday")
+	ToTargetConversionType   ConversionType // How to convert source → target (or element conversion for collections)
+	FromTargetConversionType ConversionType // How to convert target → source (or element conversion for collections)
+	ToTargetCode             string         // Code to convert source to target (for assignment/transformer)
+	FromTargetCode           string         // Code to convert target to source (for assignment/transformer)
+	ToTargetConverterFunc    string         // Converter function name for ToTarget (e.g., "AuthorToAuthorGORM")
+	FromTargetConverterFunc  string         // Converter function name for FromTarget (e.g., "AuthorFromAuthorGORM")
+	SourceIsPointer          bool           // Whether source field is a pointer type (needs nil check)
+	TargetIsPointer          bool           // Whether target field is a pointer type (affects assignment)
+	IsRepeated               bool           // Whether this is a repeated field (needs loop-based conversion)
+	IsMap                    bool           // Whether this is a map field (needs loop-based conversion)
+	TargetElementType        string         // For repeated/map: Go type of target element/value (e.g., "AuthorGORM")
+	SourceElementType        string         // For repeated/map: Go type of source element/value (e.g., "Author")
+	SourcePkgName            string         // Source package name (e.g., "api" or "testapi") - needed for type references
 }
 
 var tmpl *template.Template

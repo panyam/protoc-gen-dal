@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/panyam/protoc-gen-dal/tests/gen/go/api"
@@ -212,5 +213,137 @@ func TestProductConversion_EmptyCollections(t *testing.T) {
 	}
 	if len(apiProduct.Ratings) != 0 {
 		t.Errorf("Round-trip: Expected empty Ratings, got %v", apiProduct.Ratings)
+	}
+}
+
+// TestLibraryConversion_RepeatedMessageType verifies that repeated message types
+// are correctly converted using loop-based converter application.
+func TestLibraryConversion_RepeatedMessageType(t *testing.T) {
+	// Create a source Library with multiple contributors
+	src := &api.Library{
+		Id:   1,
+		Name: "Tech Library",
+		Contributors: []*api.Author{
+			{Name: "Alice Smith", Email: "alice@example.com"},
+			{Name: "Bob Jones", Email: "bob@example.com"},
+			{Name: "Carol White", Email: "carol@example.com"},
+		},
+	}
+
+	// Convert to GORM
+	gormLibrary, err := gorm.LibraryToLibraryGORM(src, nil, nil)
+	if err != nil {
+		t.Fatalf("LibraryToLibraryGORM failed: %v", err)
+	}
+
+	// Verify basic fields
+	if gormLibrary.Id != src.Id {
+		t.Errorf("Id mismatch: got %d, want %d", gormLibrary.Id, src.Id)
+	}
+
+	if gormLibrary.Name != src.Name {
+		t.Errorf("Name mismatch: got %s, want %s", gormLibrary.Name, src.Name)
+	}
+
+	// Verify Contributors (repeated message type)
+	if len(gormLibrary.Contributors) != len(src.Contributors) {
+		t.Fatalf("Contributors length mismatch: got %d, want %d", len(gormLibrary.Contributors), len(src.Contributors))
+	}
+
+	// Check each contributor was converted correctly
+	for i, srcAuthor := range src.Contributors {
+		gormAuthor := gormLibrary.Contributors[i]
+		if gormAuthor.Name != srcAuthor.Name {
+			t.Errorf("Contributors[%d].Name mismatch: got %s, want %s", i, gormAuthor.Name, srcAuthor.Name)
+		}
+		if gormAuthor.Email != srcAuthor.Email {
+			t.Errorf("Contributors[%d].Email mismatch: got %s, want %s", i, gormAuthor.Email, srcAuthor.Email)
+		}
+	}
+
+	// Convert back to API
+	apiLibrary, err := gorm.LibraryFromLibraryGORM(nil, gormLibrary, nil)
+	if err != nil {
+		t.Fatalf("LibraryFromLibraryGORM failed: %v", err)
+	}
+
+	// Verify round-trip conversion
+	if apiLibrary.Id != src.Id {
+		t.Errorf("Round-trip Id mismatch: got %d, want %d", apiLibrary.Id, src.Id)
+	}
+
+	if apiLibrary.Name != src.Name {
+		t.Errorf("Round-trip Name mismatch: got %s, want %s", apiLibrary.Name, src.Name)
+	}
+
+	// Verify Contributors round-trip
+	if len(apiLibrary.Contributors) != len(src.Contributors) {
+		t.Fatalf("Round-trip Contributors length mismatch: got %d, want %d", len(apiLibrary.Contributors), len(src.Contributors))
+	}
+
+	for i, srcAuthor := range src.Contributors {
+		apiAuthor := apiLibrary.Contributors[i]
+		if apiAuthor.Name != srcAuthor.Name {
+			t.Errorf("Round-trip Contributors[%d].Name mismatch: got %s, want %s", i, apiAuthor.Name, srcAuthor.Name)
+		}
+		if apiAuthor.Email != srcAuthor.Email {
+			t.Errorf("Round-trip Contributors[%d].Email mismatch: got %s, want %s", i, apiAuthor.Email, srcAuthor.Email)
+		}
+	}
+}
+
+// TestLibraryConversion_EmptyContributors verifies empty repeated message slices work.
+func TestLibraryConversion_EmptyContributors(t *testing.T) {
+	src := &api.Library{
+		Id:           2,
+		Name:         "Empty Library",
+		Contributors: []*api.Author{}, // empty slice
+	}
+
+	gormLibrary, err := gorm.LibraryToLibraryGORM(src, nil, nil)
+	if err != nil {
+		t.Fatalf("LibraryToLibraryGORM failed: %v", err)
+	}
+
+	if len(gormLibrary.Contributors) != 0 {
+		t.Errorf("Expected empty Contributors, got %v", gormLibrary.Contributors)
+	}
+
+	// Convert back
+	apiLibrary, err := gorm.LibraryFromLibraryGORM(nil, gormLibrary, nil)
+	if err != nil {
+		t.Fatalf("LibraryFromLibraryGORM failed: %v", err)
+	}
+
+	if !reflect.DeepEqual(apiLibrary.Contributors, src.Contributors) {
+		t.Errorf("Round-trip: Expected empty Contributors, got %v", apiLibrary.Contributors)
+	}
+}
+
+// TestLibraryConversion_NilContributors verifies nil repeated message slices work.
+func TestLibraryConversion_NilContributors(t *testing.T) {
+	src := &api.Library{
+		Id:           3,
+		Name:         "Nil Library",
+		Contributors: nil, // nil slice
+	}
+
+	gormLibrary, err := gorm.LibraryToLibraryGORM(src, nil, nil)
+	if err != nil {
+		t.Fatalf("LibraryToLibraryGORM failed: %v", err)
+	}
+
+	if gormLibrary.Contributors != nil {
+		t.Errorf("Expected nil Contributors, got %v", gormLibrary.Contributors)
+	}
+
+	// Convert back
+	apiLibrary, err := gorm.LibraryFromLibraryGORM(nil, gormLibrary, nil)
+	if err != nil {
+		t.Fatalf("LibraryFromLibraryGORM failed: %v", err)
+	}
+
+	if apiLibrary.Contributors != nil {
+		t.Errorf("Round-trip: Expected nil Contributors, got %v", apiLibrary.Contributors)
 	}
 }

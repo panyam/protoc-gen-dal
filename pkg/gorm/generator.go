@@ -426,6 +426,9 @@ func buildConverterData(msg *collector.MessageInfo, registry *converterRegistry)
 			continue
 		}
 
+		// Set source package name for type references
+		mapping.SourcePkgName = sourcePkgName
+
 		fieldMappings = append(fieldMappings, *mapping)
 	}
 
@@ -466,18 +469,19 @@ func buildFieldConversion(sourceField, targetField *protogen.Field, registry *co
 
 	// Check if this is a map field
 	if sourceField.Desc.IsMap() {
+		mapping.IsMap = true
 		// Map fields: check the value type to determine conversion
 		mapEntry := sourceField.Message
 		valueField := mapEntry.Fields[1] // value field is always index 1
 		valueKind := valueField.Desc.Kind().String()
 
 		if valueKind == "message" {
-			// map<K, MessageType> - needs converter for values
-			// TODO: Implement loop-based conversion for map values
+			// map<K, MessageType> - needs loop-based converter for values
 			mapping.ToTargetConversionType = ConvertByTransformerWithError
 			mapping.FromTargetConversionType = ConvertByTransformerWithError
+			// Continue to find converter function for the value type
 		} else {
-			// map<K, primitive> - direct assignment
+			// map<K, primitive> - direct assignment (copy entire map)
 			mapping.ToTargetCode = fmt.Sprintf("src.%s", fieldName)
 			mapping.FromTargetCode = fmt.Sprintf("src.%s", fieldName)
 			mapping.ToTargetConversionType = ConvertByAssignment
@@ -486,16 +490,17 @@ func buildFieldConversion(sourceField, targetField *protogen.Field, registry *co
 			return mapping
 		}
 	} else if sourceField.Desc.IsList() {
+		mapping.IsRepeated = true
 		// Repeated fields: check the element type to determine conversion
 		elementKind := sourceKind // The field's own kind is the element kind for repeated
 
 		if elementKind == "message" {
-			// []MessageType - needs converter for elements
-			// TODO: Implement loop-based conversion for repeated message elements
+			// []MessageType - needs loop-based converter for elements
 			mapping.ToTargetConversionType = ConvertByTransformerWithError
 			mapping.FromTargetConversionType = ConvertByTransformerWithError
+			// Continue to find converter function for the element type
 		} else {
-			// []primitive - direct assignment
+			// []primitive - direct assignment (copy entire slice)
 			mapping.ToTargetCode = fmt.Sprintf("src.%s", fieldName)
 			mapping.FromTargetCode = fmt.Sprintf("src.%s", fieldName)
 			mapping.ToTargetConversionType = ConvertByAssignment
@@ -546,23 +551,56 @@ func buildFieldConversion(sourceField, targetField *protogen.Field, registry *co
 	}
 
 	// Both are messages - use nested converter if available
+	// For repeated/map fields, we look up converter for the element/value type
 	if sourceKind == "message" && targetKind == "message" {
-		if sourceField.Message != nil && targetField.Message != nil {
-			sourceTypeName := string(sourceField.Message.Desc.Name())
-			targetTypeName := buildStructName(targetField.Message)
+		var sourceTypeName, targetTypeName string
+		var sourceMsg, targetMsg *protogen.Message
+
+		if mapping.IsRepeated {
+			// For repeated fields, get the element type
+			sourceMsg = sourceField.Message
+			targetMsg = targetField.Message
+		} else if mapping.IsMap {
+			// For map fields, get the value type
+			sourceMapEntry := sourceField.Message
+			targetMapEntry := targetField.Message
+			sourceMsg = sourceMapEntry.Fields[1].Message // value field
+			targetMsg = targetMapEntry.Fields[1].Message
+		} else {
+			// Regular message field
+			sourceMsg = sourceField.Message
+			targetMsg = targetField.Message
+		}
+
+		if sourceMsg != nil && targetMsg != nil {
+			sourceTypeName = string(sourceMsg.Desc.Name())
+			targetTypeName = buildStructName(targetMsg)
 
 			// Check if converter exists for this nested type
 			if registry.hasConverter(sourceTypeName, targetTypeName) {
 				mapping.ToTargetConverterFunc = fmt.Sprintf("%sTo%s", sourceTypeName, targetTypeName)
 				mapping.FromTargetConverterFunc = fmt.Sprintf("%sFrom%s", sourceTypeName, targetTypeName)
+				// For repeated/map fields, store the element/value types
+				if mapping.IsRepeated || mapping.IsMap {
+					mapping.TargetElementType = targetTypeName
+					mapping.SourceElementType = sourceTypeName
+				}
 				// Keep default ConvertByTransformerWithError (already set in Step 1)
 				return mapping
 			}
 			// No converter available - warn user and skip (decorator must handle)
-			log.Printf("WARNING: Field '%s' has matching message types (%s → %s) but no converter found.\n",
-				fieldName, sourceTypeName, targetTypeName)
+			if mapping.IsRepeated {
+				log.Printf("WARNING: Field '%s' is []%s but no converter found for element type.\n",
+					fieldName, sourceTypeName)
+			} else if mapping.IsMap {
+				log.Printf("WARNING: Field '%s' is map<K, %s> but no converter found for value type.\n",
+					fieldName, sourceTypeName)
+			} else {
+				log.Printf("WARNING: Field '%s' has matching message types (%s → %s) but no converter found.\n",
+					fieldName, sourceTypeName, targetTypeName)
+			}
 			log.Printf("         If you want automatic conversion, add 'source' annotation to %s message.\n",
-				targetField.Message.Desc.Name())
+				targetMsg.Desc.Name())
 			log.Printf("         Skipping field - handle in decorator function.\n\n")
 			return nil
 		}

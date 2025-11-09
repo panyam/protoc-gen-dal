@@ -110,6 +110,18 @@ func (*ProductGORM) TableName() string {
 	return "products"
 }
 
+// LibraryGORM is the GORM model for api.Library
+type LibraryGORM struct {
+	Id           uint32       `gorm:"primaryKey;autoIncrement"`
+	Name         string       `gorm:"type:varchar(255);not null"`
+	Contributors []AuthorGORM `gorm:"type:jsonb"`
+}
+
+// TableName returns the table name for LibraryGORM
+func (*LibraryGORM) TableName() string {
+	return "libraries"
+}
+
 // MetadataEntry
 type MetadataEntry struct {
 	Key   string

@@ -42,3 +42,10 @@ message Product {
   map<string, string> metadata = 5;   // e.g., {"color": "black", "storage": "128GB"}
   repeated int32 ratings = 6;         // e.g., [5, 4, 5, 3]
 }
+
+// Library demonstrates repeated message types
+message Library {
+  uint32 id = 1;
+  string name = 2;
+  repeated Author contributors = 3;   // List of authors
+}

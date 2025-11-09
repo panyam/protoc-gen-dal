@@ -598,3 +598,85 @@ func ProductFromProductGORM(
 
 	return out, nil
 }
+
+// LibraryToLibraryGORM converts a api.Library to LibraryGORM.
+// The optional decorator function allows custom field transformations.
+func LibraryToLibraryGORM(
+	src *api.Library,
+	dest *LibraryGORM,
+	decorator func(*api.Library, *LibraryGORM) error,
+) (out *LibraryGORM, err error) {
+	if src == nil {
+		return nil, nil
+	}
+	if dest == nil {
+		dest = &LibraryGORM{}
+	}
+	out = dest
+
+	out.Id = src.Id
+
+	out.Name = src.Name
+
+	if src.Contributors != nil {
+		out.Contributors = make([]AuthorGORM, len(src.Contributors))
+		for i, item := range src.Contributors {
+			_, err = AuthorToAuthorGORM(item, &out.Contributors[i], nil)
+
+			if err != nil {
+				return nil, fmt.Errorf("converting Contributors[%d]: %w", i, err)
+			}
+
+		}
+	}
+
+	// Apply decorator if provided
+	if decorator != nil {
+		if err := decorator(src, dest); err != nil {
+			return nil, err
+		}
+	}
+
+	return dest, nil
+}
+
+// LibraryFromLibraryGORM converts a LibraryGORM back to api.Library.
+// The optional decorator function allows custom field transformations.
+func LibraryFromLibraryGORM(
+	dest *api.Library,
+	src *LibraryGORM,
+	decorator func(dest *api.Library, src *LibraryGORM) error,
+) (out *api.Library, err error) {
+	if src == nil {
+		return nil, nil
+	}
+	if dest == nil {
+		dest = &api.Library{}
+	}
+	out = dest
+
+	out.Id = src.Id
+
+	out.Name = src.Name
+
+	if src.Contributors != nil {
+		out.Contributors = make([]*api.Author, len(src.Contributors))
+		for i, item := range src.Contributors {
+			out.Contributors[i], err = AuthorFromAuthorGORM(nil, &item, nil)
+
+			if err != nil {
+				return nil, fmt.Errorf("converting Contributors[%d]: %w", i, err)
+			}
+
+		}
+	}
+
+	// Apply decorator if provided
+	if decorator != nil {
+		if err := decorator(dest, src); err != nil {
+			return nil, err
+		}
+	}
+
+	return out, nil
+}

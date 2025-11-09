@@ -255,3 +255,24 @@ message ProductGorm {
     gorm_tags: ["type:jsonb"]
   }];
 }
+
+// LibraryGorm demonstrates repeated message types stored as JSONB
+message LibraryGorm {
+  option (dal.v1.gorm) = {
+    source: "api.Library"
+    table: "libraries"
+  };
+
+  uint32 id = 1 [(dal.v1.column) = {
+    gorm_tags: ["primaryKey", "autoIncrement"]
+  }];
+
+  string name = 2 [(dal.v1.column) = {
+    gorm_tags: ["type:varchar(255)", "not null"]
+  }];
+
+  // Repeated message type as JSONB
+  repeated AuthorGorm contributors = 3 [(dal.v1.column) = {
+    gorm_tags: ["type:jsonb"]
+  }];
+}

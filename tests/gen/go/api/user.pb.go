@@ -339,6 +339,67 @@ func (x *Product) GetRatings() []int32 {
 	return nil
 }
 
+// Library demonstrates repeated message types
+type Library struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            uint32                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Contributors  []*Author              `protobuf:"bytes,3,rep,name=contributors,proto3" json:"contributors,omitempty"` // List of authors
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Library) Reset() {
+	*x = Library{}
+	mi := &file_api_user_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Library) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Library) ProtoMessage() {}
+
+func (x *Library) ProtoReflect() protoreflect.Message {
+	mi := &file_api_user_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Library.ProtoReflect.Descriptor instead.
+func (*Library) Descriptor() ([]byte, []int) {
+	return file_api_user_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *Library) GetId() uint32 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *Library) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *Library) GetContributors() []*Author {
+	if x != nil {
+		return x.Contributors
+	}
+	return nil
+}
+
 var File_api_user_proto protoreflect.FileDescriptor
 
 const file_api_user_proto_rawDesc = "" +
@@ -375,7 +436,11 @@ const file_api_user_proto_rawDesc = "" +
 	"\aratings\x18\x06 \x03(\x05R\aratings\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01Bs\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"^\n" +
+	"\aLibrary\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\rR\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12/\n" +
+	"\fcontributors\x18\x03 \x03(\v2\v.api.AuthorR\fcontributorsBs\n" +
 	"\acom.apiB\tUserProtoP\x01Z1github.com/panyam/protoc-gen-dal/tests/gen/go/api\xa2\x02\x03AXX\xaa\x02\x03Api\xca\x02\x03Api\xe2\x02\x0fApi\\GPBMetadata\xea\x02\x03Apib\x06proto3"
 
 var (
@@ -390,27 +455,29 @@ func file_api_user_proto_rawDescGZIP() []byte {
 	return file_api_user_proto_rawDescData
 }
 
-var file_api_user_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_api_user_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_api_user_proto_goTypes = []any{
 	(*User)(nil),                  // 0: api.User
 	(*Author)(nil),                // 1: api.Author
 	(*Blog)(nil),                  // 2: api.Blog
 	(*Product)(nil),               // 3: api.Product
-	nil,                           // 4: api.Product.MetadataEntry
-	(*timestamppb.Timestamp)(nil), // 5: google.protobuf.Timestamp
+	(*Library)(nil),               // 4: api.Library
+	nil,                           // 5: api.Product.MetadataEntry
+	(*timestamppb.Timestamp)(nil), // 6: google.protobuf.Timestamp
 }
 var file_api_user_proto_depIdxs = []int32{
-	5, // 0: api.User.birthday:type_name -> google.protobuf.Timestamp
-	5, // 1: api.User.activated_at:type_name -> google.protobuf.Timestamp
-	5, // 2: api.User.created_at:type_name -> google.protobuf.Timestamp
-	5, // 3: api.User.updated_at:type_name -> google.protobuf.Timestamp
+	6, // 0: api.User.birthday:type_name -> google.protobuf.Timestamp
+	6, // 1: api.User.activated_at:type_name -> google.protobuf.Timestamp
+	6, // 2: api.User.created_at:type_name -> google.protobuf.Timestamp
+	6, // 3: api.User.updated_at:type_name -> google.protobuf.Timestamp
 	1, // 4: api.Blog.author:type_name -> api.Author
-	4, // 5: api.Product.metadata:type_name -> api.Product.MetadataEntry
-	6, // [6:6] is the sub-list for method output_type
-	6, // [6:6] is the sub-list for method input_type
-	6, // [6:6] is the sub-list for extension type_name
-	6, // [6:6] is the sub-list for extension extendee
-	0, // [0:6] is the sub-list for field type_name
+	5, // 5: api.Product.metadata:type_name -> api.Product.MetadataEntry
+	1, // 6: api.Library.contributors:type_name -> api.Author
+	7, // [7:7] is the sub-list for method output_type
+	7, // [7:7] is the sub-list for method input_type
+	7, // [7:7] is the sub-list for extension type_name
+	7, // [7:7] is the sub-list for extension extendee
+	0, // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_api_user_proto_init() }
@@ -424,7 +491,7 @@ func file_api_user_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_user_proto_rawDesc), len(file_api_user_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   5,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
