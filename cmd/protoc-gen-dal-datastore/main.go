@@ -46,7 +46,13 @@ func main() {
 			return fmt.Errorf("failed to generate Datastore code: %w", err)
 		}
 
-		// Phase 3: Write generated files to plugin response
+		// Phase 3: Generate converter code
+		converterResult, err := datastore.GenerateConverters(messages)
+		if err != nil {
+			return fmt.Errorf("failed to generate converter code: %w", err)
+		}
+
+		// Phase 4: Write generated files to plugin response
 		for _, genFile := range result.Files {
 			// Create a new file in the plugin response
 			// The second parameter is the Go import path for this generated file
@@ -56,9 +62,11 @@ func main() {
 			f.P(genFile.Content)
 		}
 
-		// TODO: Phase 4: Generate converter code (will be added later)
-		// converterResult, err := datastore.GenerateConverters(messages)
-		// ...
+		// Write converter files
+		for _, genFile := range converterResult.Files {
+			f := plugin.NewGeneratedFile(genFile.Path, protogen.GoImportPath(genFile.Path))
+			f.P(genFile.Content)
+		}
 
 		return nil
 	})

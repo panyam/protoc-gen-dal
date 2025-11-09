@@ -240,3 +240,152 @@ func buildFieldTags(field *protogen.Field) string {
 func extractPackageName(msg *protogen.Message) string {
 	return string(msg.GoIdent.GoImportPath.Ident("").GoName)
 }
+
+// GenerateConverters generates converter functions for transforming between
+// API messages and Datastore entities.
+//
+// This generates ToDatastore and FromDatastore converter functions with decorator support:
+// - ToDatastore: Converts API message to Datastore entity
+// - FromDatastore: Converts Datastore entity back to API message
+//
+// Parameters:
+//   - messages: Collected Datastore messages from the collector
+//
+// Returns:
+//   - GenerateResult containing converter files (*_converters.go)
+//   - error if generation fails
+func GenerateConverters(messages []*collector.MessageInfo) (*GenerateResult, error) {
+	if len(messages) == 0 {
+		return &GenerateResult{Files: []*GeneratedFile{}}, nil
+	}
+
+	// Group messages by their source proto file
+	fileGroups := groupMessagesByFile(messages)
+
+	var files []*GeneratedFile
+
+	// Generate one converter file per proto file
+	for protoFile, msgs := range fileGroups {
+		content, err := generateConverterFileCode(msgs)
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate converters for %s: %w", protoFile, err)
+		}
+
+		// Generate filename based on the proto file
+		// e.g., datastore/user.proto -> user_converters.go
+		filename := generateConverterFilenameFromProto(protoFile)
+
+		files = append(files, &GeneratedFile{
+			Path:    filename,
+			Content: content,
+		})
+	}
+
+	return &GenerateResult{Files: files}, nil
+}
+
+// generateConverterFilenameFromProto creates the converter filename from a proto file path.
+// e.g., "datastore/user.proto" -> "user_converters.go"
+func generateConverterFilenameFromProto(protoPath string) string {
+	// Extract base name without extension
+	baseName := protoPath
+	if idx := strings.LastIndex(baseName, "/"); idx != -1 {
+		baseName = baseName[idx+1:]
+	}
+	if idx := strings.LastIndex(baseName, ".proto"); idx != -1 {
+		baseName = baseName[:idx]
+	}
+	return baseName + "_converters.go"
+}
+
+// generateConverterFileCode generates the complete converter code for all messages in a proto file.
+func generateConverterFileCode(messages []*collector.MessageInfo) (string, error) {
+	if len(messages) == 0 {
+		return "", fmt.Errorf("no messages to generate converters for")
+	}
+
+	// Extract package name from the first message's target
+	packageName := extractPackageName(messages[0].TargetMessage)
+
+	// Build converter data for each Datastore message
+	var converters []*ConverterData
+	imports := make(map[string]bool)
+
+	for _, msg := range messages {
+		// Skip messages without a source (embedded types)
+		if msg.SourceMessage == nil {
+			continue
+		}
+
+		converterData := buildConverterData(msg)
+		converters = append(converters, converterData)
+
+		// Add import for source message package
+		sourceImportPath := string(msg.SourceMessage.GoIdent.GoImportPath)
+		imports[sourceImportPath] = true
+	}
+
+	// Build import list
+	var importList []string
+	for imp := range imports {
+		importList = append(importList, imp)
+	}
+
+	// Build template data
+	data := &ConverterFileData{
+		PackageName: packageName,
+		Imports:     importList,
+		Converters:  converters,
+	}
+
+	// Execute converter template
+	content, err := executeConverterTemplate(data)
+	if err != nil {
+		return "", fmt.Errorf("failed to execute converter template: %w", err)
+	}
+
+	return content, nil
+}
+
+// buildConverterData builds converter metadata for a single message.
+func buildConverterData(msgInfo *collector.MessageInfo) *ConverterData {
+	sourceMsg := msgInfo.SourceMessage
+	targetMsg := msgInfo.TargetMessage
+
+	sourceName := string(sourceMsg.Desc.Name())
+	targetName := string(targetMsg.Desc.Name())
+
+	// Extract source package name for imports
+	sourcePkgName := string(sourceMsg.GoIdent.GoImportPath.Ident("").GoName)
+
+	// Build field mappings
+	var fieldMappings []*FieldMapping
+	for _, targetField := range targetMsg.Fields {
+		// Find corresponding source field by name
+		var sourceField *protogen.Field
+		for _, sf := range sourceMsg.Fields {
+			if sf.Desc.Name() == targetField.Desc.Name() {
+				sourceField = sf
+				break
+			}
+		}
+
+		if sourceField == nil {
+			// Skip fields that don't exist in source (like Key field)
+			continue
+		}
+
+		mapping := &FieldMapping{
+			SourceField: fieldName(sourceField),
+			TargetField: fieldName(targetField),
+		}
+		fieldMappings = append(fieldMappings, mapping)
+	}
+
+	return &ConverterData{
+		SourceType:    sourceName,
+		TargetType:    targetName,
+		SourcePkgName: sourcePkgName,
+		FieldMappings: fieldMappings,
+	}
+}

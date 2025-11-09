@@ -59,10 +59,49 @@ type FieldData struct {
 	Tags string
 }
 
+// ConverterFileData contains all data for generating a converter file.
+type ConverterFileData struct {
+	// PackageName is the Go package name
+	PackageName string
+
+	// Imports is the list of import paths
+	Imports []string
+
+	// Converters is the list of converter functions to generate
+	Converters []*ConverterData
+}
+
+// ConverterData contains metadata for generating a pair of converter functions.
+type ConverterData struct {
+	// SourceType is the API message type name (e.g., "User")
+	SourceType string
+
+	// TargetType is the Datastore entity type name (e.g., "UserDatastore")
+	TargetType string
+
+	// SourcePkgName is the source package name for imports (e.g., "api")
+	SourcePkgName string
+
+	// FieldMappings is the list of field conversions
+	FieldMappings []*FieldMapping
+}
+
+// FieldMapping describes how to convert a single field.
+type FieldMapping struct {
+	// SourceField is the source field name
+	SourceField string
+
+	// TargetField is the target field name
+	TargetField string
+}
+
 // Embedded templates
 
 //go:embed templates/file.go.tmpl
 var fileTemplate string
+
+//go:embed templates/converters.go.tmpl
+var converterTemplate string
 
 // executeTemplate executes the file template with the given data.
 func executeTemplate(data *TemplateData) (string, error) {
@@ -74,6 +113,21 @@ func executeTemplate(data *TemplateData) (string, error) {
 	var buf bytes.Buffer
 	if err := tmpl.Execute(&buf, data); err != nil {
 		return "", fmt.Errorf("failed to execute template: %w", err)
+	}
+
+	return buf.String(), nil
+}
+
+// executeConverterTemplate executes the converter template with the given data.
+func executeConverterTemplate(data *ConverterFileData) (string, error) {
+	tmpl, err := template.New("converters").Parse(converterTemplate)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse converter template: %w", err)
+	}
+
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, data); err != nil {
+		return "", fmt.Errorf("failed to execute converter template: %w", err)
 	}
 
 	return buf.String(), nil

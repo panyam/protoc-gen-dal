@@ -132,6 +132,102 @@ func TestGenerateDatastore_SimpleMessage(t *testing.T) {
 	}
 }
 
+// TestGenerateConverters tests that converter functions are generated
+// for converting between API messages and Datastore entities.
+//
+// This test verifies:
+// - ToDatastore converter function with decorator parameter
+// - FromDatastore converter function with decorator parameter
+// - Reuses GORM converter infrastructure (built-in types, decorators)
+func TestGenerateConverters(t *testing.T) {
+	// Given: A User message with Datastore mapping
+	plugin := createTestPlugin(t, &testProtoSet{
+		files: []testFile{
+			// API proto
+			{
+				name: "api/v1/user.proto",
+				pkg:  "api.v1",
+				messages: []testMessage{
+					{
+						name: "User",
+						fields: []testField{
+							{name: "id", number: 1, typeName: "string"},
+							{name: "name", number: 2, typeName: "string"},
+							{name: "email", number: 3, typeName: "string"},
+						},
+					},
+				},
+			},
+			// Datastore DAL proto
+			{
+				name: "dal/v1/user_datastore.proto",
+				pkg:  "dal.v1",
+				messages: []testMessage{
+					{
+						name: "UserDatastore",
+						datastoreOpts: &dalv1.DatastoreOptions{
+							Source:    "api.v1.User",
+							Kind:      "User",
+							Namespace: "prod",
+						},
+						fields: []testField{
+							{name: "id", number: 1, typeName: "string"},
+							{name: "name", number: 2, typeName: "string"},
+							{name: "email", number: 3, typeName: "string"},
+						},
+					},
+				},
+			},
+		},
+	})
+
+	messages := collector.CollectMessages(plugin, collector.TargetDatastore)
+
+	// When: Generate converters
+	result, err := GenerateConverters(messages)
+
+	// Then: Should succeed
+	if err != nil {
+		t.Fatalf("GenerateConverters failed: %v", err)
+	}
+
+	if len(result.Files) == 0 {
+		t.Fatal("Expected at least one converter file")
+	}
+
+	converterCode := result.Files[0].Content
+
+	// Then: Should generate ToDatastore function
+	if !strings.Contains(converterCode, "func UserToUserDatastore(") {
+		t.Error("Expected UserToUserDatastore function")
+	}
+
+	// Should accept API message pointer as src
+	if !strings.Contains(converterCode, "src *") {
+		t.Error("Expected src parameter in ToDatastore")
+	}
+
+	// Should accept dest parameter for in-place conversion
+	if !strings.Contains(converterCode, "dest *UserDatastore") {
+		t.Error("Expected dest *UserDatastore parameter")
+	}
+
+	// Should accept decorator function
+	if !strings.Contains(converterCode, "decorator func(*") {
+		t.Error("Expected decorator parameter in ToDatastore")
+	}
+
+	// Should have FromDatastore converter
+	if !strings.Contains(converterCode, "func UserFromUserDatastore(") {
+		t.Error("Expected UserFromUserDatastore function")
+	}
+
+	// Should handle nil src
+	if !strings.Contains(converterCode, "if src == nil") {
+		t.Error("Expected nil check for src")
+	}
+}
+
 // Test helpers (copied from collector_test.go pattern)
 
 type testProtoSet struct {
