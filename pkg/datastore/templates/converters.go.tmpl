@@ -3,9 +3,11 @@ package {{ .PackageName }}
 
 import (
 {{ range .Imports }}
-	"{{ . }}"
+	{{ if .Alias }}{{ .Alias }} {{ end }}"{{ .Path }}"
 {{ end }}
+{{- if .HasRepeatedMessageConversions }}
 	"fmt"
+{{- end }}
 	"strconv"
 	"time"
 

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/panyam/protoc-gen-dal/tests/gen/go/api"
+	api "github.com/panyam/protoc-gen-dal/tests/gen/go/api"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 )

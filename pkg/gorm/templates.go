@@ -23,10 +23,16 @@ import (
 //go:embed templates/*.tmpl
 var templatesFS embed.FS
 
+// ImportSpec represents a Go import with optional alias.
+type ImportSpec struct {
+	Alias string // Optional alias (e.g., "models")
+	Path  string // Import path (e.g., "github.com/...")
+}
+
 // TemplateData contains all data needed to render a complete Go file.
 type TemplateData struct {
 	PackageName string
-	Imports     []string
+	Imports     []string // TODO: Change to []ImportSpec
 	Structs     []StructData // Multiple structs per file
 }
 
@@ -48,9 +54,10 @@ type FieldData struct {
 
 // ConverterFileData contains all data needed to render a converter file.
 type ConverterFileData struct {
-	PackageName string          // Package name (e.g., "gorm")
-	Imports     []string        // Import paths needed
-	Converters  []ConverterData // Converter functions to generate
+	PackageName                   string          // Package name (e.g., "gorm")
+	Imports                       []ImportSpec    // Import specs with optional aliases
+	Converters                    []ConverterData // Converter functions to generate
+	HasRepeatedMessageConversions bool            // Whether any converter has repeated message fields (needs fmt)
 }
 
 // ConverterData contains data for generating converter functions.

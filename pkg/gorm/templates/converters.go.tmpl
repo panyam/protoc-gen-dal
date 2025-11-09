@@ -3,8 +3,12 @@ package {{ .PackageName }}
 
 {{ if .Imports }}
 import (
-{{ range .Imports }}	"{{ . }}"
-{{ end }}	"fmt"
+{{- range .Imports }}
+	{{ if .Alias }}{{ .Alias }} {{ end }}"{{ .Path }}"
+{{- end }}
+{{- if .HasRepeatedMessageConversions }}
+	"fmt"
+{{- end }}
 	"time"
 
 	"google.golang.org/protobuf/types/known/timestamppb"

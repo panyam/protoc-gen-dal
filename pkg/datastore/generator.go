@@ -369,7 +369,7 @@ func generateConverterFileCode(messages []*collector.MessageInfo) (string, error
 
 	// Build converter data for each Datastore message
 	var converters []*ConverterData
-	imports := make(map[string]bool)
+	importsMap := make(map[string]ImportSpec) // Key: import path
 
 	for _, msg := range messages {
 		// Skip messages without a source (embedded types)
@@ -380,22 +380,41 @@ func generateConverterFileCode(messages []*collector.MessageInfo) (string, error
 		converterData := buildConverterData(msg, registry)
 		converters = append(converters, converterData)
 
-		// Add import for source message package
+		// Add import for source message package with alias
 		sourceImportPath := string(msg.SourceMessage.GoIdent.GoImportPath)
-		imports[sourceImportPath] = true
+		sourcePkgName := extractPackageName(msg.SourceMessage)
+		importsMap[sourceImportPath] = ImportSpec{
+			Alias: sourcePkgName,
+			Path:  sourceImportPath,
+		}
 	}
 
 	// Build import list
-	var importList []string
-	for imp := range imports {
+	var importList []ImportSpec
+	for _, imp := range importsMap {
 		importList = append(importList, imp)
+	}
+
+	// Check if we need fmt import (for repeated/map message conversions)
+	hasFmtNeeded := false
+	for _, conv := range converters {
+		for _, field := range conv.FieldMappings {
+			if (field.IsRepeated || field.IsMap) && field.ToTargetConverterFunc != "" {
+				hasFmtNeeded = true
+				break
+			}
+		}
+		if hasFmtNeeded {
+			break
+		}
 	}
 
 	// Build template data
 	data := &ConverterFileData{
-		PackageName: packageName,
-		Imports:     importList,
-		Converters:  converters,
+		PackageName:                   packageName,
+		Imports:                       importList,
+		Converters:                    converters,
+		HasRepeatedMessageConversions: hasFmtNeeded,
 	}
 
 	// Execute converter template

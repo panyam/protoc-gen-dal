@@ -59,16 +59,25 @@ type FieldData struct {
 	Tags string
 }
 
+// ImportSpec represents a Go import with optional alias.
+type ImportSpec struct {
+	Alias string // Optional alias (e.g., "models")
+	Path  string // Import path (e.g., "github.com/...")
+}
+
 // ConverterFileData contains all data for generating a converter file.
 type ConverterFileData struct {
 	// PackageName is the Go package name
 	PackageName string
 
-	// Imports is the list of import paths
-	Imports []string
+	// Imports is the list of import specs with optional aliases
+	Imports []ImportSpec
 
 	// Converters is the list of converter functions to generate
 	Converters []*ConverterData
+
+	// HasRepeatedMessageConversions indicates if any converter has repeated/map message conversions (needs fmt)
+	HasRepeatedMessageConversions bool
 }
 
 // ConverterData contains metadata for generating a pair of converter functions.

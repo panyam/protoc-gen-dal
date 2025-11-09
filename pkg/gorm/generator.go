@@ -243,7 +243,7 @@ func generateConverterFileCode(messages []*collector.MessageInfo) (string, error
 
 	// Build converter data for each GORM message
 	var converters []ConverterData
-	imports := make(map[string]bool)
+	importsMap := make(map[string]ImportSpec) // Key: import path
 
 	for _, msg := range messages {
 		// Skip messages without a source (embedded types)
@@ -254,33 +254,52 @@ func generateConverterFileCode(messages []*collector.MessageInfo) (string, error
 		converterData := buildConverterData(msg, registry)
 		converters = append(converters, converterData)
 
-		// Add import for source message package
+		// Add import for source message package with alias
 		sourceImportPath := string(msg.SourceMessage.GoIdent.GoImportPath)
-		imports[sourceImportPath] = true
+		sourcePkgName := extractPackageName(msg.SourceMessage)
+		importsMap[sourceImportPath] = ImportSpec{
+			Alias: sourcePkgName,
+			Path:  sourceImportPath,
+		}
 
 		// Collect custom converter package imports
-		collectCustomImports(msg.TargetMessage, imports)
+		collectCustomImportsWithAlias(msg.TargetMessage, importsMap)
 	}
 
 	// Build import list
-	var importList []string
-	for imp := range imports {
+	var importList []ImportSpec
+	for _, imp := range importsMap {
 		importList = append(importList, imp)
+	}
+
+	// Check if we need fmt import (for repeated/map message conversions)
+	hasFmtNeeded := false
+	for _, conv := range converters {
+		for _, field := range conv.FieldMappings {
+			if (field.IsRepeated || field.IsMap) && field.ToTargetConverterFunc != "" {
+				hasFmtNeeded = true
+				break
+			}
+		}
+		if hasFmtNeeded {
+			break
+		}
 	}
 
 	// Build template data
 	data := ConverterFileData{
-		PackageName: packageName,
-		Imports:     importList,
-		Converters:  converters,
+		PackageName:                   packageName,
+		Imports:                       importList,
+		Converters:                    converters,
+		HasRepeatedMessageConversions: hasFmtNeeded,
 	}
 
 	// Render the converter file template
 	return renderTemplate("converters.go.tmpl", data)
 }
 
-// collectCustomImports collects import paths from custom converter functions.
-func collectCustomImports(msg *protogen.Message, imports map[string]bool) {
+// collectCustomImportsWithAlias collects import specs from custom converter functions.
+func collectCustomImportsWithAlias(msg *protogen.Message, imports map[string]ImportSpec) {
 	for _, field := range msg.Fields {
 		opts := field.Desc.Options()
 		if opts == nil {
@@ -299,12 +318,22 @@ func collectCustomImports(msg *protogen.Message, imports map[string]bool) {
 
 		// Add to_func package
 		if colOpts.ToFunc != nil && colOpts.ToFunc.Package != "" {
-			imports[colOpts.ToFunc.Package] = true
+			pkgPath := colOpts.ToFunc.Package
+			pkgAlias := colOpts.ToFunc.Alias
+			if pkgAlias == "" {
+				pkgAlias = getPackageAlias(pkgPath)
+			}
+			imports[pkgPath] = ImportSpec{Alias: pkgAlias, Path: pkgPath}
 		}
 
 		// Add from_func package
 		if colOpts.FromFunc != nil && colOpts.FromFunc.Package != "" {
-			imports[colOpts.FromFunc.Package] = true
+			pkgPath := colOpts.FromFunc.Package
+			pkgAlias := colOpts.FromFunc.Alias
+			if pkgAlias == "" {
+				pkgAlias = getPackageAlias(pkgPath)
+			}
+			imports[pkgPath] = ImportSpec{Alias: pkgAlias, Path: pkgPath}
 		}
 	}
 }
