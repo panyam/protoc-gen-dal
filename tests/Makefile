@@ -7,6 +7,7 @@ buf: ensureenv clean
 	buf generate
 	goimports -w `find gen | grep "\.go"`
 	cd gen/gorm && go build -o /dev/null .
+	cd gen/datastore && go build -o /dev/null .
 	go test -v
 
 ensureenv:
