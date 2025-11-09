@@ -69,8 +69,8 @@
 - [x] Implement applicative conversion for primitive maps (direct assignment)
 - [x] **TEST**: Repeated message type with loop-based conversion (Library.Contributors)
 - [x] Implement loop-based converter application for []MessageType
-- [ ] **TEST**: Map with message value type with loop-based conversion
-- [ ] Implement loop-based converter application for map<K, MessageType>
+- [x] **TEST**: Map with message value type with loop-based conversion (Organization.Departments)
+- [x] Implement loop-based converter application for map<K, MessageType>
 
 ### 2.3 Foreign Keys
 - [ ] **TEST**: Foreign key annotation generates correct GORM tag
@@ -209,21 +209,23 @@
 - ✅ Optional keyword detection for proper GORM pointer generation
 - ✅ Warning system for missing nested converters
 - ✅ One file per proto file: `user_gorm.go` (structs) + `user_converters.go` (converters)
-- ✅ **Phase 2.2 (Almost Complete)**: Applicative conversion for maps and repeated fields
+- ✅ **Phase 2.2 (Complete)**: Applicative conversion for maps and repeated fields
   - ✅ `map<K, primitive>` uses direct assignment (e.g., `map[string]string`)
   - ✅ `[]primitive` uses direct assignment (e.g., `[]string`, `[]int32`)
   - ✅ `[]MessageType` uses loop-based conversion (e.g., `[]Author`)
+  - ✅ `map<K, MessageType>` uses loop-based conversion (e.g., `map[string]Author`)
   - ✅ Added Product proto with Tags, Categories, Metadata, Ratings fields
   - ✅ Added Library proto with Contributors ([]Author) field
-  - ✅ Tests verify round-trip conversion, nil handling, empty collections, repeated messages
+  - ✅ Added Organization proto with Departments (map<string, Author>) field
+  - ✅ Tests verify round-trip conversion, nil handling, empty collections for all types
   - ✅ Early return prevents incorrect message converter lookup for primitives
   - ✅ Loop-based conversion reuses existing ConversionType enum - no new types needed
-  - ⏳ `map<K, MessageType>` loop-based conversion (TODO)
+  - ✅ Fixed protoToGoType to handle map<K, MessageType> properly (use buildStructName for message values)
 
 **Generated Code:**
 From `tests/protos/gorm/user.proto`:
-- `user_gorm.go`: 8 GORM structs (UserGORM, UserWithPermissions, UserWithCustomTimestamps, UserWithIndexes, UserWithDefaults, AuthorGORM, BlogGORM, ProductGORM, LibraryGORM)
-- `user_converters.go`: 16 converter functions (To/From for each type)
+- `user_gorm.go`: 10 GORM structs (UserGORM, UserWithPermissions, UserWithCustomTimestamps, UserWithIndexes, UserWithDefaults, AuthorGORM, BlogGORM, ProductGORM, LibraryGORM, OrganizationGORM)
+- `user_converters.go`: 20 converter functions (To/From for each type)
 
 **Converter Features:**
 - Smart field mapping with ConversionType categorization
@@ -235,13 +237,12 @@ From `tests/protos/gorm/user.proto`:
 - **NEW**: Applicative conversion - check contained types in maps/repeated fields
   - Primitive values → direct assignment (copy entire map/slice)
   - Message values in slices → loop-based conversion with element converter
-  - Message values in maps → loop-based conversion (TODO)
+  - Message values in maps → loop-based conversion with value converter
 
 **Next:**
-1. **Phase 2.2 (Complete)**: Loop-based conversion for `map<K, MessageType>`
-2. **Phase 2.3**: Foreign key support with cross-file resolution
-3. **Phase 2.4**: Composite keys
-4. **Phase 3**: Additional targets (postgres-raw, firestore)
+1. **Phase 2.3**: Foreign key support with cross-file resolution
+2. **Phase 2.4**: Composite keys
+3. **Phase 3**: Additional targets (postgres-raw, firestore)
 
 ## Notes
 

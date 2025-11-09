@@ -122,8 +122,26 @@ func (*LibraryGORM) TableName() string {
 	return "libraries"
 }
 
+// OrganizationGORM is the GORM model for api.Organization
+type OrganizationGORM struct {
+	Id          uint32                `gorm:"primaryKey;autoIncrement"`
+	Name        string                `gorm:"type:varchar(255);not null"`
+	Departments map[string]AuthorGORM `gorm:"type:jsonb"`
+}
+
+// TableName returns the table name for OrganizationGORM
+func (*OrganizationGORM) TableName() string {
+	return "organizations"
+}
+
 // MetadataEntry
 type MetadataEntry struct {
 	Key   string
 	Value string
+}
+
+// DepartmentsEntry
+type DepartmentsEntry struct {
+	Key   string
+	Value AuthorGORM
 }

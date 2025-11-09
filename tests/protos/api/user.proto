@@ -49,3 +49,10 @@ message Library {
   string name = 2;
   repeated Author contributors = 3;   // List of authors
 }
+
+// Organization demonstrates map with message values
+message Organization {
+  uint32 id = 1;
+  string name = 2;
+  map<string, Author> departments = 3;  // Map of department name to department head
+}

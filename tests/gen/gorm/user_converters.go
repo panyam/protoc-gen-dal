@@ -680,3 +680,87 @@ func LibraryFromLibraryGORM(
 
 	return out, nil
 }
+
+// OrganizationToOrganizationGORM converts a api.Organization to OrganizationGORM.
+// The optional decorator function allows custom field transformations.
+func OrganizationToOrganizationGORM(
+	src *api.Organization,
+	dest *OrganizationGORM,
+	decorator func(*api.Organization, *OrganizationGORM) error,
+) (out *OrganizationGORM, err error) {
+	if src == nil {
+		return nil, nil
+	}
+	if dest == nil {
+		dest = &OrganizationGORM{}
+	}
+	out = dest
+
+	out.Id = src.Id
+
+	out.Name = src.Name
+
+	if src.Departments != nil {
+		out.Departments = make(map[string]AuthorGORM, len(src.Departments))
+		for key, value := range src.Departments {
+			var converted AuthorGORM
+			_, err = AuthorToAuthorGORM(value, &converted, nil)
+
+			if err != nil {
+				return nil, fmt.Errorf("converting Departments[%s]: %w", key, err)
+			}
+
+			out.Departments[key] = converted
+		}
+	}
+
+	// Apply decorator if provided
+	if decorator != nil {
+		if err := decorator(src, dest); err != nil {
+			return nil, err
+		}
+	}
+
+	return dest, nil
+}
+
+// OrganizationFromOrganizationGORM converts a OrganizationGORM back to api.Organization.
+// The optional decorator function allows custom field transformations.
+func OrganizationFromOrganizationGORM(
+	dest *api.Organization,
+	src *OrganizationGORM,
+	decorator func(dest *api.Organization, src *OrganizationGORM) error,
+) (out *api.Organization, err error) {
+	if src == nil {
+		return nil, nil
+	}
+	if dest == nil {
+		dest = &api.Organization{}
+	}
+	out = dest
+
+	out.Id = src.Id
+
+	out.Name = src.Name
+
+	if src.Departments != nil {
+		out.Departments = make(map[string]*api.Author, len(src.Departments))
+		for key, value := range src.Departments {
+			out.Departments[key], err = AuthorFromAuthorGORM(nil, &value, nil)
+
+			if err != nil {
+				return nil, fmt.Errorf("converting Departments[%s]: %w", key, err)
+			}
+
+		}
+	}
+
+	// Apply decorator if provided
+	if decorator != nil {
+		if err := decorator(dest, src); err != nil {
+			return nil, err
+		}
+	}
+
+	return out, nil
+}

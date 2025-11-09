@@ -347,3 +347,143 @@ func TestLibraryConversion_NilContributors(t *testing.T) {
 		t.Errorf("Round-trip: Expected nil Contributors, got %v", apiLibrary.Contributors)
 	}
 }
+
+// TestOrganizationConversion_MapMessageType verifies that map<K, MessageType> fields
+// are correctly converted using loop-based converter application.
+func TestOrganizationConversion_MapMessageType(t *testing.T) {
+	// Create a source Organization with multiple departments
+	src := &api.Organization{
+		Id:   1,
+		Name: "Tech Corp",
+		Departments: map[string]*api.Author{
+			"engineering": {Name: "Alice Smith", Email: "alice@example.com"},
+			"marketing":   {Name: "Bob Jones", Email: "bob@example.com"},
+			"sales":       {Name: "Carol White", Email: "carol@example.com"},
+		},
+	}
+
+	// Convert to GORM
+	gormOrg, err := gorm.OrganizationToOrganizationGORM(src, nil, nil)
+	if err != nil {
+		t.Fatalf("OrganizationToOrganizationGORM failed: %v", err)
+	}
+
+	// Verify basic fields
+	if gormOrg.Id != src.Id {
+		t.Errorf("Id mismatch: got %d, want %d", gormOrg.Id, src.Id)
+	}
+
+	if gormOrg.Name != src.Name {
+		t.Errorf("Name mismatch: got %s, want %s", gormOrg.Name, src.Name)
+	}
+
+	// Verify Departments (map<string, MessageType>)
+	if len(gormOrg.Departments) != len(src.Departments) {
+		t.Fatalf("Departments length mismatch: got %d, want %d", len(gormOrg.Departments), len(src.Departments))
+	}
+
+	// Check each department was converted correctly
+	for key, srcAuthor := range src.Departments {
+		gormAuthor, exists := gormOrg.Departments[key]
+		if !exists {
+			t.Errorf("Department %s missing in GORM struct", key)
+			continue
+		}
+		if gormAuthor.Name != srcAuthor.Name {
+			t.Errorf("Departments[%s].Name mismatch: got %s, want %s", key, gormAuthor.Name, srcAuthor.Name)
+		}
+		if gormAuthor.Email != srcAuthor.Email {
+			t.Errorf("Departments[%s].Email mismatch: got %s, want %s", key, gormAuthor.Email, srcAuthor.Email)
+		}
+	}
+
+	// Convert back to API
+	apiOrg, err := gorm.OrganizationFromOrganizationGORM(nil, gormOrg, nil)
+	if err != nil {
+		t.Fatalf("OrganizationFromOrganizationGORM failed: %v", err)
+	}
+
+	// Verify round-trip conversion
+	if apiOrg.Id != src.Id {
+		t.Errorf("Round-trip Id mismatch: got %d, want %d", apiOrg.Id, src.Id)
+	}
+
+	if apiOrg.Name != src.Name {
+		t.Errorf("Round-trip Name mismatch: got %s, want %s", apiOrg.Name, src.Name)
+	}
+
+	// Verify Departments round-trip
+	if len(apiOrg.Departments) != len(src.Departments) {
+		t.Fatalf("Round-trip Departments length mismatch: got %d, want %d", len(apiOrg.Departments), len(src.Departments))
+	}
+
+	for key, srcAuthor := range src.Departments {
+		apiAuthor, exists := apiOrg.Departments[key]
+		if !exists {
+			t.Errorf("Round-trip: Department %s missing", key)
+			continue
+		}
+		if apiAuthor.Name != srcAuthor.Name {
+			t.Errorf("Round-trip Departments[%s].Name mismatch: got %s, want %s", key, apiAuthor.Name, srcAuthor.Name)
+		}
+		if apiAuthor.Email != srcAuthor.Email {
+			t.Errorf("Round-trip Departments[%s].Email mismatch: got %s, want %s", key, apiAuthor.Email, srcAuthor.Email)
+		}
+	}
+}
+
+// TestOrganizationConversion_EmptyDepartments verifies empty map handling.
+func TestOrganizationConversion_EmptyDepartments(t *testing.T) {
+	src := &api.Organization{
+		Id:          2,
+		Name:        "Empty Org",
+		Departments: map[string]*api.Author{}, // empty map
+	}
+
+	gormOrg, err := gorm.OrganizationToOrganizationGORM(src, nil, nil)
+	if err != nil {
+		t.Fatalf("OrganizationToOrganizationGORM failed: %v", err)
+	}
+
+	if len(gormOrg.Departments) != 0 {
+		t.Errorf("Expected empty Departments, got %v", gormOrg.Departments)
+	}
+
+	// Convert back
+	apiOrg, err := gorm.OrganizationFromOrganizationGORM(nil, gormOrg, nil)
+	if err != nil {
+		t.Fatalf("OrganizationFromOrganizationGORM failed: %v", err)
+	}
+
+	if !reflect.DeepEqual(apiOrg.Departments, src.Departments) {
+		t.Errorf("Round-trip: Expected empty Departments, got %v", apiOrg.Departments)
+	}
+}
+
+// TestOrganizationConversion_NilDepartments verifies nil map handling.
+func TestOrganizationConversion_NilDepartments(t *testing.T) {
+	src := &api.Organization{
+		Id:          3,
+		Name:        "Nil Org",
+		Departments: nil, // nil map
+	}
+
+	gormOrg, err := gorm.OrganizationToOrganizationGORM(src, nil, nil)
+	if err != nil {
+		t.Fatalf("OrganizationToOrganizationGORM failed: %v", err)
+	}
+
+	if gormOrg.Departments != nil {
+		t.Errorf("Expected nil Departments, got %v", gormOrg.Departments)
+	}
+
+	// Convert back
+	apiOrg, err := gorm.OrganizationFromOrganizationGORM(nil, gormOrg, nil)
+	if err != nil {
+		t.Fatalf("OrganizationFromOrganizationGORM failed: %v", err)
+	}
+
+	if apiOrg.Departments != nil {
+		t.Errorf("Round-trip: Expected nil Departments, got %v", apiOrg.Departments)
+	}
+}

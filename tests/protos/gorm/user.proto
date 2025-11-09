@@ -276,3 +276,24 @@ message LibraryGorm {
     gorm_tags: ["type:jsonb"]
   }];
 }
+
+// OrganizationGorm demonstrates map with message values stored as JSONB
+message OrganizationGorm {
+  option (dal.v1.gorm) = {
+    source: "api.Organization"
+    table: "organizations"
+  };
+
+  uint32 id = 1 [(dal.v1.column) = {
+    gorm_tags: ["primaryKey", "autoIncrement"]
+  }];
+
+  string name = 2 [(dal.v1.column) = {
+    gorm_tags: ["type:varchar(255)", "not null"]
+  }];
+
+  // Map with message value type as JSONB
+  map<string, AuthorGorm> departments = 3 [(dal.v1.column) = {
+    gorm_tags: ["type:jsonb"]
+  }];
+}

@@ -764,7 +764,16 @@ func protoToGoType(field *protogen.Field) string {
 		valueField := mapEntry.Fields[1] // maps always have value at index 1
 
 		keyType := protoScalarToGo(keyField.Desc.Kind().String())
-		valueType := protoScalarToGo(valueField.Desc.Kind().String())
+
+		// Check if value is a message type or scalar
+		var valueType string
+		if valueField.Desc.Kind().String() == "message" {
+			// Map value is a message type - use the GORM struct name
+			valueType = buildStructName(valueField.Message)
+		} else {
+			// Map value is a scalar type
+			valueType = protoScalarToGo(valueField.Desc.Kind().String())
+		}
 
 		return fmt.Sprintf("map[%s]%s", keyType, valueType)
 	}

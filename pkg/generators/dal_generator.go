@@ -195,7 +195,7 @@ func (g *DALGenerator) generateSQLConverters(genFile *protogen.GeneratedFile, me
 	// Generate ToRow converter
 	genFile.P("// ", messageName, "To", capitalize(dbType), "Row converts a ", messageName, " to SQL row values")
 	genFile.P("// Table: ", tableName)
-	genFile.P("func ", messageName, "To", capitalize(dbType), "Row(msg *", messageType, ") (columns []string, values []interface{}) {")
+	genFile.P("func ", messageName, "To", capitalize(dbType), "Row(msg *", messageType, ") (columns []string, values []any) {")
 	genFile.P("\tcolumns = []string{")
 	for _, field := range message.Fields {
 		if g.shouldSkipField(field) {
@@ -206,7 +206,7 @@ func (g *DALGenerator) generateSQLConverters(genFile *protogen.GeneratedFile, me
 	}
 	genFile.P("\t}")
 	genFile.P()
-	genFile.P("\tvalues = []interface{}{")
+	genFile.P("\tvalues = []any{")
 	for _, field := range message.Fields {
 		if g.shouldSkipField(field) {
 			continue
@@ -292,8 +292,8 @@ func (g *DALGenerator) generateRedisConverters(genFile *protogen.GeneratedFile, 
 	messageType := genFile.QualifiedGoIdent(message.GoIdent)
 
 	genFile.P("// ", messageName, "ToRedisHash converts a ", messageName, " to Redis hash")
-	genFile.P("func ", messageName, "ToRedisHash(msg *", messageType, ") map[string]interface{} {")
-	genFile.P("\thash := map[string]interface{}{")
+	genFile.P("func ", messageName, "ToRedisHash(msg *", messageType, ") map[string]any {")
+	genFile.P("\thash := map[string]any{")
 	for _, field := range message.Fields {
 		fieldName := toLowerCamelCase(field.GoName)
 		genFile.P("\t\t\"", fieldName, "\": msg.", field.GoName, ",")

@@ -743,6 +743,68 @@ func (x *LibraryGorm) GetContributors() []*AuthorGorm {
 	return nil
 }
 
+// OrganizationGorm demonstrates map with message values stored as JSONB
+type OrganizationGorm struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Id    uint32                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name  string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	// Map with message value type as JSONB
+	Departments   map[string]*AuthorGorm `protobuf:"bytes,3,rep,name=departments,proto3" json:"departments,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *OrganizationGorm) Reset() {
+	*x = OrganizationGorm{}
+	mi := &file_gorm_user_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OrganizationGorm) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OrganizationGorm) ProtoMessage() {}
+
+func (x *OrganizationGorm) ProtoReflect() protoreflect.Message {
+	mi := &file_gorm_user_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OrganizationGorm.ProtoReflect.Descriptor instead.
+func (*OrganizationGorm) Descriptor() ([]byte, []int) {
+	return file_gorm_user_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *OrganizationGorm) GetId() uint32 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *OrganizationGorm) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *OrganizationGorm) GetDepartments() map[string]*AuthorGorm {
+	if x != nil {
+		return x.Departments
+	}
+	return nil
+}
+
 var File_gorm_user_proto protoreflect.FileDescriptor
 
 const file_gorm_user_proto_rawDesc = "" +
@@ -839,7 +901,17 @@ const file_gorm_user_proto_rawDesc = "" +
 	"\x04name\x18\x02 \x01(\tB!\x92\xa6\x1d\x1dR\x11type:varchar(255)R\bnot nullR\x04name\x12F\n" +
 	"\fcontributors\x18\x03 \x03(\v2\x10.gorm.AuthorGormB\x10\x92\xa6\x1d\fR\n" +
 	"type:jsonbR\fcontributors:\x1cʦ\x1d\x18\n" +
-	"\vapi.Library\x12\tlibrariesBy\n" +
+	"\vapi.Library\x12\tlibraries\"\xd0\x02\n" +
+	"\x10OrganizationGorm\x12/\n" +
+	"\x02id\x18\x01 \x01(\rB\x1f\x92\xa6\x1d\x1bR\n" +
+	"primaryKeyR\rautoIncrementR\x02id\x125\n" +
+	"\x04name\x18\x02 \x01(\tB!\x92\xa6\x1d\x1dR\x11type:varchar(255)R\bnot nullR\x04name\x12[\n" +
+	"\vdepartments\x18\x03 \x03(\v2'.gorm.OrganizationGorm.DepartmentsEntryB\x10\x92\xa6\x1d\fR\n" +
+	"type:jsonbR\vdepartments\x1aP\n" +
+	"\x10DepartmentsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12&\n" +
+	"\x05value\x18\x02 \x01(\v2\x10.gorm.AuthorGormR\x05value:\x028\x01:%ʦ\x1d!\n" +
+	"\x10api.Organization\x12\rorganizationsBy\n" +
 	"\bcom.gormB\tUserProtoP\x01Z2github.com/panyam/protoc-gen-dal/tests/gen/go/gorm\xa2\x02\x03GXX\xaa\x02\x04Gorm\xca\x02\x04Gorm\xe2\x02\x10Gorm\\GPBMetadata\xea\x02\x04Gormb\x06proto3"
 
 var (
@@ -854,7 +926,7 @@ func file_gorm_user_proto_rawDescGZIP() []byte {
 	return file_gorm_user_proto_rawDescData
 }
 
-var file_gorm_user_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_gorm_user_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_gorm_user_proto_goTypes = []any{
 	(*UserGorm)(nil),                 // 0: gorm.UserGorm
 	(*UserWithPermissions)(nil),      // 1: gorm.UserWithPermissions
@@ -865,17 +937,21 @@ var file_gorm_user_proto_goTypes = []any{
 	(*BlogGorm)(nil),                 // 6: gorm.BlogGorm
 	(*ProductGorm)(nil),              // 7: gorm.ProductGorm
 	(*LibraryGorm)(nil),              // 8: gorm.LibraryGorm
-	nil,                              // 9: gorm.ProductGorm.MetadataEntry
+	(*OrganizationGorm)(nil),         // 9: gorm.OrganizationGorm
+	nil,                              // 10: gorm.ProductGorm.MetadataEntry
+	nil,                              // 11: gorm.OrganizationGorm.DepartmentsEntry
 }
 var file_gorm_user_proto_depIdxs = []int32{
-	5, // 0: gorm.BlogGorm.author:type_name -> gorm.AuthorGorm
-	9, // 1: gorm.ProductGorm.metadata:type_name -> gorm.ProductGorm.MetadataEntry
-	5, // 2: gorm.LibraryGorm.contributors:type_name -> gorm.AuthorGorm
-	3, // [3:3] is the sub-list for method output_type
-	3, // [3:3] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	5,  // 0: gorm.BlogGorm.author:type_name -> gorm.AuthorGorm
+	10, // 1: gorm.ProductGorm.metadata:type_name -> gorm.ProductGorm.MetadataEntry
+	5,  // 2: gorm.LibraryGorm.contributors:type_name -> gorm.AuthorGorm
+	11, // 3: gorm.OrganizationGorm.departments:type_name -> gorm.OrganizationGorm.DepartmentsEntry
+	5,  // 4: gorm.OrganizationGorm.DepartmentsEntry.value:type_name -> gorm.AuthorGorm
+	5,  // [5:5] is the sub-list for method output_type
+	5,  // [5:5] is the sub-list for method input_type
+	5,  // [5:5] is the sub-list for extension type_name
+	5,  // [5:5] is the sub-list for extension extendee
+	0,  // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_gorm_user_proto_init() }
@@ -889,7 +965,7 @@ func file_gorm_user_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_gorm_user_proto_rawDesc), len(file_gorm_user_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   10,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
