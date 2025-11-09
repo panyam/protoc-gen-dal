@@ -85,6 +85,49 @@ func Generate(messages []*collector.MessageInfo) (*GenerateResult, error) {
 	return &GenerateResult{Files: files}, nil
 }
 
+// GenerateConverters generates converter functions for transforming between
+// API messages and GORM structs.
+//
+// This generates ToGORM and FromGORM converter functions with decorator support:
+// - ToGORM: Converts API message to GORM struct
+// - FromGORM: Converts GORM struct back to API message
+//
+// Parameters:
+//   - messages: Collected GORM messages from the collector
+//
+// Returns:
+//   - GenerateResult containing converter files (*_converters.go)
+//   - error if generation fails
+func GenerateConverters(messages []*collector.MessageInfo) (*GenerateResult, error) {
+	if len(messages) == 0 {
+		return &GenerateResult{Files: []*GeneratedFile{}}, nil
+	}
+
+	// Group messages by their source proto file
+	fileGroups := groupMessagesByFile(messages)
+
+	var files []*GeneratedFile
+
+	// Generate one converter file per proto file
+	for protoFile, msgs := range fileGroups {
+		content, err := generateConverterFileCode(msgs)
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate converters for %s: %w", protoFile, err)
+		}
+
+		// Generate filename based on the proto file
+		// e.g., gorm/user.proto -> user_converters.go
+		filename := generateConverterFilenameFromProto(protoFile)
+
+		files = append(files, &GeneratedFile{
+			Path:    filename,
+			Content: content,
+		})
+	}
+
+	return &GenerateResult{Files: files}, nil
+}
+
 // groupMessagesByFile groups messages by their source proto file path.
 func groupMessagesByFile(messages []*collector.MessageInfo) map[string][]*collector.MessageInfo {
 	groups := make(map[string][]*collector.MessageInfo)
@@ -109,6 +152,20 @@ func generateFilenameFromProto(protoPath string) string {
 		baseName = baseName[:idx]
 	}
 	return baseName + "_gorm.go"
+}
+
+// generateConverterFilenameFromProto creates the converter filename from a proto file path.
+// e.g., "gorm/user.proto" -> "user_converters.go"
+func generateConverterFilenameFromProto(protoPath string) string {
+	// Extract base name without extension
+	baseName := protoPath
+	if idx := strings.LastIndex(baseName, "/"); idx != -1 {
+		baseName = baseName[idx+1:]
+	}
+	if idx := strings.LastIndex(baseName, ".proto"); idx != -1 {
+		baseName = baseName[:idx]
+	}
+	return baseName + "_converters.go"
 }
 
 // generateFileCode generates the complete Go code for all messages in a proto file.
@@ -171,6 +228,86 @@ func generateFileCode(messages []*collector.MessageInfo) (string, error) {
 	return renderTemplate("file.go.tmpl", data)
 }
 
+// generateConverterFileCode generates converter functions for all messages in a proto file.
+func generateConverterFileCode(messages []*collector.MessageInfo) (string, error) {
+	if len(messages) == 0 {
+		return "", fmt.Errorf("no messages to generate converters for")
+	}
+
+	// Extract package name from the first message's target
+	packageName := extractPackageName(messages[0].TargetMessage)
+
+	// Build converter registry to track available converters
+	registry := newConverterRegistry(messages)
+
+	// Build converter data for each GORM message
+	var converters []ConverterData
+	imports := make(map[string]bool)
+
+	for _, msg := range messages {
+		// Skip messages without a source (embedded types)
+		if msg.SourceMessage == nil {
+			continue
+		}
+
+		converterData := buildConverterData(msg, registry)
+		converters = append(converters, converterData)
+
+		// Add import for source message package
+		sourceImportPath := string(msg.SourceMessage.GoIdent.GoImportPath)
+		imports[sourceImportPath] = true
+
+		// Collect custom converter package imports
+		collectCustomImports(msg.TargetMessage, imports)
+	}
+
+	// Build import list
+	var importList []string
+	for imp := range imports {
+		importList = append(importList, imp)
+	}
+
+	// Build template data
+	data := ConverterFileData{
+		PackageName: packageName,
+		Imports:     importList,
+		Converters:  converters,
+	}
+
+	// Render the converter file template
+	return renderTemplate("converters.go.tmpl", data)
+}
+
+// collectCustomImports collects import paths from custom converter functions.
+func collectCustomImports(msg *protogen.Message, imports map[string]bool) {
+	for _, field := range msg.Fields {
+		opts := field.Desc.Options()
+		if opts == nil {
+			continue
+		}
+
+		v := proto.GetExtension(opts, dalv1.E_Column)
+		if v == nil {
+			continue
+		}
+
+		colOpts, ok := v.(*dalv1.ColumnOptions)
+		if !ok || colOpts == nil {
+			continue
+		}
+
+		// Add to_func package
+		if colOpts.ToFunc != nil && colOpts.ToFunc.Package != "" {
+			imports[colOpts.ToFunc.Package] = true
+		}
+
+		// Add from_func package
+		if colOpts.FromFunc != nil && colOpts.FromFunc.Package != "" {
+			imports[colOpts.FromFunc.Package] = true
+		}
+	}
+}
+
 // collectEmbeddedTypes collects all message-type fields from a message.
 func collectEmbeddedTypes(msg *protogen.Message, types map[string]*protogen.Message) {
 	for _, field := range msg.Fields {
@@ -222,6 +359,231 @@ func buildStructData(msg *collector.MessageInfo) (StructData, error) {
 		TableName:  msg.TableName,
 		Fields:     fields,
 	}, nil
+}
+
+// converterRegistry tracks which converter functions are being generated.
+// Used to determine if nested converter calls are available.
+type converterRegistry struct {
+	converters map[string]bool // key: "SourceType:GormType"
+}
+
+// newConverterRegistry creates a new converter registry from messages.
+func newConverterRegistry(messages []*collector.MessageInfo) *converterRegistry {
+	reg := &converterRegistry{
+		converters: make(map[string]bool),
+	}
+
+	for _, msg := range messages {
+		if msg.SourceMessage == nil {
+			continue
+		}
+		sourceType := string(msg.SourceMessage.Desc.Name())
+		gormType := buildStructName(msg.TargetMessage)
+		key := fmt.Sprintf("%s:%s", sourceType, gormType)
+		reg.converters[key] = true
+	}
+
+	return reg
+}
+
+// hasConverter checks if a converter exists for the given source and gorm types.
+func (r *converterRegistry) hasConverter(sourceType, gormType string) bool {
+	key := fmt.Sprintf("%s:%s", sourceType, gormType)
+	return r.converters[key]
+}
+
+// buildConverterData builds converter function data from a MessageInfo.
+func buildConverterData(msg *collector.MessageInfo, registry *converterRegistry) ConverterData {
+	// Extract source type name and package
+	sourceTypeName := string(msg.SourceMessage.Desc.Name())
+	sourcePkgName := extractPackageName(msg.SourceMessage)
+
+	// Build GORM type name (e.g., "UserGORM", "UserWithPermissions")
+	gormTypeName := buildStructName(msg.TargetMessage)
+
+	// Build field mappings between source and GORM with built-in conversions
+	var fieldMappings []FieldMappingData
+
+	// Create a map of source fields by name for quick lookup
+	sourceFields := make(map[string]*protogen.Field)
+	for _, field := range msg.SourceMessage.Fields {
+		sourceFields[field.GoName] = field
+	}
+
+	for _, gormField := range msg.TargetMessage.Fields {
+		// Check if source has a field with the same name
+		sourceField, exists := sourceFields[gormField.GoName]
+		if !exists {
+			// Field only exists in GORM (e.g., DeletedAt) - skip, decorator will handle
+			continue
+		}
+
+		// Generate conversion code based on type compatibility
+		toGormCode, fromGormCode := buildFieldConversion(sourceField, gormField, registry)
+		if toGormCode == "" {
+			// No conversion possible - skip, decorator must handle
+			continue
+		}
+
+		fieldMappings = append(fieldMappings, FieldMappingData{
+			SourceField:  gormField.GoName,
+			GormField:    gormField.GoName,
+			ToGormCode:   toGormCode,
+			FromGormCode: fromGormCode,
+		})
+	}
+
+	return ConverterData{
+		SourceType:     sourceTypeName,
+		SourcePkgName:  sourcePkgName,
+		GormType:       gormTypeName,
+		FieldMappings:  fieldMappings,
+	}
+}
+
+// buildFieldConversion generates conversion code for a field pair.
+// Returns toGormCode and fromGormCode. Empty string means no conversion possible.
+func buildFieldConversion(sourceField, gormField *protogen.Field, registry *converterRegistry) (toGormCode, fromGormCode string) {
+	sourceKind := sourceField.Desc.Kind().String()
+	gormKind := gormField.Desc.Kind().String()
+	fieldName := sourceField.GoName
+
+	// Check for custom converter functions in column options (highest priority)
+	toGormCode, fromGormCode = extractCustomConverters(gormField, fieldName)
+	if toGormCode != "" {
+		return toGormCode, fromGormCode
+	}
+
+	// Same types - direct assignment
+	if sourceKind == gormKind {
+		return fmt.Sprintf("api.%s", fieldName), fmt.Sprintf("gorm.%s", fieldName)
+	}
+
+	// Timestamp (message) to int64 (Unix seconds)
+	if sourceKind == "message" && gormKind == "int64" {
+		if sourceField.Message != nil && string(sourceField.Message.Desc.FullName()) == "google.protobuf.Timestamp" {
+			return fmt.Sprintf("timestampToInt64(api.%s)", fieldName),
+				fmt.Sprintf("int64ToTimestamp(gorm.%s)", fieldName)
+		}
+	}
+
+	// Both are messages - check if nested converter exists
+	if sourceKind == "message" && gormKind == "message" {
+		if sourceField.Message != nil && gormField.Message != nil {
+			sourceTypeName := string(sourceField.Message.Desc.Name())
+			gormTypeName := buildStructName(gormField.Message)
+
+			// Check if converter exists for this nested type
+			if registry.hasConverter(sourceTypeName, gormTypeName) {
+				// Generate converter function calls with nil decorator
+				// ToGORM: mustConvertAuthorToAuthorGORM(api.Author)
+				// FromGORM: mustConvertAuthorFromAuthorGORM(&gorm.Author)
+				toGormCode = fmt.Sprintf("mustConvert%sTo%s(api.%s)", sourceTypeName, gormTypeName, fieldName)
+				fromGormCode = fmt.Sprintf("mustConvert%sFrom%s(&gorm.%s)", sourceTypeName, gormTypeName, fieldName)
+				return toGormCode, fromGormCode
+			}
+			// No converter available - skip, decorator must handle
+			return "", ""
+		}
+	}
+
+	// Numeric conversions
+	if isNumericKind(sourceKind) && isNumericKind(gormKind) {
+		return fmt.Sprintf("%s(api.%s)", protoKindToGoType(gormKind), fieldName),
+			fmt.Sprintf("%s(gorm.%s)", protoKindToGoType(sourceKind), fieldName)
+	}
+
+	// No built-in conversion available
+	return "", ""
+}
+
+// extractCustomConverters extracts custom converter functions from column options.
+// Returns conversion code for to_func and from_func if specified.
+func extractCustomConverters(field *protogen.Field, fieldName string) (toGormCode, fromGormCode string) {
+	opts := field.Desc.Options()
+	if opts == nil {
+		return "", ""
+	}
+
+	// Get column options
+	v := proto.GetExtension(opts, dalv1.E_Column)
+	if v == nil {
+		return "", ""
+	}
+
+	colOpts, ok := v.(*dalv1.ColumnOptions)
+	if !ok || colOpts == nil {
+		return "", ""
+	}
+
+	// Extract to_func
+	if colOpts.ToFunc != nil && colOpts.ToFunc.Function != "" {
+		pkgAlias := colOpts.ToFunc.Alias
+		if pkgAlias == "" {
+			// Use last segment of package path as alias
+			pkgAlias = getPackageAlias(colOpts.ToFunc.Package)
+		}
+		toGormCode = fmt.Sprintf("%s.%s(api.%s)", pkgAlias, colOpts.ToFunc.Function, fieldName)
+	}
+
+	// Extract from_func
+	if colOpts.FromFunc != nil && colOpts.FromFunc.Function != "" {
+		pkgAlias := colOpts.FromFunc.Alias
+		if pkgAlias == "" {
+			pkgAlias = getPackageAlias(colOpts.FromFunc.Package)
+		}
+		fromGormCode = fmt.Sprintf("%s.%s(gorm.%s)", pkgAlias, colOpts.FromFunc.Function, fieldName)
+	}
+
+	return toGormCode, fromGormCode
+}
+
+// getPackageAlias returns the default alias for a package path.
+// E.g., "github.com/myapp/converters" -> "converters"
+func getPackageAlias(pkgPath string) string {
+	if idx := strings.LastIndex(pkgPath, "/"); idx != -1 {
+		return pkgPath[idx+1:]
+	}
+	return pkgPath
+}
+
+// isNumericKind checks if a proto kind is numeric.
+func isNumericKind(kind string) bool {
+	numericKinds := map[string]bool{
+		"int32":  true,
+		"int64":  true,
+		"uint32": true,
+		"uint64": true,
+		"sint32": true,
+		"sint64": true,
+		"fixed32": true,
+		"fixed64": true,
+		"sfixed32": true,
+		"sfixed64": true,
+		"float":  true,
+		"double": true,
+	}
+	return numericKinds[kind]
+}
+
+// protoKindToGoType converts a proto kind to its Go type for casting.
+func protoKindToGoType(kind string) string {
+	switch kind {
+	case "int32", "sint32", "sfixed32":
+		return "int32"
+	case "int64", "sint64", "sfixed64":
+		return "int64"
+	case "uint32", "fixed32":
+		return "uint32"
+	case "uint64", "fixed64":
+		return "uint64"
+	case "float":
+		return "float32"
+	case "double":
+		return "float64"
+	default:
+		return kind
+	}
 }
 
 // buildStructName generates the GORM struct name from the target message name.

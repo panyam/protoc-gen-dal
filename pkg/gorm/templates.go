@@ -45,6 +45,29 @@ type FieldData struct {
 	GormTag string // GORM tag content (e.g., "primaryKey;type:uuid")
 }
 
+// ConverterFileData contains all data needed to render a converter file.
+type ConverterFileData struct {
+	PackageName string          // Package name (e.g., "gorm")
+	Imports     []string        // Import paths needed
+	Converters  []ConverterData // Converter functions to generate
+}
+
+// ConverterData contains data for generating converter functions.
+type ConverterData struct {
+	SourceType    string             // Source API type (e.g., "User")
+	SourcePkgName string             // Source package name (e.g., "testapi")
+	GormType      string             // GORM type (e.g., "UserGORM", "UserWithPermissions")
+	FieldMappings []FieldMappingData // Field conversion mappings
+}
+
+// FieldMappingData contains data for mapping a single field between API and GORM.
+type FieldMappingData struct {
+	SourceField  string // Source field name (e.g., "Birthday")
+	GormField    string // GORM field name (e.g., "Birthday")
+	ToGormCode   string // Code to convert source to GORM (e.g., "api.Id" or "timestampToInt64(api.Birthday)")
+	FromGormCode string // Code to convert GORM to source (e.g., "gorm.Id" or "int64ToTimestamp(gorm.Birthday)")
+}
+
 var tmpl *template.Template
 
 // loadTemplates loads and parses all templates.

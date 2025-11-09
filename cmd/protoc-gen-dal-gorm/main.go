@@ -40,19 +40,31 @@ func main() {
 			return nil
 		}
 
-		// Phase 2: Generate code
+		// Phase 2: Generate GORM struct code
 		result, err := gorm.Generate(messages)
 		if err != nil {
 			return fmt.Errorf("failed to generate GORM code: %w", err)
 		}
 
-		// Phase 3: Write generated files to plugin response
+		// Phase 3: Generate converter code
+		converterResult, err := gorm.GenerateConverters(messages)
+		if err != nil {
+			return fmt.Errorf("failed to generate converter code: %w", err)
+		}
+
+		// Phase 4: Write generated files to plugin response
 		for _, genFile := range result.Files {
 			// Create a new file in the plugin response
 			// The second parameter is the Go import path for this generated file
 			f := plugin.NewGeneratedFile(genFile.Path, protogen.GoImportPath(genFile.Path))
 
 			// Write the generated content
+			f.P(genFile.Content)
+		}
+
+		// Write converter files
+		for _, genFile := range converterResult.Files {
+			f := plugin.NewGeneratedFile(genFile.Path, protogen.GoImportPath(genFile.Path))
 			f.P(genFile.Content)
 		}
 

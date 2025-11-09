@@ -25,14 +25,16 @@
 - [x] Implement basic GORM struct generation (template-based)
 - [x] **TEST**: GORM tags pass through from gorm_tags annotation
 - [x] Implement GORM tag extraction and rendering
-- [x] **TEST**: Generates TableName() method
+- [x] **TEST**: Generates TableName() method with pointer receiver
 - [x] Implement TableName() method generation
 - [x] Add TargetGorm to collector
 - [x] Implement extractGormInfo() function
-- [ ] **TEST**: Generates BookToGORM converter
-- [ ] Implement typed converter generation
-- [ ] **TEST**: Generates BookFromGORM converter
-- [ ] Implement reverse converter generation
+- [x] **TEST**: Generates converter functions (BookToBookGORM, BookFromBookGORM)
+- [x] Implement typed converter generation with decorator support
+- [x] Implement built-in type converters (Timestamp ↔ int64, numeric types)
+- [x] Implement custom converter annotations (to_func/from_func with ConverterFunc)
+- [x] Implement converter registry for nested message conversions
+- [x] Generate mustConvert helper functions for recursive conversions
 
 ### 1.4 First Binary: protoc-gen-dal-gorm ✅
 - [x] **TEST**: Binary collects and generates from test protos
@@ -183,24 +185,33 @@
 
 ## Current Sprint
 
-**Focus:** Phase 1.3 - GORM Generator (Converters)
+**Focus:** Phase 2 - Core Features or Additional Targets
 
 **Recently Completed:**
-- ✅ Phase 1.4 - protoc-gen-dal-gorm binary end-to-end working
-- ✅ One file per proto file generation strategy
-- ✅ Automatic embedded type collection (e.g., AuthorGORM in BlogGORM)
-- ✅ Package name extraction from buf-managed go_package paths
-- ✅ Template-based multi-struct file generation
-- ✅ Full integration with buf generate
+- ✅ Phase 1.3 & 1.4 - Complete GORM generator with converters
+- ✅ Struct generation with pointer receiver TableName() methods
+- ✅ Converter functions with decorator pattern
+- ✅ Built-in type converters (Timestamp ↔ int64, numeric types)
+- ✅ Custom converter annotations (to_func/from_func with ConverterFunc message)
+- ✅ Converter registry for nested message conversions
+- ✅ Automatic recursive conversion via mustConvert helpers
+- ✅ One file per proto file: `user_gorm.go` (structs) + `user_converters.go` (converters)
 
-**Generated Code Example:**
-From `tests/protos/gorm/user.proto` → `tests/gen/gorm/user_gorm.go` containing:
-- 6 GORM-annotated structs (UserGORM, BlogGORM, etc.)
-- 1 embedded type (AuthorGORM) automatically included
-- All structs compile and have correct package names
+**Generated Code:**
+From `tests/protos/gorm/user.proto`:
+- `user_gorm.go`: 6 GORM structs + 1 embedded type (AuthorGORM)
+- `user_converters.go`: 12 converter functions (To/From for each type) + mustConvert helpers
+
+**Converter Features:**
+- Smart field mapping (only converts compatible types)
+- Priority: custom converters > built-in > skip (decorator handles)
+- Nested conversions: `Blog.Author` automatically converts via `mustConvertAuthorToAuthorGORM`
+- Skips incompatible fields (e.g., `DeletedAt` only in GORM) - decorator handles them
 
 **Next:**
-1. **Phase 1.3 (converters)**: Implement BookToGORM/BookFromGORM typed converters with decorator support
+1. **Phase 2.1**: Field transformations for complex types (repeated fields, maps)
+2. **Phase 2.2**: Foreign key support
+3. **Phase 3**: Additional targets (postgres-raw, firestore)
 
 ## Notes
 

@@ -120,13 +120,111 @@ func TestGenerateGORM_SimpleMessage(t *testing.T) {
 		t.Error("Expected primaryKey tag for ID field")
 	}
 
-	// Then: Should generate TableName method
-	if !strings.Contains(generatedCode, "func (BookGORM) TableName() string") {
-		t.Error("Expected TableName() method in generated code")
+	// Then: Should generate TableName method with pointer receiver
+	if !strings.Contains(generatedCode, "func (*BookGORM) TableName() string") {
+		t.Error("Expected TableName() method with pointer receiver in generated code")
 	}
 
 	if !strings.Contains(generatedCode, `return "books"`) {
 		t.Error("Expected TableName() to return 'books'")
+	}
+}
+
+// TestGenerateConverters tests that converter functions are generated
+// for converting between API messages and GORM structs.
+//
+// This test verifies:
+// - ToGORM converter function with decorator parameter
+// - FromGORM converter function with decorator parameter
+// - Pointer receivers to avoid struct copying
+func TestGenerateConverters(t *testing.T) {
+	// Given: A Book message with GORM mapping
+	plugin := createTestPlugin(t, &testProtoSet{
+		files: []testFile{
+			// API proto
+			{
+				name: "library/v1/book.proto",
+				pkg:  "library.v1",
+				messages: []testMessage{
+					{
+						name: "Book",
+						fields: []testField{
+							{name: "id", number: 1, typeName: "string"},
+							{name: "title", number: 2, typeName: "string"},
+						},
+					},
+				},
+			},
+			// GORM DAL proto
+			{
+				name: "library/v1/dal/book_gorm.proto",
+				pkg:  "library.v1.dal",
+				messages: []testMessage{
+					{
+						name: "BookGorm",
+						gormOpts: &dalv1.GormOptions{
+							Source: "library.v1.Book",
+							Table:  "books",
+						},
+						fields: []testField{
+							{name: "id", number: 1, typeName: "string"},
+							{name: "title", number: 2, typeName: "string"},
+						},
+					},
+				},
+			},
+		},
+	})
+
+	messages := collector.CollectMessages(plugin, collector.TargetGorm)
+
+	// When: Generate converters
+	result, err := GenerateConverters(messages)
+
+	// Then: Should succeed
+	if err != nil {
+		t.Fatalf("GenerateConverters failed: %v", err)
+	}
+
+	if len(result.Files) == 0 {
+		t.Fatal("Expected at least one converter file")
+	}
+
+	converterCode := result.Files[0].Content
+
+	// Then: Should generate ToGORM function with full name (SourceToGormType)
+	if !strings.Contains(converterCode, "func BookToBookGORM(") {
+		t.Error("Expected BookToBookGORM function")
+	}
+
+	// Should accept API message pointer
+	if !strings.Contains(converterCode, "*Book") {
+		t.Error("Expected *Book parameter in ToGORM")
+	}
+
+	// Should accept decorator function
+	if !strings.Contains(converterCode, "decorator func(*") {
+		t.Error("Expected decorator parameter in ToGORM")
+	}
+
+	// Should return GORM struct pointer and error
+	if !strings.Contains(converterCode, "(*BookGORM, error)") {
+		t.Error("Expected (*BookGORM, error) return in ToGORM")
+	}
+
+	// Then: Should generate FromGORM function with full name (SourceFromGormType)
+	if !strings.Contains(converterCode, "func BookFromBookGORM(") {
+		t.Error("Expected BookFromBookGORM function")
+	}
+
+	// Should accept GORM struct pointer
+	if !strings.Contains(converterCode, "gorm *BookGORM") {
+		t.Error("Expected *BookGORM parameter in FromGORM")
+	}
+
+	// Should return API message pointer and error (with package qualifier)
+	if !strings.Contains(converterCode, ".Book") || !strings.Contains(converterCode, ", error)") {
+		t.Error("Expected qualified Book type and error in FromGORM return")
 	}
 }
 
