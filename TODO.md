@@ -287,6 +287,19 @@ From `tests/protos/gorm/user.proto`:
 - ⏸️ Phase 2.5 - Repository Pattern (Optional - deferred)
 
 **Phase 3 Status:**
+- ✅ Phase 3.0 - Refactor Common Generator Utilities (COMPLETE)
+  - ✅ Create `pkg/generator/common` package
+    - ✅ File organization utilities (grouping, naming)
+    - ✅ Package name extraction
+    - ✅ Proto→Go type mapping (centralized map field handling)
+    - ✅ Import management with deduplication
+  - ✅ Create `pkg/generator/registry` package
+    - ✅ Converter registry for tracking available converters
+    - ✅ Prevents generating calls to non-existent converters
+  - ✅ Unit tests for all shared utilities (100% coverage)
+  - ⏸️ Migration of GORM generator to use shared utilities (pending)
+  - ⏸️ Migration of Datastore generator to use shared utilities (pending)
+
 - ✅ Phase 3.1 - Google Cloud Datastore (COMPLETE)
   - ✅ Collector support (TargetDatastore, extractDatastoreInfo)
   - ✅ Basic struct generation with datastore tags
@@ -310,11 +323,12 @@ From `tests/protos/datastore/user.proto`:
 - Proper bidirectional handling of pointer types
 
 **Next:**
-1. **Phase 3.2**: postgres-raw (Go + database/sql)
-2. **Phase 3.3**: firestore (Go)
-3. **Phase 3.4**: mongodb (Go)
-4. **Phase 4**: Multi-language support (Python, TypeScript)
-5. **Phase 5**: Advanced features (if needed after real-world usage)
+1. **Complete Phase 3.0**: Migrate GORM and Datastore generators to use shared utilities
+2. **Phase 3.2**: postgres-raw (Go + database/sql)
+3. **Phase 3.3**: firestore (Go)
+4. **Phase 3.4**: mongodb (Go)
+5. **Phase 4**: Multi-language support (Python, TypeScript)
+6. **Phase 5**: Advanced features (if needed after real-world usage)
 
 ## Notes
 

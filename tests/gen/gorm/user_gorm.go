@@ -134,14 +134,14 @@ func (*OrganizationGORM) TableName() string {
 	return "organizations"
 }
 
-// DepartmentsEntry
-type DepartmentsEntry struct {
-	Key   string
-	Value AuthorGORM
-}
-
 // MetadataEntry
 type MetadataEntry struct {
 	Key   string
 	Value string
+}
+
+// DepartmentsEntry
+type DepartmentsEntry struct {
+	Key   string
+	Value AuthorGORM
 }
