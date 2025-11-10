@@ -18,16 +18,12 @@ import (
 	"bytes"
 	"embed"
 	"text/template"
+
+	"github.com/panyam/protoc-gen-dal/pkg/generator/common"
 )
 
 //go:embed templates/*.tmpl
 var templatesFS embed.FS
-
-// ImportSpec represents a Go import with optional alias.
-type ImportSpec struct {
-	Alias string // Optional alias (e.g., "models")
-	Path  string // Import path (e.g., "github.com/...")
-}
 
 // TemplateData contains all data needed to render a complete Go file.
 type TemplateData struct {
@@ -54,10 +50,10 @@ type FieldData struct {
 
 // ConverterFileData contains all data needed to render a converter file.
 type ConverterFileData struct {
-	PackageName                   string          // Package name (e.g., "gorm")
-	Imports                       []ImportSpec    // Import specs with optional aliases
-	Converters                    []ConverterData // Converter functions to generate
-	HasRepeatedMessageConversions bool            // Whether any converter has repeated message fields (needs fmt)
+	PackageName                   string               // Package name (e.g., "gorm")
+	Imports                       []common.ImportSpec  // Import specs with optional aliases
+	Converters                    []ConverterData      // Converter functions to generate
+	HasRepeatedMessageConversions bool                 // Whether any converter has repeated message fields (needs fmt)
 }
 
 // ConverterData contains data for generating converter functions.
