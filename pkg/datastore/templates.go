@@ -19,6 +19,8 @@ import (
 	_ "embed"
 	"fmt"
 	"text/template"
+
+	"github.com/panyam/protoc-gen-dal/pkg/generator/common"
 )
 
 // Template data structures
@@ -59,19 +61,13 @@ type FieldData struct {
 	Tags string
 }
 
-// ImportSpec represents a Go import with optional alias.
-type ImportSpec struct {
-	Alias string // Optional alias (e.g., "models")
-	Path  string // Import path (e.g., "github.com/...")
-}
-
 // ConverterFileData contains all data for generating a converter file.
 type ConverterFileData struct {
 	// PackageName is the Go package name
 	PackageName string
 
 	// Imports is the list of import specs with optional aliases
-	Imports []ImportSpec
+	Imports []common.ImportSpec
 
 	// Converters is the list of converter functions to generate
 	Converters []*ConverterData

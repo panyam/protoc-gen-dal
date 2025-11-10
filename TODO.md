@@ -297,8 +297,8 @@ From `tests/protos/gorm/user.proto`:
     - ✅ Converter registry for tracking available converters
     - ✅ Prevents generating calls to non-existent converters
   - ✅ Unit tests for all shared utilities (100% coverage)
-  - ⏸️ Migration of GORM generator to use shared utilities (pending)
-  - ⏸️ Migration of Datastore generator to use shared utilities (pending)
+  - ✅ Migration of GORM generator to use shared utilities (removed 214 lines)
+  - ✅ Migration of Datastore generator to use shared utilities (removed similar duplicate code)
 
 - ✅ Phase 3.1 - Google Cloud Datastore (COMPLETE)
   - ✅ Collector support (TargetDatastore, extractDatastoreInfo)
@@ -323,12 +323,11 @@ From `tests/protos/datastore/user.proto`:
 - Proper bidirectional handling of pointer types
 
 **Next:**
-1. **Complete Phase 3.0**: Migrate GORM and Datastore generators to use shared utilities
-2. **Phase 3.2**: postgres-raw (Go + database/sql)
-3. **Phase 3.3**: firestore (Go)
-4. **Phase 3.4**: mongodb (Go)
-5. **Phase 4**: Multi-language support (Python, TypeScript)
-6. **Phase 5**: Advanced features (if needed after real-world usage)
+1. **Phase 3.2**: postgres-raw (Go + database/sql)
+2. **Phase 3.3**: firestore (Go)
+3. **Phase 3.4**: mongodb (Go)
+4. **Phase 4**: Multi-language support (Python, TypeScript)
+5. **Phase 5**: Advanced features (if needed after real-world usage)
 
 ## Notes
 
