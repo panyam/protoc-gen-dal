@@ -19,6 +19,7 @@ import (
 
 	"github.com/panyam/protoc-gen-dal/pkg/collector"
 	"github.com/panyam/protoc-gen-dal/pkg/generator/common"
+	"github.com/panyam/protoc-gen-dal/pkg/generator/converter"
 	"github.com/panyam/protoc-gen-dal/pkg/generator/registry"
 	"google.golang.org/protobuf/compiler/protogen"
 )
@@ -372,8 +373,36 @@ func buildConverterData(msgInfo *collector.MessageInfo, reg *registry.ConverterR
 			continue
 		}
 
-		mapping := buildFieldMapping(sourceField, targetField, reg)
+		mapping := buildFieldMapping(sourceField, targetField, reg, sourcePkgName)
 		fieldMappings = append(fieldMappings, mapping)
+	}
+
+	// Classify fields by render strategy
+	var toTargetInline, toTargetSetter, toTargetLoop []*FieldMapping
+	var fromTargetInline, fromTargetSetter, fromTargetLoop []*FieldMapping
+
+	for _, mapping := range fieldMappings {
+		// Classify ToTarget direction
+		switch mapping.ToTargetRenderStrategy {
+		case converter.StrategyInlineValue:
+			toTargetInline = append(toTargetInline, mapping)
+		case converter.StrategySetterSimple, converter.StrategySetterTransform,
+			converter.StrategySetterWithError, converter.StrategySetterIgnoreError:
+			toTargetSetter = append(toTargetSetter, mapping)
+		case converter.StrategyLoopRepeated, converter.StrategyLoopMap:
+			toTargetLoop = append(toTargetLoop, mapping)
+		}
+
+		// Classify FromTarget direction
+		switch mapping.FromTargetRenderStrategy {
+		case converter.StrategyInlineValue:
+			fromTargetInline = append(fromTargetInline, mapping)
+		case converter.StrategySetterSimple, converter.StrategySetterTransform,
+			converter.StrategySetterWithError, converter.StrategySetterIgnoreError:
+			fromTargetSetter = append(fromTargetSetter, mapping)
+		case converter.StrategyLoopRepeated, converter.StrategyLoopMap:
+			fromTargetLoop = append(fromTargetLoop, mapping)
+		}
 	}
 
 	return &ConverterData{
@@ -381,11 +410,50 @@ func buildConverterData(msgInfo *collector.MessageInfo, reg *registry.ConverterR
 		TargetType:    targetName,
 		SourcePkgName: sourcePkgName,
 		FieldMappings: fieldMappings,
+
+		ToTargetInlineFields: toTargetInline,
+		ToTargetSetterFields: toTargetSetter,
+		ToTargetLoopFields:   toTargetLoop,
+
+		FromTargetInlineFields: fromTargetInline,
+		FromTargetSetterFields: fromTargetSetter,
+		FromTargetLoopFields:   fromTargetLoop,
 	}
 }
 
+// addRenderStrategies calculates and populates render strategies for a field mapping.
+// This determines how the field conversion should be rendered in the template based on
+// the ConversionType and field characteristics (pointer, repeated, map, etc.).
+func addRenderStrategies(mapping *FieldMapping) {
+	if mapping == nil {
+		return
+	}
+
+	// Build characteristics for ToTarget direction (API → Datastore)
+	chars := converter.FieldCharacteristics{
+		IsPointer:          mapping.SourceIsPointer,
+		IsRepeated:         mapping.IsRepeated,
+		IsMap:              mapping.IsMap,
+		HasMessageElements: mapping.IsRepeated && mapping.ToTargetConverterFunc != "",
+		HasMessageValues:   mapping.IsMap && mapping.ToTargetConverterFunc != "",
+	}
+
+	mapping.ToTargetRenderStrategy = converter.DetermineRenderStrategy(
+		mapping.ToTargetConversionType,
+		chars,
+	)
+
+	// Build characteristics for FromTarget direction (Datastore → API)
+	charsFrom := chars
+	charsFrom.IsPointer = mapping.TargetIsPointer
+	mapping.FromTargetRenderStrategy = converter.DetermineRenderStrategy(
+		mapping.FromTargetConversionType,
+		charsFrom,
+	)
+}
+
 // buildFieldMapping creates a field mapping with type conversion if needed.
-func buildFieldMapping(sourceField, targetField *protogen.Field, reg *registry.ConverterRegistry) *FieldMapping {
+func buildFieldMapping(sourceField, targetField *protogen.Field, reg *registry.ConverterRegistry, sourcePkgName string) *FieldMapping {
 	sourceFieldName := fieldName(sourceField)
 	targetFieldName := fieldName(targetField)
 
@@ -393,8 +461,11 @@ func buildFieldMapping(sourceField, targetField *protogen.Field, reg *registry.C
 	targetKind := targetField.Desc.Kind().String()
 
 	mapping := &FieldMapping{
-		SourceField: sourceFieldName,
-		TargetField: targetFieldName,
+		SourceField:     sourceFieldName,
+		TargetField:     targetFieldName,
+		SourceIsPointer: sourceField.Desc.HasPresence(), // Proto3 optional fields are pointers
+		TargetIsPointer: targetField.Desc.HasPresence(), // Datastore entity fields with HasPresence are pointers
+		SourcePkgName:   sourcePkgName,                  // Package name for template rendering
 	}
 
 	// Check if this is a map field
@@ -422,13 +493,19 @@ func buildFieldMapping(sourceField, targetField *protogen.Field, reg *registry.C
 					mapping.FromTargetConverterFunc = fmt.Sprintf("%sFrom%s", sourceTypeName, targetTypeName)
 					mapping.TargetElementType = targetTypeName
 					mapping.SourceElementType = sourceTypeName
+					mapping.ToTargetConversionType = converter.ConvertByTransformerWithError
+					mapping.FromTargetConversionType = converter.ConvertByTransformerWithError
 				}
 			}
+			addRenderStrategies(mapping)
 			return mapping
 		} else {
 			// map<K, primitive> - direct assignment (copy entire map)
 			mapping.ToTargetCode = fmt.Sprintf("src.%s", sourceFieldName)
 			mapping.FromTargetCode = fmt.Sprintf("src.%s", targetFieldName)
+			mapping.ToTargetConversionType = converter.ConvertByAssignment
+			mapping.FromTargetConversionType = converter.ConvertByAssignment
+			addRenderStrategies(mapping)
 			return mapping
 		}
 	} else if sourceField.Desc.IsList() {
@@ -451,19 +528,28 @@ func buildFieldMapping(sourceField, targetField *protogen.Field, reg *registry.C
 					mapping.FromTargetConverterFunc = fmt.Sprintf("%sFrom%s", sourceTypeName, targetTypeName)
 					mapping.TargetElementType = targetTypeName
 					mapping.SourceElementType = sourceTypeName
+					mapping.ToTargetConversionType = converter.ConvertByTransformerWithError
+					mapping.FromTargetConversionType = converter.ConvertByTransformerWithError
 				}
 			}
+			addRenderStrategies(mapping)
 			return mapping
 		} else {
 			// []primitive - direct assignment (copy entire slice)
 			mapping.ToTargetCode = fmt.Sprintf("src.%s", sourceFieldName)
 			mapping.FromTargetCode = fmt.Sprintf("src.%s", targetFieldName)
+			mapping.ToTargetConversionType = converter.ConvertByAssignment
+			mapping.FromTargetConversionType = converter.ConvertByAssignment
+			addRenderStrategies(mapping)
 			return mapping
 		}
 	}
 
 	// Check if types match - if so, simple assignment
 	if sourceKind == targetKind {
+		mapping.ToTargetConversionType = converter.ConvertByAssignment
+		mapping.FromTargetConversionType = converter.ConvertByAssignment
+		addRenderStrategies(mapping)
 		return mapping
 	}
 
@@ -474,6 +560,9 @@ func buildFieldMapping(sourceField, targetField *protogen.Field, reg *registry.C
 	if sourceKind == "uint32" && targetKind == "string" {
 		mapping.ToTargetCode = fmt.Sprintf("strconv.FormatUint(uint64(src.%s), 10)", sourceFieldName)
 		mapping.FromTargetCode = fmt.Sprintf("uint32(mustParseUint(src.%s))", targetFieldName)
+		mapping.ToTargetConversionType = converter.ConvertByTransformer
+		mapping.FromTargetConversionType = converter.ConvertByTransformer
+		addRenderStrategies(mapping)
 		return mapping
 	}
 
@@ -483,9 +572,15 @@ func buildFieldMapping(sourceField, targetField *protogen.Field, reg *registry.C
 		targetKind == "int64" {
 		mapping.ToTargetCode = fmt.Sprintf("timestampToInt64(src.%s)", sourceFieldName)
 		mapping.FromTargetCode = fmt.Sprintf("int64ToTimestamp(src.%s)", targetFieldName)
+		mapping.ToTargetConversionType = converter.ConvertByTransformer
+		mapping.FromTargetConversionType = converter.ConvertByTransformer
+		addRenderStrategies(mapping)
 		return mapping
 	}
 
 	// Default: simple assignment (may fail at compile time if incompatible)
+	mapping.ToTargetConversionType = converter.ConvertByAssignment
+	mapping.FromTargetConversionType = converter.ConvertByAssignment
+	addRenderStrategies(mapping)
 	return mapping
 }

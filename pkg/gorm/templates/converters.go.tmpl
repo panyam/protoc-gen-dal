@@ -53,7 +53,7 @@ func {{ .SourceType }}To{{ .TargetType }}(
 	// Initialize struct with inline values
 	*dest = {{ .TargetType }}{
 {{- range .ToTargetInlineFields }}
-		{{ .TargetField }}: {{ .ToTargetCode }},
+		{{ .TargetField }}: {{ if .ToTargetCode }}{{ .ToTargetCode }}{{ else }}src.{{ .SourceField }}{{ end }},
 {{- end }}
 	}
 	out = dest
@@ -146,7 +146,7 @@ func {{ .SourceType }}From{{ .TargetType }}(
 	// Initialize struct with inline values
 	*dest = {{ .SourcePkgName }}.{{ .SourceType }}{
 {{- range .FromTargetInlineFields }}
-		{{ .SourceField }}: {{ .FromTargetCode }},
+		{{ .SourceField }}: {{ if .FromTargetCode }}{{ .FromTargetCode }}{{ else }}src.{{ .TargetField }}{{ end }},
 {{- end }}
 	}
 	out = dest

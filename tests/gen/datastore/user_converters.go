@@ -61,23 +61,25 @@ func UserToUserDatastore(
 	if dest == nil {
 		dest = &UserDatastore{}
 	}
+
+	// Initialize struct with inline values
+	*dest = UserDatastore{
+		Id:    strconv.FormatUint(uint64(src.Id), 10),
+		Name:  src.Name,
+		Email: src.Email,
+		Age:   src.Age,
+	}
 	out = dest
 
-	// Convert fields
-
-	out.Id = strconv.FormatUint(uint64(src.Id), 10)
-
-	out.Name = src.Name
-
-	out.Email = src.Email
-
-	out.Age = src.Age
-
-	out.Birthday = timestampToInt64(src.Birthday)
-
-	out.CreatedAt = timestampToInt64(src.CreatedAt)
-
-	out.UpdatedAt = timestampToInt64(src.UpdatedAt)
+	if src.Birthday != nil {
+		out.Birthday = timestampToInt64(src.Birthday)
+	}
+	if src.CreatedAt != nil {
+		out.CreatedAt = timestampToInt64(src.CreatedAt)
+	}
+	if src.UpdatedAt != nil {
+		out.UpdatedAt = timestampToInt64(src.UpdatedAt)
+	}
 
 	// Apply decorator if provided
 	if decorator != nil {
@@ -112,23 +114,18 @@ func UserFromUserDatastore(
 	if dest == nil {
 		dest = &api.User{}
 	}
+
+	// Initialize struct with inline values
+	*dest = api.User{
+		Id:        uint32(mustParseUint(src.Id)),
+		Name:      src.Name,
+		Email:     src.Email,
+		Age:       src.Age,
+		Birthday:  int64ToTimestamp(src.Birthday),
+		CreatedAt: int64ToTimestamp(src.CreatedAt),
+		UpdatedAt: int64ToTimestamp(src.UpdatedAt),
+	}
 	out = dest
-
-	// Convert fields (reverse direction)
-
-	out.Id = uint32(mustParseUint(src.Id))
-
-	out.Name = src.Name
-
-	out.Email = src.Email
-
-	out.Age = src.Age
-
-	out.Birthday = int64ToTimestamp(src.Birthday)
-
-	out.CreatedAt = int64ToTimestamp(src.CreatedAt)
-
-	out.UpdatedAt = int64ToTimestamp(src.UpdatedAt)
 
 	// Apply decorator if provided
 	if decorator != nil {
@@ -163,15 +160,14 @@ func UserToUserWithNamespace(
 	if dest == nil {
 		dest = &UserWithNamespace{}
 	}
+
+	// Initialize struct with inline values
+	*dest = UserWithNamespace{
+		Id:    strconv.FormatUint(uint64(src.Id), 10),
+		Name:  src.Name,
+		Email: src.Email,
+	}
 	out = dest
-
-	// Convert fields
-
-	out.Id = strconv.FormatUint(uint64(src.Id), 10)
-
-	out.Name = src.Name
-
-	out.Email = src.Email
 
 	// Apply decorator if provided
 	if decorator != nil {
@@ -206,15 +202,14 @@ func UserFromUserWithNamespace(
 	if dest == nil {
 		dest = &api.User{}
 	}
+
+	// Initialize struct with inline values
+	*dest = api.User{
+		Id:    uint32(mustParseUint(src.Id)),
+		Name:  src.Name,
+		Email: src.Email,
+	}
 	out = dest
-
-	// Convert fields (reverse direction)
-
-	out.Id = uint32(mustParseUint(src.Id))
-
-	out.Name = src.Name
-
-	out.Email = src.Email
 
 	// Apply decorator if provided
 	if decorator != nil {
@@ -249,15 +244,14 @@ func UserToUserWithLargeText(
 	if dest == nil {
 		dest = &UserWithLargeText{}
 	}
+
+	// Initialize struct with inline values
+	*dest = UserWithLargeText{
+		Id:    strconv.FormatUint(uint64(src.Id), 10),
+		Name:  src.Name,
+		Email: src.Email,
+	}
 	out = dest
-
-	// Convert fields
-
-	out.Id = strconv.FormatUint(uint64(src.Id), 10)
-
-	out.Name = src.Name
-
-	out.Email = src.Email
 
 	// Apply decorator if provided
 	if decorator != nil {
@@ -292,15 +286,14 @@ func UserFromUserWithLargeText(
 	if dest == nil {
 		dest = &api.User{}
 	}
+
+	// Initialize struct with inline values
+	*dest = api.User{
+		Id:    uint32(mustParseUint(src.Id)),
+		Name:  src.Name,
+		Email: src.Email,
+	}
 	out = dest
-
-	// Convert fields (reverse direction)
-
-	out.Id = uint32(mustParseUint(src.Id))
-
-	out.Name = src.Name
-
-	out.Email = src.Email
 
 	// Apply decorator if provided
 	if decorator != nil {
@@ -335,13 +328,13 @@ func UserToUserSimple(
 	if dest == nil {
 		dest = &UserSimple{}
 	}
+
+	// Initialize struct with inline values
+	*dest = UserSimple{
+		Id:   strconv.FormatUint(uint64(src.Id), 10),
+		Name: src.Name,
+	}
 	out = dest
-
-	// Convert fields
-
-	out.Id = strconv.FormatUint(uint64(src.Id), 10)
-
-	out.Name = src.Name
 
 	// Apply decorator if provided
 	if decorator != nil {
@@ -376,13 +369,13 @@ func UserFromUserSimple(
 	if dest == nil {
 		dest = &api.User{}
 	}
+
+	// Initialize struct with inline values
+	*dest = api.User{
+		Id:   uint32(mustParseUint(src.Id)),
+		Name: src.Name,
+	}
 	out = dest
-
-	// Convert fields (reverse direction)
-
-	out.Id = uint32(mustParseUint(src.Id))
-
-	out.Name = src.Name
 
 	// Apply decorator if provided
 	if decorator != nil {
@@ -417,13 +410,13 @@ func AuthorToAuthorDatastore(
 	if dest == nil {
 		dest = &AuthorDatastore{}
 	}
+
+	// Initialize struct with inline values
+	*dest = AuthorDatastore{
+		Name:  src.Name,
+		Email: src.Email,
+	}
 	out = dest
-
-	// Convert fields
-
-	out.Name = src.Name
-
-	out.Email = src.Email
 
 	// Apply decorator if provided
 	if decorator != nil {
@@ -458,13 +451,13 @@ func AuthorFromAuthorDatastore(
 	if dest == nil {
 		dest = &api.Author{}
 	}
+
+	// Initialize struct with inline values
+	*dest = api.Author{
+		Name:  src.Name,
+		Email: src.Email,
+	}
 	out = dest
-
-	// Convert fields (reverse direction)
-
-	out.Name = src.Name
-
-	out.Email = src.Email
 
 	// Apply decorator if provided
 	if decorator != nil {
@@ -499,23 +492,17 @@ func ProductToProductDatastore(
 	if dest == nil {
 		dest = &ProductDatastore{}
 	}
-	out = dest
 
-	// Convert fields
-
-	out.Id = strconv.FormatUint(uint64(src.Id), 10)
-
-	out.Name = src.Name
-
-	out.Tags = src.Tags
-
-	out.Categories = src.Categories
-
-	if src.Metadata != nil {
-		out.Metadata = src.Metadata
+	// Initialize struct with inline values
+	*dest = ProductDatastore{
+		Id:         strconv.FormatUint(uint64(src.Id), 10),
+		Name:       src.Name,
+		Tags:       src.Tags,
+		Categories: src.Categories,
+		Metadata:   src.Metadata,
+		Ratings:    src.Ratings,
 	}
-
-	out.Ratings = src.Ratings
+	out = dest
 
 	// Apply decorator if provided
 	if decorator != nil {
@@ -550,23 +537,17 @@ func ProductFromProductDatastore(
 	if dest == nil {
 		dest = &api.Product{}
 	}
-	out = dest
 
-	// Convert fields (reverse direction)
-
-	out.Id = uint32(mustParseUint(src.Id))
-
-	out.Name = src.Name
-
-	out.Tags = src.Tags
-
-	out.Categories = src.Categories
-
-	if src.Metadata != nil {
-		out.Metadata = src.Metadata
+	// Initialize struct with inline values
+	*dest = api.Product{
+		Id:         uint32(mustParseUint(src.Id)),
+		Name:       src.Name,
+		Tags:       src.Tags,
+		Categories: src.Categories,
+		Metadata:   src.Metadata,
+		Ratings:    src.Ratings,
 	}
-
-	out.Ratings = src.Ratings
+	out = dest
 
 	// Apply decorator if provided
 	if decorator != nil {
@@ -601,13 +582,13 @@ func LibraryToLibraryDatastore(
 	if dest == nil {
 		dest = &LibraryDatastore{}
 	}
+
+	// Initialize struct with inline values
+	*dest = LibraryDatastore{
+		Id:   strconv.FormatUint(uint64(src.Id), 10),
+		Name: src.Name,
+	}
 	out = dest
-
-	// Convert fields
-
-	out.Id = strconv.FormatUint(uint64(src.Id), 10)
-
-	out.Name = src.Name
 
 	if src.Contributors != nil {
 		out.Contributors = make([]AuthorDatastore, len(src.Contributors))
@@ -652,13 +633,13 @@ func LibraryFromLibraryDatastore(
 	if dest == nil {
 		dest = &api.Library{}
 	}
+
+	// Initialize struct with inline values
+	*dest = api.Library{
+		Id:   uint32(mustParseUint(src.Id)),
+		Name: src.Name,
+	}
 	out = dest
-
-	// Convert fields (reverse direction)
-
-	out.Id = uint32(mustParseUint(src.Id))
-
-	out.Name = src.Name
 
 	if src.Contributors != nil {
 		out.Contributors = make([]*api.Author, len(src.Contributors))
@@ -703,13 +684,13 @@ func OrganizationToOrganizationDatastore(
 	if dest == nil {
 		dest = &OrganizationDatastore{}
 	}
+
+	// Initialize struct with inline values
+	*dest = OrganizationDatastore{
+		Id:   strconv.FormatUint(uint64(src.Id), 10),
+		Name: src.Name,
+	}
 	out = dest
-
-	// Convert fields
-
-	out.Id = strconv.FormatUint(uint64(src.Id), 10)
-
-	out.Name = src.Name
 
 	if src.Departments != nil {
 		out.Departments = make(map[string]AuthorDatastore, len(src.Departments))
@@ -756,13 +737,13 @@ func OrganizationFromOrganizationDatastore(
 	if dest == nil {
 		dest = &api.Organization{}
 	}
+
+	// Initialize struct with inline values
+	*dest = api.Organization{
+		Id:   uint32(mustParseUint(src.Id)),
+		Name: src.Name,
+	}
 	out = dest
-
-	// Convert fields (reverse direction)
-
-	out.Id = uint32(mustParseUint(src.Id))
-
-	out.Name = src.Name
 
 	if src.Departments != nil {
 		out.Departments = make(map[string]*api.Author, len(src.Departments))

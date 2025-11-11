@@ -21,6 +21,7 @@ import (
 	"text/template"
 
 	"github.com/panyam/protoc-gen-dal/pkg/generator/common"
+	"github.com/panyam/protoc-gen-dal/pkg/generator/converter"
 )
 
 // Template data structures
@@ -87,8 +88,17 @@ type ConverterData struct {
 	// SourcePkgName is the source package name for imports (e.g., "api")
 	SourcePkgName string
 
-	// FieldMappings is the list of field conversions
+	// FieldMappings is the list of field conversions (for backward compatibility)
 	FieldMappings []*FieldMapping
+
+	// Field groups by render strategy (for struct literal + setters pattern)
+	ToTargetInlineFields []*FieldMapping
+	ToTargetSetterFields []*FieldMapping
+	ToTargetLoopFields   []*FieldMapping
+
+	FromTargetInlineFields []*FieldMapping
+	FromTargetSetterFields []*FieldMapping
+	FromTargetLoopFields   []*FieldMapping
 }
 
 // FieldMapping describes how to convert a single field.
@@ -104,6 +114,12 @@ type FieldMapping struct {
 
 	// FromTargetCode is the conversion code for Datastore → API (empty string = simple assignment)
 	FromTargetCode string
+
+	// Conversion and render strategies
+	ToTargetConversionType   converter.ConversionType      // How to convert source → target (user intent)
+	FromTargetConversionType converter.ConversionType      // How to convert target → source (user intent)
+	ToTargetRenderStrategy   converter.FieldRenderStrategy // How to render source → target (implementation)
+	FromTargetRenderStrategy converter.FieldRenderStrategy // How to render target → source (implementation)
 
 	// IsRepeated indicates this is a repeated field (slice/array)
 	IsRepeated bool
@@ -122,6 +138,13 @@ type FieldMapping struct {
 
 	// FromTargetConverterFunc is the converter function name for nested message conversions (Datastore → API)
 	FromTargetConverterFunc string
+
+	// Pointer characteristics (needed for render strategy calculation)
+	SourceIsPointer bool // Whether source field is a pointer type
+	TargetIsPointer bool // Whether target field is a pointer type
+
+	// SourcePkgName is the source package name for imports (needed for template rendering)
+	SourcePkgName string
 }
 
 // Embedded templates
@@ -149,7 +172,46 @@ func executeTemplate(data *TemplateData) (string, error) {
 
 // executeConverterTemplate executes the converter template with the given data.
 func executeConverterTemplate(data *ConverterFileData) (string, error) {
-	tmpl, err := template.New("converters").Parse(converterTemplate)
+	// Create template with helper functions
+	tmpl := template.New("converters").Funcs(template.FuncMap{
+		// fieldRef generates the correct field reference expression for converter parameters.
+		// For pointer fields: returns "varName.fieldName" (pass pointer as-is)
+		// For value fields: returns "&varName.fieldName" (take address for in-place modification)
+		"fieldRef": func(varName, fieldName string, isPointer bool) string {
+			if isPointer {
+				return varName + "." + fieldName
+			}
+			return "&" + varName + "." + fieldName
+		},
+		// Render strategy helpers for ToTarget direction
+		"isInlineValue": func(strategy converter.FieldRenderStrategy) bool {
+			return strategy == converter.StrategyInlineValue
+		},
+		"isSetterSimple": func(strategy converter.FieldRenderStrategy) bool {
+			return strategy == converter.StrategySetterSimple
+		},
+		"isSetterTransform": func(strategy converter.FieldRenderStrategy) bool {
+			return strategy == converter.StrategySetterTransform
+		},
+		"isSetterWithError": func(strategy converter.FieldRenderStrategy) bool {
+			return strategy == converter.StrategySetterWithError
+		},
+		"isSetterIgnoreError": func(strategy converter.FieldRenderStrategy) bool {
+			return strategy == converter.StrategySetterIgnoreError
+		},
+		"isLoopRepeated": func(strategy converter.FieldRenderStrategy) bool {
+			return strategy == converter.StrategyLoopRepeated
+		},
+		"isLoopMap": func(strategy converter.FieldRenderStrategy) bool {
+			return strategy == converter.StrategyLoopMap
+		},
+		// Convenience helpers for checking if error handling is needed
+		"needsErrorCheck": func(convType converter.ConversionType) bool {
+			return convType == converter.ConvertByTransformerWithError
+		},
+	})
+
+	tmpl, err := tmpl.Parse(converterTemplate)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse converter template: %w", err)
 	}
