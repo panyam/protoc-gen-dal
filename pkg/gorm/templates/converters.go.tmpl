@@ -155,27 +155,27 @@ func {{ .SourceType }}From{{ .TargetType }}(
 	{{- range .FromTargetSetterFields }}
 		{{- if isSetterSimple .FromTargetRenderStrategy }}
 			{{- if .TargetIsPointer }}
-	if src.{{ .TargetField }} != nil {
-		out.{{ .SourceField }} = {{ .FromTargetCode }}
-	}
+        if src.{{ .TargetField }} != nil {
+          out.{{ .SourceField }} = {{ .FromTargetCode }}
+        }
 			{{- else }}
-	out.{{ .SourceField }} = {{ .FromTargetCode }}
+	      out.{{ .SourceField }} = {{ .FromTargetCode }}
 			{{- end }}
 		{{- else if isSetterTransform .FromTargetRenderStrategy }}
 			{{- if .TargetIsPointer }}
-	if src.{{ .TargetField }} != nil {
-		out.{{ .SourceField }} = {{ .FromTargetCode }}
-	}
+        if src.{{ .TargetField }} != nil {
+          out.{{ .SourceField }} = {{ .FromTargetCode }}
+        }
 			{{- else }}
-	out.{{ .SourceField }} = {{ .FromTargetCode }}
+	      out.{{ .SourceField }} = {{ .FromTargetCode }}
 			{{- end }}
 		{{- else if or (isSetterWithError .FromTargetRenderStrategy) (isSetterIgnoreError .FromTargetRenderStrategy) }}
 			{{- if .TargetIsPointer }}if src.{{ .TargetField }} != nil { {{ end }}
-	_, err = {{ .FromTargetConverterFunc }}(out.{{ .SourceField }}, {{ fieldRef "src" .TargetField .TargetIsPointer }}, nil)
+	      _, err = {{ .FromTargetConverterFunc }}(out.{{ .SourceField }}, {{ fieldRef "src" .TargetField .TargetIsPointer }}, nil)
 			{{- if needsErrorCheck .FromTargetConversionType }}
-	if err != nil {
-		return nil, fmt.Errorf("converting {{ .SourceField }}: %w", err)
-	}
+        if err != nil {
+          return nil, fmt.Errorf("converting {{ .SourceField }}: %w", err)
+        }
 			{{- end }}
 			{{- if .TargetIsPointer }}}{{ end }}
 		{{- end }}
