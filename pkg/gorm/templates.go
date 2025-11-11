@@ -62,7 +62,16 @@ type ConverterData struct {
 	SourceType    string             // Source API type (e.g., "User")
 	SourcePkgName string             // Source package name (e.g., "testapi")
 	TargetType    string             // Target type (e.g., "UserGORM", "UserWithPermissions")
-	FieldMappings []FieldMappingData // Field conversion mappings
+	FieldMappings []FieldMappingData // All field conversion mappings (for backward compatibility)
+
+	// Field groups by render strategy (for struct literal + setters pattern)
+	ToTargetInlineFields []FieldMappingData // Fields for struct literal initialization (ToTarget)
+	ToTargetSetterFields []FieldMappingData // Fields needing setter statements (ToTarget)
+	ToTargetLoopFields   []FieldMappingData // Fields needing loop-based conversion (ToTarget)
+
+	FromTargetInlineFields []FieldMappingData // Fields for struct literal initialization (FromTarget)
+	FromTargetSetterFields []FieldMappingData // Fields needing setter statements (FromTarget)
+	FromTargetLoopFields   []FieldMappingData // Fields needing loop-based conversion (FromTarget)
 }
 
 // FieldMappingData contains data for mapping a single field between API and target.

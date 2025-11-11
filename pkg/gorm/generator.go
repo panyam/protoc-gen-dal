@@ -371,11 +371,48 @@ func buildConverterData(msg *collector.MessageInfo, reg *registry.ConverterRegis
 		fieldMappings = append(fieldMappings, *mapping)
 	}
 
+	// Classify fields by render strategy for template
+	var toTargetInline, toTargetSetter, toTargetLoop []FieldMappingData
+	var fromTargetInline, fromTargetSetter, fromTargetLoop []FieldMappingData
+
+	for _, mapping := range fieldMappings {
+		// Classify for ToTarget direction (API → GORM)
+		switch mapping.ToTargetRenderStrategy {
+		case converter.StrategyInlineValue:
+			toTargetInline = append(toTargetInline, mapping)
+		case converter.StrategySetterSimple, converter.StrategySetterTransform,
+			converter.StrategySetterWithError, converter.StrategySetterIgnoreError:
+			toTargetSetter = append(toTargetSetter, mapping)
+		case converter.StrategyLoopRepeated, converter.StrategyLoopMap:
+			toTargetLoop = append(toTargetLoop, mapping)
+		}
+
+		// Classify for FromTarget direction (GORM → API)
+		switch mapping.FromTargetRenderStrategy {
+		case converter.StrategyInlineValue:
+			fromTargetInline = append(fromTargetInline, mapping)
+		case converter.StrategySetterSimple, converter.StrategySetterTransform,
+			converter.StrategySetterWithError, converter.StrategySetterIgnoreError:
+			fromTargetSetter = append(fromTargetSetter, mapping)
+		case converter.StrategyLoopRepeated, converter.StrategyLoopMap:
+			fromTargetLoop = append(fromTargetLoop, mapping)
+		}
+	}
+
 	return ConverterData{
 		SourceType:    sourceTypeName,
 		SourcePkgName: sourcePkgName,
 		TargetType:    gormTypeName,
-		FieldMappings: fieldMappings,
+		FieldMappings: fieldMappings, // Keep for backward compatibility
+
+		// Classified field groups
+		ToTargetInlineFields: toTargetInline,
+		ToTargetSetterFields: toTargetSetter,
+		ToTargetLoopFields:   toTargetLoop,
+
+		FromTargetInlineFields: fromTargetInline,
+		FromTargetSetterFields: fromTargetSetter,
+		FromTargetLoopFields:   fromTargetLoop,
 	}
 }
 

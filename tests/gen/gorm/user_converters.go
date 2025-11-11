@@ -43,30 +43,26 @@ func UserToUserGORM(
 	if dest == nil {
 		dest = &UserGORM{}
 	}
+
+	// Initialize struct with inline values
+	*dest = UserGORM{
+		Id:           src.Id,
+		Name:         src.Name,
+		Email:        src.Email,
+		Age:          src.Age,
+		MemberNumber: src.MemberNumber,
+	}
 	out = dest
-
-	out.Id = src.Id
-
-	out.Name = src.Name
-
-	out.Email = src.Email
-
-	out.Age = src.Age
 
 	if src.Birthday != nil {
 		out.Birthday = timestampToInt64(src.Birthday)
 	}
-
-	out.MemberNumber = src.MemberNumber
-
 	if src.ActivatedAt != nil {
 		out.ActivatedAt = timestampToInt64(src.ActivatedAt)
 	}
-
 	if src.CreatedAt != nil {
 		out.CreatedAt = timestampToInt64(src.CreatedAt)
 	}
-
 	if src.UpdatedAt != nil {
 		out.UpdatedAt = timestampToInt64(src.UpdatedAt)
 	}
@@ -94,25 +90,20 @@ func UserFromUserGORM(
 	if dest == nil {
 		dest = &api.User{}
 	}
+
+	// Initialize struct with inline values
+	*dest = api.User{
+		Id:           src.Id,
+		Name:         src.Name,
+		Email:        src.Email,
+		Age:          src.Age,
+		Birthday:     int64ToTimestamp(src.Birthday),
+		MemberNumber: src.MemberNumber,
+		ActivatedAt:  int64ToTimestamp(src.ActivatedAt),
+		CreatedAt:    int64ToTimestamp(src.CreatedAt),
+		UpdatedAt:    int64ToTimestamp(src.UpdatedAt),
+	}
 	out = dest
-
-	out.Id = src.Id
-
-	out.Name = src.Name
-
-	out.Email = src.Email
-
-	out.Age = src.Age
-
-	out.Birthday = int64ToTimestamp(src.Birthday)
-
-	out.MemberNumber = src.MemberNumber
-
-	out.ActivatedAt = int64ToTimestamp(src.ActivatedAt)
-
-	out.CreatedAt = int64ToTimestamp(src.CreatedAt)
-
-	out.UpdatedAt = int64ToTimestamp(src.UpdatedAt)
 
 	// Apply decorator if provided
 	if decorator != nil {
@@ -137,18 +128,18 @@ func UserToUserWithPermissions(
 	if dest == nil {
 		dest = &UserWithPermissions{}
 	}
+
+	// Initialize struct with inline values
+	*dest = UserWithPermissions{
+		Id:    src.Id,
+		Name:  src.Name,
+		Email: src.Email,
+	}
 	out = dest
-
-	out.Id = src.Id
-
-	out.Name = src.Name
-
-	out.Email = src.Email
 
 	if src.CreatedAt != nil {
 		out.CreatedAt = timestampToInt64(src.CreatedAt)
 	}
-
 	if src.UpdatedAt != nil {
 		out.UpdatedAt = timestampToInt64(src.UpdatedAt)
 	}
@@ -176,17 +167,16 @@ func UserFromUserWithPermissions(
 	if dest == nil {
 		dest = &api.User{}
 	}
+
+	// Initialize struct with inline values
+	*dest = api.User{
+		Id:        src.Id,
+		Name:      src.Name,
+		Email:     src.Email,
+		CreatedAt: int64ToTimestamp(src.CreatedAt),
+		UpdatedAt: int64ToTimestamp(src.UpdatedAt),
+	}
 	out = dest
-
-	out.Id = src.Id
-
-	out.Name = src.Name
-
-	out.Email = src.Email
-
-	out.CreatedAt = int64ToTimestamp(src.CreatedAt)
-
-	out.UpdatedAt = int64ToTimestamp(src.UpdatedAt)
 
 	// Apply decorator if provided
 	if decorator != nil {
@@ -211,11 +201,13 @@ func UserToUserWithCustomTimestamps(
 	if dest == nil {
 		dest = &UserWithCustomTimestamps{}
 	}
+
+	// Initialize struct with inline values
+	*dest = UserWithCustomTimestamps{
+		Id:   src.Id,
+		Name: src.Name,
+	}
 	out = dest
-
-	out.Id = src.Id
-
-	out.Name = src.Name
 
 	if src.CreatedAt != nil {
 		out.CreatedAt = timestampToInt64(src.CreatedAt)
@@ -244,13 +236,14 @@ func UserFromUserWithCustomTimestamps(
 	if dest == nil {
 		dest = &api.User{}
 	}
+
+	// Initialize struct with inline values
+	*dest = api.User{
+		Id:        src.Id,
+		Name:      src.Name,
+		CreatedAt: int64ToTimestamp(src.CreatedAt),
+	}
 	out = dest
-
-	out.Id = src.Id
-
-	out.Name = src.Name
-
-	out.CreatedAt = int64ToTimestamp(src.CreatedAt)
 
 	// Apply decorator if provided
 	if decorator != nil {
@@ -275,13 +268,14 @@ func UserToUserWithIndexes(
 	if dest == nil {
 		dest = &UserWithIndexes{}
 	}
+
+	// Initialize struct with inline values
+	*dest = UserWithIndexes{
+		Id:    src.Id,
+		Name:  src.Name,
+		Email: src.Email,
+	}
 	out = dest
-
-	out.Id = src.Id
-
-	out.Name = src.Name
-
-	out.Email = src.Email
 
 	// Apply decorator if provided
 	if decorator != nil {
@@ -306,13 +300,14 @@ func UserFromUserWithIndexes(
 	if dest == nil {
 		dest = &api.User{}
 	}
+
+	// Initialize struct with inline values
+	*dest = api.User{
+		Id:    src.Id,
+		Name:  src.Name,
+		Email: src.Email,
+	}
 	out = dest
-
-	out.Id = src.Id
-
-	out.Name = src.Name
-
-	out.Email = src.Email
 
 	// Apply decorator if provided
 	if decorator != nil {
@@ -337,11 +332,13 @@ func UserToUserWithDefaults(
 	if dest == nil {
 		dest = &UserWithDefaults{}
 	}
+
+	// Initialize struct with inline values
+	*dest = UserWithDefaults{
+		Id:   src.Id,
+		Name: src.Name,
+	}
 	out = dest
-
-	out.Id = src.Id
-
-	out.Name = src.Name
 
 	if src.CreatedAt != nil {
 		out.CreatedAt = timestampToInt64(src.CreatedAt)
@@ -370,13 +367,14 @@ func UserFromUserWithDefaults(
 	if dest == nil {
 		dest = &api.User{}
 	}
+
+	// Initialize struct with inline values
+	*dest = api.User{
+		Id:        src.Id,
+		Name:      src.Name,
+		CreatedAt: int64ToTimestamp(src.CreatedAt),
+	}
 	out = dest
-
-	out.Id = src.Id
-
-	out.Name = src.Name
-
-	out.CreatedAt = int64ToTimestamp(src.CreatedAt)
 
 	// Apply decorator if provided
 	if decorator != nil {
@@ -401,11 +399,13 @@ func AuthorToAuthorGORM(
 	if dest == nil {
 		dest = &AuthorGORM{}
 	}
+
+	// Initialize struct with inline values
+	*dest = AuthorGORM{
+		Name:  src.Name,
+		Email: src.Email,
+	}
 	out = dest
-
-	out.Name = src.Name
-
-	out.Email = src.Email
 
 	// Apply decorator if provided
 	if decorator != nil {
@@ -430,11 +430,13 @@ func AuthorFromAuthorGORM(
 	if dest == nil {
 		dest = &api.Author{}
 	}
+
+	// Initialize struct with inline values
+	*dest = api.Author{
+		Name:  src.Name,
+		Email: src.Email,
+	}
 	out = dest
-
-	out.Name = src.Name
-
-	out.Email = src.Email
 
 	// Apply decorator if provided
 	if decorator != nil {
@@ -459,22 +461,21 @@ func BlogToBlogGORM(
 	if dest == nil {
 		dest = &BlogGORM{}
 	}
-	out = dest
 
-	out.Id = src.Id
+	// Initialize struct with inline values
+	*dest = BlogGORM{
+		Id:      src.Id,
+		Upvotes: src.Upvotes,
+		Title:   src.Title,
+	}
+	out = dest
 
 	if src.Author != nil {
 		_, err = AuthorToAuthorGORM(src.Author, &out.Author, nil)
-
 		if err != nil {
 			return nil, fmt.Errorf("converting Author: %w", err)
 		}
-
 	}
-
-	out.Upvotes = src.Upvotes
-
-	out.Title = src.Title
 
 	// Apply decorator if provided
 	if decorator != nil {
@@ -499,19 +500,19 @@ func BlogFromBlogGORM(
 	if dest == nil {
 		dest = &api.Blog{}
 	}
+
+	// Initialize struct with inline values
+	*dest = api.Blog{
+		Id:      src.Id,
+		Upvotes: src.Upvotes,
+		Title:   src.Title,
+	}
 	out = dest
 
-	out.Id = src.Id
-
 	_, err = AuthorFromAuthorGORM(out.Author, &src.Author, nil)
-
 	if err != nil {
 		return nil, fmt.Errorf("converting Author: %w", err)
 	}
-
-	out.Upvotes = src.Upvotes
-
-	out.Title = src.Title
 
 	// Apply decorator if provided
 	if decorator != nil {
@@ -536,21 +537,20 @@ func ProductToProductGORM(
 	if dest == nil {
 		dest = &ProductGORM{}
 	}
+
+	// Initialize struct with inline values
+	*dest = ProductGORM{
+		Id:         src.Id,
+		Name:       src.Name,
+		Tags:       src.Tags,
+		Categories: src.Categories,
+		Ratings:    src.Ratings,
+	}
 	out = dest
-
-	out.Id = src.Id
-
-	out.Name = src.Name
-
-	out.Tags = src.Tags
-
-	out.Categories = src.Categories
 
 	if src.Metadata != nil {
 		out.Metadata = src.Metadata
 	}
-
-	out.Ratings = src.Ratings
 
 	// Apply decorator if provided
 	if decorator != nil {
@@ -575,19 +575,17 @@ func ProductFromProductGORM(
 	if dest == nil {
 		dest = &api.Product{}
 	}
+
+	// Initialize struct with inline values
+	*dest = api.Product{
+		Id:         src.Id,
+		Name:       src.Name,
+		Tags:       src.Tags,
+		Categories: src.Categories,
+		Metadata:   src.Metadata,
+		Ratings:    src.Ratings,
+	}
 	out = dest
-
-	out.Id = src.Id
-
-	out.Name = src.Name
-
-	out.Tags = src.Tags
-
-	out.Categories = src.Categories
-
-	out.Metadata = src.Metadata
-
-	out.Ratings = src.Ratings
 
 	// Apply decorator if provided
 	if decorator != nil {
@@ -612,21 +610,21 @@ func LibraryToLibraryGORM(
 	if dest == nil {
 		dest = &LibraryGORM{}
 	}
+
+	// Initialize struct with inline values
+	*dest = LibraryGORM{
+		Id:   src.Id,
+		Name: src.Name,
+	}
 	out = dest
-
-	out.Id = src.Id
-
-	out.Name = src.Name
 
 	if src.Contributors != nil {
 		out.Contributors = make([]AuthorGORM, len(src.Contributors))
 		for i, item := range src.Contributors {
 			_, err = AuthorToAuthorGORM(item, &out.Contributors[i], nil)
-
 			if err != nil {
 				return nil, fmt.Errorf("converting Contributors[%d]: %w", i, err)
 			}
-
 		}
 	}
 
@@ -653,21 +651,21 @@ func LibraryFromLibraryGORM(
 	if dest == nil {
 		dest = &api.Library{}
 	}
+
+	// Initialize struct with inline values
+	*dest = api.Library{
+		Id:   src.Id,
+		Name: src.Name,
+	}
 	out = dest
-
-	out.Id = src.Id
-
-	out.Name = src.Name
 
 	if src.Contributors != nil {
 		out.Contributors = make([]*api.Author, len(src.Contributors))
 		for i, item := range src.Contributors {
 			out.Contributors[i], err = AuthorFromAuthorGORM(nil, &item, nil)
-
 			if err != nil {
 				return nil, fmt.Errorf("converting Contributors[%d]: %w", i, err)
 			}
-
 		}
 	}
 
@@ -694,22 +692,22 @@ func OrganizationToOrganizationGORM(
 	if dest == nil {
 		dest = &OrganizationGORM{}
 	}
+
+	// Initialize struct with inline values
+	*dest = OrganizationGORM{
+		Id:   src.Id,
+		Name: src.Name,
+	}
 	out = dest
-
-	out.Id = src.Id
-
-	out.Name = src.Name
 
 	if src.Departments != nil {
 		out.Departments = make(map[string]AuthorGORM, len(src.Departments))
 		for key, value := range src.Departments {
 			var converted AuthorGORM
 			_, err = AuthorToAuthorGORM(value, &converted, nil)
-
 			if err != nil {
 				return nil, fmt.Errorf("converting Departments[%s]: %w", key, err)
 			}
-
 			out.Departments[key] = converted
 		}
 	}
@@ -737,21 +735,21 @@ func OrganizationFromOrganizationGORM(
 	if dest == nil {
 		dest = &api.Organization{}
 	}
+
+	// Initialize struct with inline values
+	*dest = api.Organization{
+		Id:   src.Id,
+		Name: src.Name,
+	}
 	out = dest
-
-	out.Id = src.Id
-
-	out.Name = src.Name
 
 	if src.Departments != nil {
 		out.Departments = make(map[string]*api.Author, len(src.Departments))
 		for key, value := range src.Departments {
 			out.Departments[key], err = AuthorFromAuthorGORM(nil, &value, nil)
-
 			if err != nil {
 				return nil, fmt.Errorf("converting Departments[%s]: %w", key, err)
 			}
-
 		}
 	}
 
