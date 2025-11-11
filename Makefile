@@ -15,6 +15,6 @@ install:
 	go build -o ${GOBIN}/protoc-gen-dal-datastore ./cmd/protoc-gen-dal-datastore
 
 test:
-	cd tests ; make 
 	go test ./... -v
+	cd tests ; make 
 

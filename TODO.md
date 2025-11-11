@@ -300,6 +300,16 @@ From `tests/protos/gorm/user.proto`:
   - ✅ Migration of GORM generator to use shared utilities (removed 214 lines)
   - ✅ Migration of Datastore generator to use shared utilities (removed similar duplicate code)
 
+- ✅ Phase 3.0b - Extract Converter Strategy Utilities (COMPLETE)
+  - ✅ Create `pkg/generator/converter` package
+    - ✅ Collection utilities (CheckMapValueType, CheckRepeatedElementType, BuildNestedConverterName)
+    - ✅ Conversion detection (IsTimestampToInt64, IsNumericConversion, BuildNumericCast)
+    - ✅ Template helper generators (TimestampHelperFunctions, MustParseUintHelper)
+    - ✅ Render strategy system (ConversionType, FieldRenderStrategy, DetermineRenderStrategy)
+  - ✅ Unit tests for all converter utilities
+  - ✅ GORM generator calculates render strategies for all field mappings
+  - ✅ All existing tests passing (no behavioral changes)
+
 - ✅ Phase 3.1 - Google Cloud Datastore (COMPLETE)
   - ✅ Collector support (TargetDatastore, extractDatastoreInfo)
   - ✅ Basic struct generation with datastore tags

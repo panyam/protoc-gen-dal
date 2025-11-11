@@ -20,6 +20,7 @@ import (
 	"text/template"
 
 	"github.com/panyam/protoc-gen-dal/pkg/generator/common"
+	"github.com/panyam/protoc-gen-dal/pkg/generator/converter"
 )
 
 //go:embed templates/*.tmpl
@@ -64,34 +65,26 @@ type ConverterData struct {
 	FieldMappings []FieldMappingData // Field conversion mappings
 }
 
-// ConversionType represents how a field should be converted.
-type ConversionType int
-
-const (
-	ConvertIgnore                          ConversionType = iota // Field only in target, skip conversion
-	ConvertByAssignment                                          // Direct assignment: out.Field = src.Field
-	ConvertByTransformer                                         // No-error transformer: out.Field = converter(src.Field)
-	ConvertByTransformerWithError                                // Error-returning transformer: out.Field, err = converter(src.Field)
-	ConvertByTransformerWithIgnorableError                       // Error-ignoring transformer: out.Field, _ = converter(src.Field)
-)
-
 // FieldMappingData contains data for mapping a single field between API and target.
+// This extends ClassifiedField with GORM-specific bidirectional conversion support.
 type FieldMappingData struct {
-	SourceField              string         // Source field name (e.g., "Birthday")
-	TargetField              string         // Target field name (e.g., "Birthday")
-	ToTargetConversionType   ConversionType // How to convert source → target (or element conversion for collections)
-	FromTargetConversionType ConversionType // How to convert target → source (or element conversion for collections)
-	ToTargetCode             string         // Code to convert source to target (for assignment/transformer)
-	FromTargetCode           string         // Code to convert target to source (for assignment/transformer)
-	ToTargetConverterFunc    string         // Converter function name for ToTarget (e.g., "AuthorToAuthorGORM")
-	FromTargetConverterFunc  string         // Converter function name for FromTarget (e.g., "AuthorFromAuthorGORM")
-	SourceIsPointer          bool           // Whether source field is a pointer type (needs nil check)
-	TargetIsPointer          bool           // Whether target field is a pointer type (affects assignment)
-	IsRepeated               bool           // Whether this is a repeated field (needs loop-based conversion)
-	IsMap                    bool           // Whether this is a map field (needs loop-based conversion)
-	TargetElementType        string         // For repeated/map: Go type of target element/value (e.g., "AuthorGORM")
-	SourceElementType        string         // For repeated/map: Go type of source element/value (e.g., "Author")
-	SourcePkgName            string         // Source package name (e.g., "api" or "testapi") - needed for type references
+	SourceField              string                      // Source field name (e.g., "Birthday")
+	TargetField              string                      // Target field name (e.g., "Birthday")
+	ToTargetConversionType   converter.ConversionType    // How to convert source → target
+	FromTargetConversionType converter.ConversionType    // How to convert target → source
+	ToTargetRenderStrategy   converter.FieldRenderStrategy // How to render source → target
+	FromTargetRenderStrategy converter.FieldRenderStrategy // How to render target → source
+	ToTargetCode             string                      // Code to convert source to target (for assignment/transformer)
+	FromTargetCode           string                      // Code to convert target to source (for assignment/transformer)
+	ToTargetConverterFunc    string                      // Converter function name for ToTarget (e.g., "AuthorToAuthorGORM")
+	FromTargetConverterFunc  string                      // Converter function name for FromTarget (e.g., "AuthorFromAuthorGORM")
+	SourceIsPointer          bool                        // Whether source field is a pointer type (needs nil check)
+	TargetIsPointer          bool                        // Whether target field is a pointer type (affects assignment)
+	IsRepeated               bool                        // Whether this is a repeated field (needs loop-based conversion)
+	IsMap                    bool                        // Whether this is a map field (needs loop-based conversion)
+	TargetElementType        string                      // For repeated/map: Go type of target element/value (e.g., "AuthorGORM")
+	SourceElementType        string                      // For repeated/map: Go type of source element/value (e.g., "Author")
+	SourcePkgName            string                      // Source package name (e.g., "api" or "testapi") - needed for type references
 }
 
 var tmpl *template.Template
