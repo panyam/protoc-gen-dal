@@ -308,7 +308,25 @@ From `tests/protos/gorm/user.proto`:
     - ✅ Render strategy system (ConversionType, FieldRenderStrategy, DetermineRenderStrategy)
   - ✅ Unit tests for all converter utilities
   - ✅ GORM generator calculates render strategies for all field mappings
+  - ✅ Datastore generator calculates render strategies for all field mappings
   - ✅ All existing tests passing (no behavioral changes)
+
+- ✅ Phase 3.0c - Template Unification: Struct Literal + Setters Pattern (COMPLETE)
+  - ✅ GORM template rewrite
+    - ✅ Updated ConverterData with field groups (ToTarget/FromTarget Inline/Setter/Loop)
+    - ✅ Added template helper functions (isInlineValue, isSetterSimple, etc.)
+    - ✅ Struct literal initialization for inline fields
+    - ✅ Post-construction setters for pointer/error handling
+    - ✅ Separate loop sections for repeated/map conversions
+    - ✅ Handle empty ToTargetCode/FromTargetCode (fallback to src.Field)
+  - ✅ Datastore template rewrite
+    - ✅ Updated FieldMapping with ConversionType/RenderStrategy/SourcePkgName
+    - ✅ Updated ConverterData with field groups
+    - ✅ Modified buildFieldMapping to calculate render strategies
+    - ✅ Added addRenderStrategies helper function
+    - ✅ Modified buildConverterData to classify fields
+    - ✅ Rewrote converters.go.tmpl with same pattern as GORM
+    - ✅ All tests passing
 
 - ✅ Phase 3.1 - Google Cloud Datastore (COMPLETE)
   - ✅ Collector support (TargetDatastore, extractDatastoreInfo)
