@@ -51,10 +51,13 @@ func {{ .SourceType }}To{{ .TargetType }}(
 	}
 	out = dest
 
-	{{/* Process fields by conversion type */}}
+	{{/* Process fields by render strategy */}}
 	{{ range .FieldMappings }}
-		{{/* ConvertByAssignment */}}
-		{{ if eq .ToTargetConversionType 1 }}
+		{{/* Inline values and simple setters */}}
+		{{ if isInlineValue .ToTargetRenderStrategy }}
+	out.{{ .TargetField }} = {{ .ToTargetCode }}
+
+		{{ else if isSetterSimple .ToTargetRenderStrategy }}
 			{{ if .SourceIsPointer }}
 	if src.{{ .SourceField }} != nil {
 		out.{{ .TargetField }} = {{ .ToTargetCode }}
@@ -63,39 +66,38 @@ func {{ .SourceType }}To{{ .TargetType }}(
 	out.{{ .TargetField }} = {{ .ToTargetCode }}
 			{{ end }}
 
-		{{/* ConvertByTransformer (no error) */}}
-		{{ else if eq .ToTargetConversionType 2 }}
+		{{/* Setter with transformation (no error) */}}
+		{{ else if isSetterTransform .ToTargetRenderStrategy }}
 			{{ if .SourceIsPointer }}
-	      if src.{{ .SourceField }} != nil {
-		      out.{{ .TargetField }} = {{ .ToTargetCode }}
-	      }
+	if src.{{ .SourceField }} != nil {
+		out.{{ .TargetField }} = {{ .ToTargetCode }}
+	}
 			{{ else }}
-	      out.{{ .TargetField }} = {{ .ToTargetCode }}
+	out.{{ .TargetField }} = {{ .ToTargetCode }}
 			{{ end }}
 
-		{{/* ConvertByTransformerWithError */}}
-		{{ else if or (eq .ToTargetConversionType 3) (eq .ToTargetConversionType 4)}}
-			{{ if .IsRepeated }}
-				{{/* Loop-based conversion for []MessageType */}}
+		{{/* Loop-based conversion for repeated messages */}}
+		{{ else if isLoopRepeated .ToTargetRenderStrategy }}
 	if src.{{ .SourceField }} != nil {
 		out.{{ .TargetField }} = make([]{{ .TargetElementType }}, len(src.{{ .SourceField }}))
 		for i, item := range src.{{ .SourceField }} {
 			_, err = {{ .ToTargetConverterFunc }}(item, &out.{{ .TargetField }}[i], nil)
-			{{ if eq .ToTargetConversionType 3 }}
+			{{ if needsErrorCheck .ToTargetConversionType }}
 			if err != nil {
 				return nil, fmt.Errorf("converting {{ .SourceField }}[%d]: %w", i, err)
 			}
 			{{ end }}
 		}
 	}
-			{{ else if .IsMap }}
-				{{/* Loop-based conversion for map<K, MessageType> */}}
+
+		{{/* Loop-based conversion for map messages */}}
+		{{ else if isLoopMap .ToTargetRenderStrategy }}
 	if src.{{ .SourceField }} != nil {
 		out.{{ .TargetField }} = make(map[string]{{ .TargetElementType }}, len(src.{{ .SourceField }}))
 		for key, value := range src.{{ .SourceField }} {
 			var converted {{ .TargetElementType }}
 			_, err = {{ .ToTargetConverterFunc }}(value, &converted, nil)
-			{{ if eq .ToTargetConversionType 3 }}
+			{{ if needsErrorCheck .ToTargetConversionType }}
 			if err != nil {
 				return nil, fmt.Errorf("converting {{ .SourceField }}[%s]: %w", key, err)
 			}
@@ -103,17 +105,17 @@ func {{ .SourceType }}To{{ .TargetType }}(
 			out.{{ .TargetField }}[key] = converted
 		}
 	}
-			{{ else }}
-				{{/* Regular message field conversion */}}
-			{{ if .SourceIsPointer }} if src.{{ .SourceField }} != nil { {{ end }}
-      _, err = {{ .ToTargetConverterFunc }}(src.{{ .SourceField }}, {{ fieldRef "out" .TargetField .TargetIsPointer }}, nil)
-		  {{ if eq .ToTargetConversionType 3 }}
-      if err != nil {
-        return nil, fmt.Errorf("converting {{ .SourceField }}: %w", err)
-      }
-      {{ end }}
-			{{ if .SourceIsPointer }} } {{ end }}
+
+		{{/* Setter with error handling or ignore error */}}
+		{{ else if or (isSetterWithError .ToTargetRenderStrategy) (isSetterIgnoreError .ToTargetRenderStrategy) }}
+			{{ if .SourceIsPointer }}if src.{{ .SourceField }} != nil { {{ end }}
+	_, err = {{ .ToTargetConverterFunc }}(src.{{ .SourceField }}, {{ fieldRef "out" .TargetField .TargetIsPointer }}, nil)
+			{{ if needsErrorCheck .ToTargetConversionType }}
+	if err != nil {
+		return nil, fmt.Errorf("converting {{ .SourceField }}: %w", err)
+	}
 			{{ end }}
+			{{ if .SourceIsPointer }}}{{ end }}
 		{{ end }}
 	{{ end }}
 
@@ -142,10 +144,13 @@ func {{ .SourceType }}From{{ .TargetType }}(
 	}
 	out = dest
 
-	{{/* Process fields by conversion type */}}
+	{{/* Process fields by render strategy */}}
 	{{ range .FieldMappings }}
-		{{/* ConvertByAssignment */}}
-		{{ if eq .FromTargetConversionType 1 }}
+		{{/* Inline values and simple setters */}}
+		{{ if isInlineValue .FromTargetRenderStrategy }}
+	out.{{ .SourceField }} = {{ .FromTargetCode }}
+
+		{{ else if isSetterSimple .FromTargetRenderStrategy }}
 			{{ if .TargetIsPointer }}
 	if src.{{ .TargetField }} != nil {
 		out.{{ .SourceField }} = {{ .FromTargetCode }}
@@ -154,8 +159,8 @@ func {{ .SourceType }}From{{ .TargetType }}(
 	out.{{ .SourceField }} = {{ .FromTargetCode }}
 			{{ end }}
 
-		{{/* ConvertByTransformer (no error) */}}
-		{{ else if eq .FromTargetConversionType 2 }}
+		{{/* Setter with transformation (no error) */}}
+		{{ else if isSetterTransform .FromTargetRenderStrategy }}
 			{{ if .TargetIsPointer }}
 	if src.{{ .TargetField }} != nil {
 		out.{{ .SourceField }} = {{ .FromTargetCode }}
@@ -164,46 +169,44 @@ func {{ .SourceType }}From{{ .TargetType }}(
 	out.{{ .SourceField }} = {{ .FromTargetCode }}
 			{{ end }}
 
-		{{/* ConvertByTransformerWithError */}}
-		{{/* ConvertByTransformerWithIgnorableError */}}
-		{{ else if or (eq .FromTargetConversionType 3) (eq .FromTargetConversionType 4)}}
-			{{ if .IsRepeated }}
-				{{/* Loop-based conversion for []MessageType (from target) */}}
+		{{/* Loop-based conversion for repeated messages */}}
+		{{ else if isLoopRepeated .FromTargetRenderStrategy }}
 	if src.{{ .TargetField }} != nil {
 		out.{{ .SourceField }} = make([]*{{ .SourcePkgName }}.{{ .SourceElementType }}, len(src.{{ .TargetField }}))
 		for i, item := range src.{{ .TargetField }} {
 			out.{{ .SourceField }}[i], err = {{ .FromTargetConverterFunc }}(nil, &item, nil)
-			{{ if eq .FromTargetConversionType 3 }}
+			{{ if needsErrorCheck .FromTargetConversionType }}
 			if err != nil {
 				return nil, fmt.Errorf("converting {{ .SourceField }}[%d]: %w", i, err)
 			}
 			{{ end }}
 		}
 	}
-			{{ else if .IsMap }}
-				{{/* Loop-based conversion for map<K, MessageType> (from target) */}}
+
+		{{/* Loop-based conversion for map messages */}}
+		{{ else if isLoopMap .FromTargetRenderStrategy }}
 	if src.{{ .TargetField }} != nil {
 		out.{{ .SourceField }} = make(map[string]*{{ .SourcePkgName }}.{{ .SourceElementType }}, len(src.{{ .TargetField }}))
 		for key, value := range src.{{ .TargetField }} {
 			out.{{ .SourceField }}[key], err = {{ .FromTargetConverterFunc }}(nil, &value, nil)
-			{{ if eq .FromTargetConversionType 3 }}
+			{{ if needsErrorCheck .FromTargetConversionType }}
 			if err != nil {
 				return nil, fmt.Errorf("converting {{ .SourceField }}[%s]: %w", key, err)
 			}
 			{{ end }}
 		}
 	}
-			{{ else }}
-				{{/* Regular message field conversion (from target) */}}
-			{{ if .TargetIsPointer }} if src.{{ .SourceField }} != nil { {{ end }}
-      _, err = {{ .FromTargetConverterFunc }}(out.{{ .SourceField }}, {{ fieldRef "src" .TargetField .TargetIsPointer }}, nil)
-		  {{ if eq .FromTargetConversionType 3 }}
-      if err != nil {
-        return nil, fmt.Errorf("converting {{ .SourceField }}: %w", err)
-      }
-      {{ end }}
-			{{ if .TargetIsPointer }} } {{ end }}
+
+		{{/* Setter with error handling or ignore error */}}
+		{{ else if or (isSetterWithError .FromTargetRenderStrategy) (isSetterIgnoreError .FromTargetRenderStrategy) }}
+			{{ if .TargetIsPointer }}if src.{{ .TargetField }} != nil { {{ end }}
+	_, err = {{ .FromTargetConverterFunc }}(out.{{ .SourceField }}, {{ fieldRef "src" .TargetField .TargetIsPointer }}, nil)
+			{{ if needsErrorCheck .FromTargetConversionType }}
+	if err != nil {
+		return nil, fmt.Errorf("converting {{ .SourceField }}: %w", err)
+	}
 			{{ end }}
+			{{ if .TargetIsPointer }}}{{ end }}
 		{{ end }}
 	{{ end }}
 

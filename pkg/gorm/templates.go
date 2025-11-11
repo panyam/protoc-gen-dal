@@ -107,6 +107,32 @@ func loadTemplates() (*template.Template, error) {
 			}
 			return "&" + varName + "." + fieldName
 		},
+		// Render strategy helpers for ToTarget direction
+		"isInlineValue": func(strategy converter.FieldRenderStrategy) bool {
+			return strategy == converter.StrategyInlineValue
+		},
+		"isSetterSimple": func(strategy converter.FieldRenderStrategy) bool {
+			return strategy == converter.StrategySetterSimple
+		},
+		"isSetterTransform": func(strategy converter.FieldRenderStrategy) bool {
+			return strategy == converter.StrategySetterTransform
+		},
+		"isSetterWithError": func(strategy converter.FieldRenderStrategy) bool {
+			return strategy == converter.StrategySetterWithError
+		},
+		"isSetterIgnoreError": func(strategy converter.FieldRenderStrategy) bool {
+			return strategy == converter.StrategySetterIgnoreError
+		},
+		"isLoopRepeated": func(strategy converter.FieldRenderStrategy) bool {
+			return strategy == converter.StrategyLoopRepeated
+		},
+		"isLoopMap": func(strategy converter.FieldRenderStrategy) bool {
+			return strategy == converter.StrategyLoopMap
+		},
+		// Convenience helpers for checking if error handling is needed
+		"needsErrorCheck": func(convType converter.ConversionType) bool {
+			return convType == converter.ConvertByTransformerWithError
+		},
 	})
 
 	// Parse all template files
