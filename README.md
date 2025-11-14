@@ -1,0 +1,381 @@
+# protoc-gen-dal
+
+Protocol Buffer compiler plugins for generating Data Access Layer code. Converts between API messages (clean, transport-focused) and database entities (storage-optimized).
+
+## Overview
+
+protoc-gen-dal uses a sidecar pattern: keep your API protos clean, define database schemas in separate proto files. Generate type-safe converters between API messages and database entities.
+
+Supported targets:
+- **GORM** - Go ORM (works with postgres, mysql, sqlite via GORM dialects)
+- **Google Cloud Datastore** - Go NoSQL database
+
+## Quick Start
+
+### Installation
+
+```bash
+go install github.com/panyam/protoc-gen-dal/cmd/protoc-gen-dal-gorm@latest
+go install github.com/panyam/protoc-gen-dal/cmd/protoc-gen-dal-datastore@latest
+```
+
+### Example: GORM
+
+**API proto** (`api/user.proto`):
+```protobuf
+syntax = "proto3";
+package api.v1;
+
+message User {
+  uint32 id = 1;
+  string name = 2;
+  string email = 3;
+  google.protobuf.Timestamp created_at = 4;
+}
+```
+
+**GORM sidecar** (`gorm/user.proto`):
+```protobuf
+syntax = "proto3";
+package gorm;
+
+import "dal/v1/annotations.proto";
+import "api/user.proto";
+
+message UserGORM {
+  option (dal.v1.table) = {
+    source: "api.v1.User"
+    name: "users"
+  };
+
+  uint32 id = 1 [(dal.v1.column) = {
+    gorm_tags: ["primaryKey", "autoIncrement"]
+  }];
+  string name = 2;
+  string email = 3 [(dal.v1.column) = {
+    gorm_tags: ["uniqueIndex"]
+  }];
+  int64 created_at = 4;  // Timestamp stored as Unix seconds
+}
+```
+
+**buf.gen.yaml**:
+```yaml
+version: v2
+plugins:
+  - local: protoc-gen-dal-gorm
+    out: gen
+    opt: paths=source_relative
+```
+
+**Generated code** (`gen/gorm/user_gorm.go`):
+```go
+type UserGORM struct {
+    ID        uint32 `gorm:"primaryKey;autoIncrement"`
+    Name      string
+    Email     string `gorm:"uniqueIndex"`
+    CreatedAt int64
+}
+
+func (UserGORM) TableName() string {
+    return "users"
+}
+```
+
+**Generated converters** (`gen/gorm/user_converters.go`):
+```go
+func UserToUserGORM(
+    src *api.User,
+    dest *UserGORM,
+    decorator func(*api.User, *UserGORM) error,
+) (out *UserGORM, err error)
+
+func UserFromUserGORM(
+    dest *api.User,
+    src *UserGORM,
+    decorator func(*api.User, *UserGORM) error,
+) (out *api.User, err error)
+```
+
+**Usage**:
+```go
+// API to database
+apiUser := &api.User{Name: "Alice", Email: "alice@example.com"}
+dbUser, err := UserToUserGORM(apiUser, nil, nil)
+db.Create(dbUser)
+
+// Database to API
+var dbUser UserGORM
+db.First(&dbUser, 1)
+apiUser, err := UserFromUserGORM(nil, &dbUser, nil)
+```
+
+## Features
+
+### Type Conversions
+
+Built-in conversions handle common type mismatches:
+
+- `google.protobuf.Timestamp` ↔ `int64` (Unix seconds)
+- `uint32` ↔ `string` (Datastore keys)
+- Numeric types with casting (`int32` → `int64`, etc.)
+
+### Nested Messages
+
+Converters auto-generate for nested message types when both sides have converters defined:
+
+```protobuf
+message BookGORM {
+  option (dal.v1.table) = {source: "api.v1.Book"};
+
+  uint32 id = 1;
+  AuthorGORM author = 2;  // Nested message
+}
+
+message AuthorGORM {
+  option (dal.v1.table) = {source: "api.v1.Author"};
+
+  uint32 id = 1;
+  string name = 2;
+}
+```
+
+Generated converter calls `AuthorToAuthorGORM` automatically for the nested field.
+
+### Collections
+
+**Repeated primitives** - direct assignment:
+```protobuf
+repeated string tags = 1;  // API
+repeated string tags = 1 [(dal.v1.column) = {
+  gorm_tags: ["type:text[]"]
+}];  // Postgres array
+```
+
+**Repeated messages** - loop-based conversion:
+```protobuf
+repeated Author contributors = 1;  // API
+repeated AuthorGORM contributors = 1;  // GORM
+```
+
+**Maps with primitives** - direct assignment:
+```protobuf
+map<string, string> metadata = 1;  // API
+map<string, string> metadata = 1 [(dal.v1.column) = {
+  gorm_tags: ["type:jsonb"]
+}];  // GORM
+```
+
+**Maps with messages** - loop-based conversion:
+```protobuf
+map<string, Author> authors_by_id = 1;  // API
+map<string, AuthorGORM> authors_by_id = 1;  // GORM
+```
+
+### Custom Transformations
+
+Use decorator functions for custom field transformations:
+
+```go
+decorator := func(src *api.User, dest *UserGORM) error {
+    // Custom logic here
+    dest.NormalizedEmail = strings.ToLower(src.Email)
+    return nil
+}
+
+dbUser, err := UserToUserGORM(apiUser, nil, decorator)
+```
+
+### In-place Conversion
+
+Converters accept destination parameter for in-place modification:
+
+```go
+var dbUser UserGORM
+UserToUserGORM(apiUser, &dbUser, nil)  // Modifies dbUser in place
+```
+
+## Annotations Reference
+
+### Table-level
+
+**TableOptions** - Applied to GORM messages:
+```protobuf
+option (dal.v1.table) = {
+  source: "api.v1.User"  // Required: source API message
+  name: "users"          // Optional: table name (default: lowercase message name)
+};
+```
+
+**DatastoreOptions** - Applied to Datastore messages:
+```protobuf
+option (dal.v1.table) = {
+  target_datastore: {
+    source: "api.v1.User"
+    kind: "User"           // Optional: Datastore kind (default: message name)
+    namespace: "prod"      // Optional: Datastore namespace
+  }
+};
+```
+
+### Field-level
+
+**ColumnOptions** - Applied to individual fields:
+```protobuf
+uint32 id = 1 [(dal.v1.column) = {
+  gorm_tags: ["primaryKey", "autoIncrement"]
+}];
+
+string email = 2 [(dal.v1.column) = {
+  gorm_tags: ["uniqueIndex", "type:varchar(255)"]
+}];
+```
+
+**Datastore tags**:
+```protobuf
+string id = 1 [(dal.v1.column) = {
+  datastore_tags: ["-"]  // Exclude from Datastore (used for Key field)
+}];
+
+string large_text = 2 [(dal.v1.column) = {
+  datastore_tags: ["noindex"]  // Don't index this field
+}];
+```
+
+## Target-specific Guides
+
+### GORM
+
+GORM is database-agnostic. The same generated code works with postgres, mysql, sqlite via GORM dialects. Specify database-specific types in tags:
+
+```protobuf
+// Postgres JSONB
+map<string, string> metadata = 1 [(dal.v1.column) = {
+  gorm_tags: ["type:jsonb"]
+}];
+
+// MySQL JSON
+map<string, string> metadata = 1 [(dal.v1.column) = {
+  gorm_tags: ["type:json"]
+}];
+
+// UUID primary key
+string id = 1 [(dal.v1.column) = {
+  gorm_tags: ["primaryKey", "type:uuid", "default:gen_random_uuid()"]
+}];
+```
+
+**Foreign keys**:
+```protobuf
+uint32 author_id = 1 [(dal.v1.column) = {
+  gorm_tags: ["foreignKey:AuthorID", "references:ID", "constraint:OnDelete:CASCADE"]
+}];
+```
+
+**Composite primary keys**:
+```protobuf
+string book_id = 1 [(dal.v1.column) = {gorm_tags: ["primaryKey"]}];
+int32 edition = 2 [(dal.v1.column) = {gorm_tags: ["primaryKey"]}];
+```
+
+### Google Cloud Datastore
+
+Datastore entities are generated with `Kind()` methods:
+
+```go
+type UserDatastore struct {
+    Key       *datastore.Key `datastore:"-"`  // Manually managed
+    Id        string
+    Name      string
+    Email     string
+    CreatedAt int64
+}
+
+func (UserDatastore) Kind() string {
+    return "User"
+}
+```
+
+**Type conversions**:
+- `uint32` → `string` (Datastore keys are strings)
+- `google.protobuf.Timestamp` → `int64` (Unix seconds)
+
+**Usage**:
+```go
+// Create
+apiUser := &api.User{Name: "Alice"}
+dsUser, err := UserToUserDatastore(apiUser, nil, nil)
+key := datastore.NameKey("User", "alice", nil)
+client.Put(ctx, key, dsUser)
+
+// Retrieve
+var dsUser UserDatastore
+key := datastore.NameKey("User", "alice", nil)
+client.Get(ctx, key, &dsUser)
+apiUser, err := UserFromUserDatastore(nil, &dsUser, nil)
+```
+
+## Project Structure
+
+```
+protoc-gen-dal/
+├── cmd/
+│   ├── protoc-gen-dal-gorm/       # GORM plugin binary
+│   └── protoc-gen-dal-datastore/  # Datastore plugin binary
+├── pkg/
+│   ├── collector/                 # Collects messages from proto files
+│   ├── gorm/                      # GORM code generator
+│   ├── datastore/                 # Datastore code generator
+│   └── generator/
+│       ├── common/                # Shared utilities (file naming, types, imports)
+│       ├── converter/             # Converter strategy utilities
+│       └── registry/              # Converter registry
+├── protos/
+│   └── dal/v1/
+│       └── annotations.proto      # Annotation definitions
+└── tests/
+    └── protos/
+        ├── gorm/                  # Test proto files for GORM
+        └── datastore/             # Test proto files for Datastore
+```
+
+## Design Principles
+
+1. **Sidecar pattern** - Keep API protos clean, DB schemas separate
+2. **No abstraction layer** - Use native target syntax directly (GORM tags, Datastore tags)
+3. **Type safety** - Compile-time checks, no runtime map lookups
+4. **Opt-in** - Only messages with annotations generate code
+5. **Explicit over implicit** - Require `source` annotation for nested conversions
+
+## Development
+
+```bash
+# Build all binaries
+make build
+
+# Run all tests
+make test
+
+# Generate code from test protos
+make buf
+```
+
+## Roadmap
+
+**Completed:**
+- ✅ GORM generator (Go)
+- ✅ Google Cloud Datastore generator (Go)
+- ✅ Nested message converters
+- ✅ Repeated/map field support
+- ✅ Shared generator utilities
+
+**Planned:**
+- Firestore (Go)
+- postgres-raw (Go + database/sql)
+- MongoDB (Go)
+- Python generators
+- TypeScript generators
+
+## License
+
+Apache License 2.0
