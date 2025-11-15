@@ -1,4 +1,4 @@
 version: v2
 modules:
   - path: .
-    name: buf.build/panyam/protoc-gen-dal
+    name: buf.build/prototools/protoc-gen-dal
