@@ -1,0 +1,19 @@
+
+syntax = "proto3";
+
+package gorm;
+
+import "dal/v1/annotations.proto";
+import "api/testany.proto";  // Import API protos so they're available for source references
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/any.proto";
+
+option go_package = "github.com/panyam/protoc-gen-dal/tests/gen/dal;testdal";
+
+// UserGorm demonstrates comprehensive GORM features from https://gorm.io/docs/models.html
+message TestRecord1Gorm {
+  option (dal.v1.gorm) = {
+    source: "api.TestRecord1"
+    table: "test_records"
+  };
+}

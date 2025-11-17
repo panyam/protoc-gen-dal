@@ -17,6 +17,7 @@ package converter
 import (
 	"fmt"
 
+	"github.com/panyam/protoc-gen-dal/pkg/generator/common"
 	"google.golang.org/protobuf/compiler/protogen"
 )
 
@@ -61,6 +62,13 @@ var globalTypeMappings = map[TypePair]TypeMapping{
 		TargetIsPointer:    boolPtr(false), // time.Time is a value type
 	},
 
+	// google.protobuf.Any → bytes (binary serialization)
+	{SourceType: "google.protobuf.Any", TargetType: "bytes"}: {
+		ToTargetTemplate:   "converters.AnyToBytes(src.{{.SourceField}})",
+		FromTargetTemplate: "converters.BytesToAny(src.{{.TargetField}})",
+		ConversionType:     ConvertByTransformerWithError,
+	},
+
 	// uint32 → string (for ID conversions)
 	{SourceType: "uint32", TargetType: "string"}: {
 		ToTargetTemplate:   "strconv.FormatUint(uint64(src.{{.SourceField}}), 10)",
@@ -72,8 +80,8 @@ var globalTypeMappings = map[TypePair]TypeMapping{
 // GetTypeMapping finds a type mapping for the given source and target fields.
 // Returns nil if no mapping exists.
 func GetTypeMapping(sourceField, targetField *protogen.Field) *TypeMapping {
-	sourceType := getTypeKey(sourceField)
-	targetType := getTypeKey(targetField)
+	sourceType := getSourceTypeKey(sourceField)
+	targetType := getTargetTypeKey(targetField)
 
 	pair := TypePair{SourceType: sourceType, TargetType: targetType}
 	if mapping, exists := globalTypeMappings[pair]; exists {
@@ -83,14 +91,45 @@ func GetTypeMapping(sourceField, targetField *protogen.Field) *TypeMapping {
 	return nil
 }
 
-// getTypeKey returns a unique key for a field's type.
+// getSourceTypeKey returns the type key for a source field (from proto-generated code).
 // For messages, returns the fully qualified name (e.g., "google.protobuf.Timestamp").
 // For primitives, returns the proto kind (e.g., "int64", "string").
-func getTypeKey(field *protogen.Field) string {
+// Source fields use the proto-generated Go types (e.g., *anypb.Any), not our custom mappings.
+func getSourceTypeKey(field *protogen.Field) string {
 	kind := field.Desc.Kind().String()
 
 	if kind == "message" && field.Message != nil {
 		return string(field.Message.Desc.FullName())
+	}
+
+	return kind
+}
+
+// getTargetTypeKey returns the type key for a target field (in our generated code).
+// For messages, returns the fully qualified name or mapped type.
+// For primitives, returns the proto kind.
+// Target fields may use well-known type mappings (e.g., google.protobuf.Any → []byte).
+func getTargetTypeKey(field *protogen.Field) string {
+	kind := field.Desc.Kind().String()
+
+	if kind == "message" && field.Message != nil {
+		protoFullName := string(field.Message.Desc.FullName())
+
+		// Check if this is a well-known type that gets mapped to a different Go type
+		// If so, return the type key for the Go type instead of the proto type
+		// For example: google.protobuf.Any → []byte in our generated code → "bytes" type key
+		if wellKnownMapping, exists := common.GetWellKnownTypeMapping(field.Message); exists {
+			// Map Go type back to proto kind for type matching
+			// []byte → "bytes", time.Time → special case (keep as proto name for compatibility)
+			if wellKnownMapping.GoType == "[]byte" {
+				return "bytes"
+			}
+			// For types like time.Time, keep using the proto full name
+			// This allows Timestamp→Timestamp mappings to work
+			return protoFullName
+		}
+
+		return protoFullName
 	}
 
 	return kind
@@ -165,10 +204,16 @@ func RegisterTypeMapping(sourceType, targetType string, mapping TypeMapping) {
 	globalTypeMappings[pair] = mapping
 }
 
+// GetTypeName returns a human-readable type name for error messages.
+// Uses source type key (proto full name).
+func GetTypeName(field *protogen.Field) string {
+	return getSourceTypeKey(field)
+}
+
 // Debug helper to show what mapping was found
 func DebugTypeMapping(sourceField, targetField *protogen.Field) string {
-	sourceType := getTypeKey(sourceField)
-	targetType := getTypeKey(targetField)
+	sourceType := getSourceTypeKey(sourceField)
+	targetType := getTargetTypeKey(targetField)
 	pair := TypePair{SourceType: sourceType, TargetType: targetType}
 
 	if mapping, exists := globalTypeMappings[pair]; exists {

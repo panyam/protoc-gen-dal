@@ -20,6 +20,50 @@ import (
 	"google.golang.org/protobuf/compiler/protogen"
 )
 
+// WellKnownTypeMapping defines how a well-known proto type maps to a Go type.
+type WellKnownTypeMapping struct {
+	// ProtoFullName is the fully qualified proto type name (e.g., "google.protobuf.Timestamp")
+	ProtoFullName string
+	// GoType is the Go type to use in generated structs (e.g., "time.Time")
+	GoType string
+	// GoImport is the import path needed for this type (empty for built-in types)
+	GoImport string
+}
+
+// wellKnownTypes is the registry of proto types that map to idiomatic Go types.
+// This allows easy extension for new well-known types.
+var wellKnownTypes = map[string]WellKnownTypeMapping{
+	"google.protobuf.Timestamp": {
+		ProtoFullName: "google.protobuf.Timestamp",
+		GoType:        "time.Time",
+		GoImport:      "time",
+	},
+	"google.protobuf.Any": {
+		ProtoFullName: "google.protobuf.Any",
+		GoType:        "[]byte",
+		GoImport:      "", // []byte is built-in
+	},
+}
+
+// RegisterWellKnownType adds a new well-known type mapping to the registry.
+// This allows library users to extend the type system with custom mappings.
+func RegisterWellKnownType(protoFullName, goType, goImport string) {
+	wellKnownTypes[protoFullName] = WellKnownTypeMapping{
+		ProtoFullName: protoFullName,
+		GoType:        goType,
+		GoImport:      goImport,
+	}
+}
+
+// GetWellKnownTypeMapping returns the Go type mapping for a proto message, if it exists.
+func GetWellKnownTypeMapping(msg *protogen.Message) (WellKnownTypeMapping, bool) {
+	if msg == nil {
+		return WellKnownTypeMapping{}, false
+	}
+	mapping, exists := wellKnownTypes[string(msg.Desc.FullName())]
+	return mapping, exists
+}
+
 // ProtoScalarToGo maps proto scalar types to their Go equivalents.
 //
 // This function handles the conversion of proto primitive types to Go types.
@@ -112,14 +156,14 @@ func ProtoFieldToGoType(field *protogen.Field, structNameFunc StructNameFunc) st
 
 	// Handle message types (embedded structs, nested objects, etc.)
 	if kind == "message" {
-		// Special case: google.protobuf.Timestamp maps to time.Time for database storage
-		if field.Message != nil && string(field.Message.Desc.FullName()) == "google.protobuf.Timestamp" {
-			// For repeated timestamp fields: []time.Time
+		// Check if this is a well-known type with a custom Go mapping
+		if mapping, exists := GetWellKnownTypeMapping(field.Message); exists {
+			// For repeated well-known type fields: []time.Time, [][]byte
 			if field.Desc.Cardinality().String() == "repeated" {
-				return "[]time.Time"
+				return "[]" + mapping.GoType
 			}
-			// For singular timestamp fields: time.Time
-			return "time.Time"
+			// For singular well-known type fields: time.Time, []byte
+			return mapping.GoType
 		}
 
 		// For repeated message fields: []BookGORM, []AuthorDatastore

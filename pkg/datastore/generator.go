@@ -16,6 +16,7 @@ package datastore
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/panyam/protoc-gen-dal/pkg/collector"
 	"github.com/panyam/protoc-gen-dal/pkg/generator/common"
@@ -82,8 +83,6 @@ func Generate(messages []*collector.MessageInfo) (*GenerateResult, error) {
 
 	return &GenerateResult{Files: files}, nil
 }
-
-
 
 // generateFileCode generates the complete Go code for all messages in a proto file.
 func generateFileCode(messages []*collector.MessageInfo) (string, error) {
@@ -157,9 +156,9 @@ func buildStructData(msgInfo *collector.MessageInfo) (*StructData, error) {
 	var fields []*FieldData
 	for _, field := range mergedFields {
 		fieldData := &FieldData{
-			Name:  fieldName(field),
-			Type:  fieldType(field),
-			Tags:  buildFieldTags(field),
+			Name: fieldName(field),
+			Type: fieldType(field),
+			Tags: buildFieldTags(field),
 		}
 		fields = append(fields, fieldData)
 	}
@@ -195,14 +194,12 @@ func fieldType(field *protogen.Field) string {
 	return common.ProtoFieldToGoType(field, structNameFunc)
 }
 
-
 // buildFieldTags creates struct tags for a field.
 func buildFieldTags(field *protogen.Field) string {
 	// Use snake_case for datastore property names
 	propName := string(field.Desc.Name())
 	return fmt.Sprintf("`datastore:\"%s\"`", propName)
 }
-
 
 // GenerateConverters generates converter functions for transforming between
 // API messages and Datastore entities.
@@ -246,7 +243,6 @@ func GenerateConverters(messages []*collector.MessageInfo) (*GenerateResult, err
 
 	return &GenerateResult{Files: files}, nil
 }
-
 
 // generateConverterFileCode generates the complete converter code for all messages in a proto file.
 func generateConverterFileCode(messages []*collector.MessageInfo) (string, error) {
@@ -353,6 +349,12 @@ func buildConverterData(msgInfo *collector.MessageInfo, reg *registry.ConverterR
 		}
 
 		mapping := buildFieldMapping(sourceField, mergedField, reg, sourcePkgName)
+
+		// Skip fields marked as ConvertIgnore (no conversion available, decorator handles)
+		if mapping.ToTargetConversionType == converter.ConvertIgnore {
+			continue
+		}
+
 		fieldMappings = append(fieldMappings, mapping)
 	}
 
@@ -542,15 +544,25 @@ func buildFieldMapping(sourceField, targetField *protogen.Field, reg *registry.C
 
 	// Check if types match - if so, simple assignment
 	if sourceKind == targetKind {
+		mapping.ToTargetCode = fmt.Sprintf("src.%s", sourceFieldName)
+		mapping.FromTargetCode = fmt.Sprintf("src.%s", targetFieldName)
 		mapping.ToTargetConversionType = converter.ConvertByAssignment
 		mapping.FromTargetConversionType = converter.ConvertByAssignment
 		addRenderStrategies(mapping)
 		return mapping
 	}
 
-	// Default: simple assignment (may fail at compile time if incompatible)
-	mapping.ToTargetConversionType = converter.ConvertByAssignment
-	mapping.FromTargetConversionType = converter.ConvertByAssignment
-	addRenderStrategies(mapping)
+	// If we got here, we have incompatible types with no known conversion
+	// Log warning and skip field (decorator must handle it)
+	log.Printf("WARNING: No type conversion found for field %q: %s (%s) → %s (%s).",
+		sourceFieldName,
+		converter.GetTypeName(sourceField), sourceKind,
+		converter.GetTypeName(targetField), targetKind)
+	log.Printf("         Field will be skipped in converter - handle in decorator function.")
+
+	// Skip this field - decorator must handle it
+	mapping.ToTargetConversionType = converter.ConvertIgnore
+	mapping.FromTargetConversionType = converter.ConvertIgnore
+	// NOTE: Do NOT call addRenderStrategies - we want to skip this field entirely
 	return mapping
 }

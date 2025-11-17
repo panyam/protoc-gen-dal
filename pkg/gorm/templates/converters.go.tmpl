@@ -55,14 +55,31 @@ func {{ .SourceType }}To{{ .TargetType }}(
 	out.{{ .TargetField }} = {{ .ToTargetCode }}
 			{{- end }}
 		{{- else if or (isSetterWithError .ToTargetRenderStrategy) (isSetterIgnoreError .ToTargetRenderStrategy) }}
-			{{- if .SourceIsPointer }}if src.{{ .SourceField }} != nil { {{ end }}
+			{{- if .ToTargetConverterFunc }}
+				{{- /* Use converter function (message type conversions) */ -}}
+				{{- if .SourceIsPointer }}if src.{{ .SourceField }} != nil { {{ end }}
 	_, err = {{ .ToTargetConverterFunc }}(src.{{ .SourceField }}, {{ fieldRef "out" .TargetField .TargetIsPointer }}, nil)
-			{{- if needsErrorCheck .ToTargetConversionType }}
+				{{- if needsErrorCheck .ToTargetConversionType }}
 	if err != nil {
 		return nil, fmt.Errorf("converting {{ .SourceField }}: %w", err)
 	}
+				{{- end }}
+				{{- if .SourceIsPointer }}}{{ end }}
+			{{- else if .ToTargetCode }}
+				{{- /* Use inline converter code (type mapping registry) */ -}}
+				{{- if .SourceIsPointer }}
+	if src.{{ .SourceField }} != nil {
+				{{- end }}
+		out.{{ .TargetField }}, err = {{ .ToTargetCode }}
+				{{- if needsErrorCheck .ToTargetConversionType }}
+		if err != nil {
+			return nil, fmt.Errorf("converting {{ .SourceField }}: %w", err)
+		}
+				{{- end }}
+				{{- if .SourceIsPointer }}
+	}
+				{{- end }}
 			{{- end }}
-			{{- if .SourceIsPointer }}}{{ end }}
 		{{- end }}
 	{{- end }}
 
@@ -148,14 +165,31 @@ func {{ .SourceType }}From{{ .TargetType }}(
 	      out.{{ .SourceField }} = {{ .FromTargetCode }}
 			{{- end }}
 		{{- else if or (isSetterWithError .FromTargetRenderStrategy) (isSetterIgnoreError .FromTargetRenderStrategy) }}
-			{{- if .TargetIsPointer }}if src.{{ .TargetField }} != nil { {{ end }}
+			{{- if .FromTargetConverterFunc }}
+				{{- /* Use converter function (message type conversions) */ -}}
+				{{- if .TargetIsPointer }}if src.{{ .TargetField }} != nil { {{ end }}
 	      _, err = {{ .FromTargetConverterFunc }}(out.{{ .SourceField }}, {{ fieldRef "src" .TargetField .TargetIsPointer }}, nil)
-			{{- if needsErrorCheck .FromTargetConversionType }}
+				{{- if needsErrorCheck .FromTargetConversionType }}
         if err != nil {
           return nil, fmt.Errorf("converting {{ .SourceField }}: %w", err)
         }
+				{{- end }}
+				{{- if .TargetIsPointer }}}{{ end }}
+			{{- else if .FromTargetCode }}
+				{{- /* Use inline converter code (type mapping registry) */ -}}
+				{{- if .TargetIsPointer }}
+	if src.{{ .TargetField }} != nil {
+				{{- end }}
+		out.{{ .SourceField }}, err = {{ .FromTargetCode }}
+				{{- if needsErrorCheck .FromTargetConversionType }}
+		if err != nil {
+			return nil, fmt.Errorf("converting {{ .SourceField }}: %w", err)
+		}
+				{{- end }}
+				{{- if .TargetIsPointer }}
+	}
+				{{- end }}
 			{{- end }}
-			{{- if .TargetIsPointer }}}{{ end }}
 		{{- end }}
 	{{- end }}
 

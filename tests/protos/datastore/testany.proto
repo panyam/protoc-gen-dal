@@ -1,0 +1,18 @@
+
+syntax = "proto3";
+
+package datastore;
+
+import "dal/v1/annotations.proto";
+import "api/testany.proto";  // Import API protos so they're available for source references
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/panyam/protoc-gen-dal/tests/gen/datastore;testdatastore";
+
+// UserDatastore demonstrates basic Datastore entity
+message TestRecord1Datastore {
+  option (dal.v1.datastore_options) = {
+    source: "api.TestRecord1"
+    kind: "test_records"
+  };
+}

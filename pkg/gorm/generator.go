@@ -691,7 +691,12 @@ func buildFieldConversion(sourceField, targetField *protogen.Field, reg *registr
 		return mapping
 	}
 
-	// No built-in conversion available
+	// No built-in conversion available - log warning and skip
+	log.Printf("WARNING: No type conversion found for field %q: %s (%s) → %s (%s).",
+		fieldName,
+		converter.GetTypeName(sourceField), sourceKind,
+		converter.GetTypeName(targetField), targetKind)
+	log.Printf("         Field will be skipped in converter - handle in decorator function.")
 	return nil
 }
 

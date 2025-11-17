@@ -389,6 +389,27 @@ From `tests/protos/gorm/user.proto`:
   - ✅ Easy to extend with RegisterTypeMapping()
   - ✅ All tests passing (protoc-gen-dal and weewar)
 
+- ✅ Phase 3.1f - Well-Known Type System & google.protobuf.Any Support (COMPLETE)
+  - ✅ Created well-known type registry in pkg/generator/common/types.go
+  - ✅ Added WellKnownTypeMapping structure (ProtoFullName, GoType, GoImport)
+  - ✅ Registered mappings:
+    - google.protobuf.Timestamp → time.Time
+    - google.protobuf.Any → []byte
+  - ✅ Provided RegisterWellKnownType() for easy extension
+  - ✅ Updated ProtoFieldToGoType() to use registry for all well-known types
+  - ✅ Implemented two-level type system:
+    - Level 1: Well-known type registry (proto → Go type in generated structs)
+    - Level 2: Type conversion registry (source proto-gen → target generated)
+  - ✅ Created getSourceTypeKey() - returns proto type names (e.g., google.protobuf.Any)
+  - ✅ Created getTargetTypeKey() - applies well-known mappings (e.g., google.protobuf.Any → bytes)
+  - ✅ Added google.protobuf.Any → bytes mapping with converters.AnyToBytes/BytesToAny
+  - ✅ Implemented pkg/converters/any.go with proto.Marshal/Unmarshal
+  - ✅ Fixed GORM template to support inline converter code (ToTargetCode) for ConvertByTransformerWithError
+  - ✅ Fixed Datastore template to support inline converter code for ConvertByTransformerWithError
+  - ✅ Templates now check ToTargetConverterFunc OR ToTargetCode (both directions)
+  - ✅ Added comprehensive tests for well-known type registry
+  - ✅ All tests passing (testany.proto and weewar)
+
 **Generated Code Features:**
 From `tests/protos/datastore/user.proto`:
 - `user.go`: 8 Datastore entity structs (UserDatastore, UserWithNamespace, UserWithLargeText, UserSimple, AuthorDatastore, ProductDatastore, LibraryDatastore, OrganizationDatastore)

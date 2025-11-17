@@ -114,6 +114,81 @@ func TestProtoKindToGoType(t *testing.T) {
 	}
 }
 
+func TestGetWellKnownTypeMapping(t *testing.T) {
+	tests := []struct {
+		name          string
+		protoFullName string
+		expectExists  bool
+		expectedGoType string
+	}{
+		{
+			name:          "Timestamp",
+			protoFullName: "google.protobuf.Timestamp",
+			expectExists:  true,
+			expectedGoType: "time.Time",
+		},
+		{
+			name:          "Any",
+			protoFullName: "google.protobuf.Any",
+			expectExists:  true,
+			expectedGoType: "[]byte",
+		},
+		{
+			name:          "Unknown",
+			protoFullName: "google.protobuf.Unknown",
+			expectExists:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Check if mapping exists in registry
+			mapping, exists := wellKnownTypes[tt.protoFullName]
+			if exists != tt.expectExists {
+				t.Errorf("Expected exists=%v for %q, got %v",
+					tt.expectExists, tt.protoFullName, exists)
+				return
+			}
+
+			if exists && mapping.GoType != tt.expectedGoType {
+				t.Errorf("Expected GoType=%q for %q, got %q",
+					tt.expectedGoType, tt.protoFullName, mapping.GoType)
+			}
+		})
+	}
+}
+
+func TestRegisterWellKnownType(t *testing.T) {
+	// Save original state
+	originalMapping := wellKnownTypes["test.CustomType"]
+	defer func() {
+		// Restore original state
+		if originalMapping.ProtoFullName != "" {
+			wellKnownTypes["test.CustomType"] = originalMapping
+		} else {
+			delete(wellKnownTypes, "test.CustomType")
+		}
+	}()
+
+	// Register a custom type
+	RegisterWellKnownType("test.CustomType", "CustomGoType", "example.com/custom")
+
+	// Verify it was registered
+	mapping, exists := wellKnownTypes["test.CustomType"]
+	if !exists {
+		t.Error("Expected custom type to be registered")
+		return
+	}
+
+	if mapping.GoType != "CustomGoType" {
+		t.Errorf("Expected GoType=CustomGoType, got %q", mapping.GoType)
+	}
+
+	if mapping.GoImport != "example.com/custom" {
+		t.Errorf("Expected GoImport=example.com/custom, got %q", mapping.GoImport)
+	}
+}
+
 // Note: ProtoFieldToGoType testing requires actual protogen.Field structures
 // which depend on complex proto descriptors that are difficult to mock.
 // This function is tested indirectly via integration tests in the GORM
