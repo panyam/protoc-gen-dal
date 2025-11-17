@@ -14,6 +14,8 @@ type TestRecord1Datastore struct {
 	TimeField time.Time `datastore:"time_field"`
 
 	ExtraData []byte `datastore:"extra_data"`
+
+	AnEnum SampleEnum `datastore:"an_enum"`
 }
 
 // Kind returns the Datastore kind name for TestRecord1Datastore.

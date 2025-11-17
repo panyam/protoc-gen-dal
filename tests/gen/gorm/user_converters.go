@@ -120,11 +120,11 @@ func UserToUserWithPermissions(
 	if src.CreatedAt != nil {
 		out.CreatedAt = converters.TimestampToTime(src.CreatedAt)
 	}
-	if src.UpdatedAt != nil {
-		out.UpdatedAt = converters.TimestampToTime(src.UpdatedAt)
-	}
 	if src.Birthday != nil {
 		out.Birthday = converters.TimestampToTime(src.Birthday)
+	}
+	if src.UpdatedAt != nil {
+		out.UpdatedAt = converters.TimestampToTime(src.UpdatedAt)
 	}
 	if src.ActivatedAt != nil {
 		out.ActivatedAt = converters.TimestampToTime(src.ActivatedAt)
@@ -159,10 +159,10 @@ func UserFromUserWithPermissions(
 		Id:           src.Id,
 		Name:         src.Name,
 		Email:        src.Email,
-		CreatedAt:    converters.TimeToTimestamp(src.CreatedAt),
 		Age:          src.Age,
-		UpdatedAt:    converters.TimeToTimestamp(src.UpdatedAt),
+		CreatedAt:    converters.TimeToTimestamp(src.CreatedAt),
 		Birthday:     converters.TimeToTimestamp(src.Birthday),
+		UpdatedAt:    converters.TimeToTimestamp(src.UpdatedAt),
 		MemberNumber: src.MemberNumber,
 		ActivatedAt:  converters.TimeToTimestamp(src.ActivatedAt),
 	}

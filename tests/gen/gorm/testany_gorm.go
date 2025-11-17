@@ -9,6 +9,7 @@ import (
 type TestRecord1GORM struct {
 	TimeField time.Time
 	ExtraData []byte
+	AnEnum    SampleEnum
 }
 
 // TableName returns the table name for TestRecord1GORM

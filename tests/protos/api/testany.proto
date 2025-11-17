@@ -8,8 +8,16 @@ import "google/protobuf/any.proto";
 
 option go_package = "github.com/panyam/protoc-gen-dal/tests/gen/go/api;testapi";
 
+enum SampleEnum {
+  SAMPLE_ENUM_UNSPECIFIED = 0;
+  SAMPLE_ENUM_A = 1;
+  SAMPLE_ENUM_B = 2;
+  SAMPLE_ENUM_C = 33;
+}
+
 // A sample test record with extra types for testing conversion
 message TestRecord1 {
   google.protobuf.Timestamp time_field = 1;
   google.protobuf.Any extra_data = 2;
+  SampleEnum an_enum = 3;
 }

@@ -50,11 +50,11 @@ func UserToUserDatastore(
 	if src.CreatedAt != nil {
 		out.CreatedAt = converters.TimestampToTime(src.CreatedAt)
 	}
-	if src.ActivatedAt != nil {
-		out.ActivatedAt = converters.TimestampToTime(src.ActivatedAt)
-	}
 	if src.UpdatedAt != nil {
 		out.UpdatedAt = converters.TimestampToTime(src.UpdatedAt)
+	}
+	if src.ActivatedAt != nil {
+		out.ActivatedAt = converters.TimestampToTime(src.ActivatedAt)
 	}
 
 	// Apply decorator if provided
@@ -100,8 +100,8 @@ func UserFromUserDatastore(
 		Birthday:     converters.TimeToTimestamp(src.Birthday),
 		CreatedAt:    converters.TimeToTimestamp(src.CreatedAt),
 		MemberNumber: src.MemberNumber,
-		ActivatedAt:  converters.TimeToTimestamp(src.ActivatedAt),
 		UpdatedAt:    converters.TimeToTimestamp(src.UpdatedAt),
+		ActivatedAt:  converters.TimeToTimestamp(src.ActivatedAt),
 	}
 	out = dest
 

@@ -34,7 +34,9 @@ func TestRecord1ToTestRecord1Datastore(
 	}
 
 	// Initialize struct with inline values
-	*dest = TestRecord1Datastore{}
+	*dest = TestRecord1Datastore{
+		AnEnum: src.AnEnum,
+	}
 	out = dest
 
 	if src.TimeField != nil {
@@ -84,6 +86,7 @@ func TestRecord1FromTestRecord1Datastore(
 	// Initialize struct with inline values
 	*dest = api.TestRecord1{
 		TimeField: converters.TimeToTimestamp(src.TimeField),
+		AnEnum:    src.AnEnum,
 	}
 	out = dest
 

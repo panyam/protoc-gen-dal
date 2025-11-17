@@ -23,7 +23,9 @@ func TestRecord1ToTestRecord1GORM(
 	}
 
 	// Initialize struct with inline values
-	*dest = TestRecord1GORM{}
+	*dest = TestRecord1GORM{
+		AnEnum: src.AnEnum,
+	}
 	out = dest
 
 	if src.TimeField != nil {
@@ -63,6 +65,7 @@ func TestRecord1FromTestRecord1GORM(
 	// Initialize struct with inline values
 	*dest = api.TestRecord1{
 		TimeField: converters.TimeToTimestamp(src.TimeField),
+		AnEnum:    src.AnEnum,
 	}
 	out = dest
 

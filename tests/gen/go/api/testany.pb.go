@@ -24,11 +24,64 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type SampleEnum int32
+
+const (
+	SampleEnum_SAMPLE_ENUM_UNSPECIFIED SampleEnum = 0
+	SampleEnum_SAMPLE_ENUM_A           SampleEnum = 1
+	SampleEnum_SAMPLE_ENUM_B           SampleEnum = 2
+	SampleEnum_SAMPLE_ENUM_C           SampleEnum = 33
+)
+
+// Enum value maps for SampleEnum.
+var (
+	SampleEnum_name = map[int32]string{
+		0:  "SAMPLE_ENUM_UNSPECIFIED",
+		1:  "SAMPLE_ENUM_A",
+		2:  "SAMPLE_ENUM_B",
+		33: "SAMPLE_ENUM_C",
+	}
+	SampleEnum_value = map[string]int32{
+		"SAMPLE_ENUM_UNSPECIFIED": 0,
+		"SAMPLE_ENUM_A":           1,
+		"SAMPLE_ENUM_B":           2,
+		"SAMPLE_ENUM_C":           33,
+	}
+)
+
+func (x SampleEnum) Enum() *SampleEnum {
+	p := new(SampleEnum)
+	*p = x
+	return p
+}
+
+func (x SampleEnum) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (SampleEnum) Descriptor() protoreflect.EnumDescriptor {
+	return file_api_testany_proto_enumTypes[0].Descriptor()
+}
+
+func (SampleEnum) Type() protoreflect.EnumType {
+	return &file_api_testany_proto_enumTypes[0]
+}
+
+func (x SampleEnum) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use SampleEnum.Descriptor instead.
+func (SampleEnum) EnumDescriptor() ([]byte, []int) {
+	return file_api_testany_proto_rawDescGZIP(), []int{0}
+}
+
 // A sample test record with extra types for testing conversion
 type TestRecord1 struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	TimeField     *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=time_field,json=timeField,proto3" json:"time_field,omitempty"`
 	ExtraData     *anypb.Any             `protobuf:"bytes,2,opt,name=extra_data,json=extraData,proto3" json:"extra_data,omitempty"`
+	AnEnum        SampleEnum             `protobuf:"varint,3,opt,name=an_enum,json=anEnum,proto3,enum=api.SampleEnum" json:"an_enum,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -77,16 +130,30 @@ func (x *TestRecord1) GetExtraData() *anypb.Any {
 	return nil
 }
 
+func (x *TestRecord1) GetAnEnum() SampleEnum {
+	if x != nil {
+		return x.AnEnum
+	}
+	return SampleEnum_SAMPLE_ENUM_UNSPECIFIED
+}
+
 var File_api_testany_proto protoreflect.FileDescriptor
 
 const file_api_testany_proto_rawDesc = "" +
 	"\n" +
-	"\x11api/testany.proto\x12\x03api\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19google/protobuf/any.proto\"}\n" +
+	"\x11api/testany.proto\x12\x03api\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19google/protobuf/any.proto\"\xa7\x01\n" +
 	"\vTestRecord1\x129\n" +
 	"\n" +
 	"time_field\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\ttimeField\x123\n" +
 	"\n" +
-	"extra_data\x18\x02 \x01(\v2\x14.google.protobuf.AnyR\textraDataBv\n" +
+	"extra_data\x18\x02 \x01(\v2\x14.google.protobuf.AnyR\textraData\x12(\n" +
+	"\aan_enum\x18\x03 \x01(\x0e2\x0f.api.SampleEnumR\x06anEnum*b\n" +
+	"\n" +
+	"SampleEnum\x12\x1b\n" +
+	"\x17SAMPLE_ENUM_UNSPECIFIED\x10\x00\x12\x11\n" +
+	"\rSAMPLE_ENUM_A\x10\x01\x12\x11\n" +
+	"\rSAMPLE_ENUM_B\x10\x02\x12\x11\n" +
+	"\rSAMPLE_ENUM_C\x10!Bv\n" +
 	"\acom.apiB\fTestanyProtoP\x01Z1github.com/panyam/protoc-gen-dal/tests/gen/go/api\xa2\x02\x03AXX\xaa\x02\x03Api\xca\x02\x03Api\xe2\x02\x0fApi\\GPBMetadata\xea\x02\x03Apib\x06proto3"
 
 var (
@@ -101,20 +168,23 @@ func file_api_testany_proto_rawDescGZIP() []byte {
 	return file_api_testany_proto_rawDescData
 }
 
+var file_api_testany_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_api_testany_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_api_testany_proto_goTypes = []any{
-	(*TestRecord1)(nil),           // 0: api.TestRecord1
-	(*timestamppb.Timestamp)(nil), // 1: google.protobuf.Timestamp
-	(*anypb.Any)(nil),             // 2: google.protobuf.Any
+	(SampleEnum)(0),               // 0: api.SampleEnum
+	(*TestRecord1)(nil),           // 1: api.TestRecord1
+	(*timestamppb.Timestamp)(nil), // 2: google.protobuf.Timestamp
+	(*anypb.Any)(nil),             // 3: google.protobuf.Any
 }
 var file_api_testany_proto_depIdxs = []int32{
-	1, // 0: api.TestRecord1.time_field:type_name -> google.protobuf.Timestamp
-	2, // 1: api.TestRecord1.extra_data:type_name -> google.protobuf.Any
-	2, // [2:2] is the sub-list for method output_type
-	2, // [2:2] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	2, // 0: api.TestRecord1.time_field:type_name -> google.protobuf.Timestamp
+	3, // 1: api.TestRecord1.extra_data:type_name -> google.protobuf.Any
+	0, // 2: api.TestRecord1.an_enum:type_name -> api.SampleEnum
+	3, // [3:3] is the sub-list for method output_type
+	3, // [3:3] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_api_testany_proto_init() }
@@ -127,13 +197,14 @@ func file_api_testany_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_testany_proto_rawDesc), len(file_api_testany_proto_rawDesc)),
-			NumEnums:      0,
+			NumEnums:      1,
 			NumMessages:   1,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
 		GoTypes:           file_api_testany_proto_goTypes,
 		DependencyIndexes: file_api_testany_proto_depIdxs,
+		EnumInfos:         file_api_testany_proto_enumTypes,
 		MessageInfos:      file_api_testany_proto_msgTypes,
 	}.Build()
 	File_api_testany_proto = out.File
