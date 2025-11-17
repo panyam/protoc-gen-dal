@@ -10,6 +10,24 @@ import (
 // DocumentDatastoreEmpty is the Datastore entity for the source message.
 type DocumentDatastoreEmpty struct {
 	Key *datastore.Key `datastore:"-"`
+
+	Id uint32 `datastore:"id"`
+
+	Title string `datastore:"title"`
+
+	Content string `datastore:"content"`
+
+	Author string `datastore:"author"`
+
+	CreatedAt time.Time `datastore:"created_at"`
+
+	UpdatedAt time.Time `datastore:"updated_at"`
+
+	Published bool `datastore:"published"`
+
+	ViewCount int32 `datastore:"view_count"`
+
+	Tags []string `datastore:"tags"`
 }
 
 // Kind returns the Datastore kind name for DocumentDatastoreEmpty.
@@ -22,6 +40,22 @@ type DocumentDatastorePartial struct {
 	Key *datastore.Key `datastore:"-"`
 
 	Id string `datastore:"id"`
+
+	Title string `datastore:"title"`
+
+	Content string `datastore:"content"`
+
+	Author string `datastore:"author"`
+
+	CreatedAt time.Time `datastore:"created_at"`
+
+	UpdatedAt time.Time `datastore:"updated_at"`
+
+	Published bool `datastore:"published"`
+
+	ViewCount int32 `datastore:"view_count"`
+
+	Tags []string `datastore:"tags"`
 }
 
 // Kind returns the Datastore kind name for DocumentDatastorePartial.
@@ -35,7 +69,19 @@ type DocumentDatastoreSkip struct {
 
 	Id string `datastore:"id"`
 
-	Content string `datastore:"content"`
+	Title string `datastore:"title"`
+
+	Author string `datastore:"author"`
+
+	CreatedAt time.Time `datastore:"created_at"`
+
+	UpdatedAt time.Time `datastore:"updated_at"`
+
+	Published bool `datastore:"published"`
+
+	ViewCount int32 `datastore:"view_count"`
+
+	Tags []string `datastore:"tags"`
 }
 
 // Kind returns the Datastore kind name for DocumentDatastoreSkip.

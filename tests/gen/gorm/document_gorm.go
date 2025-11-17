@@ -7,6 +7,15 @@ import (
 
 // DocumentGormEmpty is the GORM model for api.Document
 type DocumentGormEmpty struct {
+	Id        uint32
+	Title     string
+	Content   string
+	Author    string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Published bool
+	ViewCount int32
+	Tags      []string
 }
 
 // TableName returns the table name for DocumentGormEmpty
@@ -16,8 +25,15 @@ func (*DocumentGormEmpty) TableName() string {
 
 // DocumentGormPartial is the GORM model for api.Document
 type DocumentGormPartial struct {
-	Id    uint32 `gorm:"primaryKey;autoIncrement"`
-	Title string `gorm:"type:varchar(255);not null"`
+	Id        uint32 `gorm:"primaryKey;autoIncrement"`
+	Title     string `gorm:"type:varchar(255);not null"`
+	Content   string
+	Author    string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Published bool
+	ViewCount int32
+	Tags      []string
 }
 
 // TableName returns the table name for DocumentGormPartial
@@ -27,8 +43,14 @@ func (*DocumentGormPartial) TableName() string {
 
 // DocumentGormSkip is the GORM model for api.Document
 type DocumentGormSkip struct {
-	Id      uint32 `gorm:"primaryKey"`
-	Content string
+	Id        uint32 `gorm:"primaryKey"`
+	Title     string
+	Author    string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Published bool
+	ViewCount int32
+	Tags      []string
 }
 
 // TableName returns the table name for DocumentGormSkip
@@ -38,6 +60,15 @@ func (*DocumentGormSkip) TableName() string {
 
 // DocumentGormExtra is the GORM model for api.Document
 type DocumentGormExtra struct {
+	Id        uint32
+	Title     string
+	Content   string
+	Author    string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Published bool
+	ViewCount int32
+	Tags      []string
 	DeletedAt time.Time `gorm:"index"`
 	Version   int32     `gorm:"default:1"`
 }
@@ -45,10 +76,4 @@ type DocumentGormExtra struct {
 // TableName returns the table name for DocumentGormExtra
 func (*DocumentGormExtra) TableName() string {
 	return "documents_extra"
-}
-
-// Timestamp
-type Timestamp struct {
-	Seconds int64
-	Nanos   int32
 }

@@ -36,10 +36,11 @@ func UserToUserDatastore(
 
 	// Initialize struct with inline values
 	*dest = UserDatastore{
-		Id:    strconv.FormatUint(uint64(src.Id), 10),
-		Name:  src.Name,
-		Email: src.Email,
-		Age:   src.Age,
+		Id:           strconv.FormatUint(uint64(src.Id), 10),
+		Name:         src.Name,
+		Email:        src.Email,
+		Age:          src.Age,
+		MemberNumber: src.MemberNumber,
 	}
 	out = dest
 
@@ -51,6 +52,9 @@ func UserToUserDatastore(
 	}
 	if src.UpdatedAt != nil {
 		out.UpdatedAt = converters.TimestampToTime(src.UpdatedAt)
+	}
+	if src.ActivatedAt != nil {
+		out.ActivatedAt = converters.TimestampToTime(src.ActivatedAt)
 	}
 
 	// Apply decorator if provided
@@ -89,13 +93,15 @@ func UserFromUserDatastore(
 
 	// Initialize struct with inline values
 	*dest = api.User{
-		Id:        uint32(converters.MustParseUint(src.Id)),
-		Name:      src.Name,
-		Email:     src.Email,
-		Age:       src.Age,
-		Birthday:  converters.TimeToTimestamp(src.Birthday),
-		CreatedAt: converters.TimeToTimestamp(src.CreatedAt),
-		UpdatedAt: converters.TimeToTimestamp(src.UpdatedAt),
+		Id:           uint32(converters.MustParseUint(src.Id)),
+		Name:         src.Name,
+		Email:        src.Email,
+		Age:          src.Age,
+		Birthday:     converters.TimeToTimestamp(src.Birthday),
+		MemberNumber: src.MemberNumber,
+		CreatedAt:    converters.TimeToTimestamp(src.CreatedAt),
+		UpdatedAt:    converters.TimeToTimestamp(src.UpdatedAt),
+		ActivatedAt:  converters.TimeToTimestamp(src.ActivatedAt),
 	}
 	out = dest
 
@@ -135,11 +141,26 @@ func UserToUserWithNamespace(
 
 	// Initialize struct with inline values
 	*dest = UserWithNamespace{
-		Id:    strconv.FormatUint(uint64(src.Id), 10),
-		Name:  src.Name,
-		Email: src.Email,
+		Id:           strconv.FormatUint(uint64(src.Id), 10),
+		Name:         src.Name,
+		Email:        src.Email,
+		Age:          src.Age,
+		MemberNumber: src.MemberNumber,
 	}
 	out = dest
+
+	if src.Birthday != nil {
+		out.Birthday = converters.TimestampToTime(src.Birthday)
+	}
+	if src.ActivatedAt != nil {
+		out.ActivatedAt = converters.TimestampToTime(src.ActivatedAt)
+	}
+	if src.CreatedAt != nil {
+		out.CreatedAt = converters.TimestampToTime(src.CreatedAt)
+	}
+	if src.UpdatedAt != nil {
+		out.UpdatedAt = converters.TimestampToTime(src.UpdatedAt)
+	}
 
 	// Apply decorator if provided
 	if decorator != nil {
@@ -177,9 +198,15 @@ func UserFromUserWithNamespace(
 
 	// Initialize struct with inline values
 	*dest = api.User{
-		Id:    uint32(converters.MustParseUint(src.Id)),
-		Name:  src.Name,
-		Email: src.Email,
+		Id:           uint32(converters.MustParseUint(src.Id)),
+		Name:         src.Name,
+		Email:        src.Email,
+		Age:          src.Age,
+		Birthday:     converters.TimeToTimestamp(src.Birthday),
+		MemberNumber: src.MemberNumber,
+		ActivatedAt:  converters.TimeToTimestamp(src.ActivatedAt),
+		CreatedAt:    converters.TimeToTimestamp(src.CreatedAt),
+		UpdatedAt:    converters.TimeToTimestamp(src.UpdatedAt),
 	}
 	out = dest
 
@@ -219,11 +246,26 @@ func UserToUserWithLargeText(
 
 	// Initialize struct with inline values
 	*dest = UserWithLargeText{
-		Id:    strconv.FormatUint(uint64(src.Id), 10),
-		Name:  src.Name,
-		Email: src.Email,
+		Id:           strconv.FormatUint(uint64(src.Id), 10),
+		Name:         src.Name,
+		Email:        src.Email,
+		Age:          src.Age,
+		MemberNumber: src.MemberNumber,
 	}
 	out = dest
+
+	if src.Birthday != nil {
+		out.Birthday = converters.TimestampToTime(src.Birthday)
+	}
+	if src.ActivatedAt != nil {
+		out.ActivatedAt = converters.TimestampToTime(src.ActivatedAt)
+	}
+	if src.CreatedAt != nil {
+		out.CreatedAt = converters.TimestampToTime(src.CreatedAt)
+	}
+	if src.UpdatedAt != nil {
+		out.UpdatedAt = converters.TimestampToTime(src.UpdatedAt)
+	}
 
 	// Apply decorator if provided
 	if decorator != nil {
@@ -261,9 +303,15 @@ func UserFromUserWithLargeText(
 
 	// Initialize struct with inline values
 	*dest = api.User{
-		Id:    uint32(converters.MustParseUint(src.Id)),
-		Name:  src.Name,
-		Email: src.Email,
+		Id:           uint32(converters.MustParseUint(src.Id)),
+		Name:         src.Name,
+		Email:        src.Email,
+		Age:          src.Age,
+		Birthday:     converters.TimeToTimestamp(src.Birthday),
+		MemberNumber: src.MemberNumber,
+		ActivatedAt:  converters.TimeToTimestamp(src.ActivatedAt),
+		CreatedAt:    converters.TimeToTimestamp(src.CreatedAt),
+		UpdatedAt:    converters.TimeToTimestamp(src.UpdatedAt),
 	}
 	out = dest
 
@@ -303,10 +351,26 @@ func UserToUserSimple(
 
 	// Initialize struct with inline values
 	*dest = UserSimple{
-		Id:   strconv.FormatUint(uint64(src.Id), 10),
-		Name: src.Name,
+		Id:           strconv.FormatUint(uint64(src.Id), 10),
+		Name:         src.Name,
+		Email:        src.Email,
+		Age:          src.Age,
+		MemberNumber: src.MemberNumber,
 	}
 	out = dest
+
+	if src.Birthday != nil {
+		out.Birthday = converters.TimestampToTime(src.Birthday)
+	}
+	if src.ActivatedAt != nil {
+		out.ActivatedAt = converters.TimestampToTime(src.ActivatedAt)
+	}
+	if src.CreatedAt != nil {
+		out.CreatedAt = converters.TimestampToTime(src.CreatedAt)
+	}
+	if src.UpdatedAt != nil {
+		out.UpdatedAt = converters.TimestampToTime(src.UpdatedAt)
+	}
 
 	// Apply decorator if provided
 	if decorator != nil {
@@ -344,8 +408,15 @@ func UserFromUserSimple(
 
 	// Initialize struct with inline values
 	*dest = api.User{
-		Id:   uint32(converters.MustParseUint(src.Id)),
-		Name: src.Name,
+		Id:           uint32(converters.MustParseUint(src.Id)),
+		Name:         src.Name,
+		Email:        src.Email,
+		Age:          src.Age,
+		Birthday:     converters.TimeToTimestamp(src.Birthday),
+		MemberNumber: src.MemberNumber,
+		ActivatedAt:  converters.TimeToTimestamp(src.ActivatedAt),
+		CreatedAt:    converters.TimeToTimestamp(src.CreatedAt),
+		UpdatedAt:    converters.TimeToTimestamp(src.UpdatedAt),
 	}
 	out = dest
 

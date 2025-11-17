@@ -142,11 +142,20 @@ func buildTemplateData(messages []*collector.MessageInfo) (*TemplateData, error)
 // buildStructData extracts metadata for a single struct/entity.
 func buildStructData(msgInfo *collector.MessageInfo) (*StructData, error) {
 	targetMsg := msgInfo.TargetMessage
+	sourceMsg := msgInfo.SourceMessage
 	structName := string(targetMsg.Desc.Name())
 
-	// Extract fields
+	// Validate field merging (skip_field references, source exists, etc.)
+	if err := common.ValidateFieldMerge(sourceMsg, targetMsg, msgInfo.SourceName); err != nil {
+		return nil, err
+	}
+
+	// Merge source and target fields (implements opt-out field model)
+	mergedFields := common.MergeSourceFields(sourceMsg, targetMsg)
+
+	// Extract fields from merged list
 	var fields []*FieldData
-	for _, field := range targetMsg.Fields {
+	for _, field := range mergedFields {
 		fieldData := &FieldData{
 			Name:  fieldName(field),
 			Type:  fieldType(field),
@@ -322,24 +331,28 @@ func buildConverterData(msgInfo *collector.MessageInfo, reg *registry.ConverterR
 	// Extract source package name for imports (use same logic as extractPackageName)
 	sourcePkgName := common.ExtractPackageName(sourceMsg)
 
+	// Merge source and target fields (same as buildStructData)
+	// This ensures converters use the same fields as the generated struct
+	mergedFields := common.MergeSourceFields(sourceMsg, targetMsg)
+
 	// Build field mappings
 	var fieldMappings []*FieldMapping
-	for _, targetField := range targetMsg.Fields {
+	for _, mergedField := range mergedFields {
 		// Find corresponding source field by name
 		var sourceField *protogen.Field
 		for _, sf := range sourceMsg.Fields {
-			if sf.Desc.Name() == targetField.Desc.Name() {
+			if sf.Desc.Name() == mergedField.Desc.Name() {
 				sourceField = sf
 				break
 			}
 		}
 
 		if sourceField == nil {
-			// Skip fields that don't exist in source (like Key field)
+			// Skip fields that don't exist in source (like Key field added by Datastore)
 			continue
 		}
 
-		mapping := buildFieldMapping(sourceField, targetField, reg, sourcePkgName)
+		mapping := buildFieldMapping(sourceField, mergedField, reg, sourcePkgName)
 		fieldMappings = append(fieldMappings, mapping)
 	}
 
@@ -511,34 +524,18 @@ func buildFieldMapping(sourceField, targetField *protogen.Field, reg *registry.C
 		}
 	}
 
-	// Handle common type conversions BEFORE generic type matching
-	// Note: ToTargetCode is for API → Datastore, FromTargetCode is for Datastore → API
-
-	// Timestamp (API) ↔ time.Time (Datastore)
-	// Both source and target are google.protobuf.Timestamp in proto, but target maps to time.Time in Go
-	// Check this BEFORE the generic "types match" check below
-	if sourceKind == "message" && targetKind == "message" {
-		if converter.IsTimestampToTimeTime(sourceField, targetField) {
-			mapping.ToTargetCode = fmt.Sprintf("converters.TimestampToTime(src.%s)", sourceFieldName)
-			mapping.FromTargetCode = fmt.Sprintf("converters.TimeToTimestamp(src.%s)", targetFieldName)
-			mapping.ToTargetConversionType = converter.ConvertByTransformer
-			mapping.FromTargetConversionType = converter.ConvertByTransformer
-			// IMPORTANT: Override pointer status for time.Time fields
-			// In ToTarget direction (API → Datastore): source is *timestamppb.Timestamp (pointer), target is time.Time (value)
-			// In FromTarget direction (Datastore → API): source is time.Time (value), target is *timestamppb.Timestamp (pointer)
-			// The TargetIsPointer is false because time.Time in Datastore structs is a value type
-			mapping.TargetIsPointer = false
-			addRenderStrategies(mapping)
-			return mapping
+	// Handle common type conversions using the generic type mapping registry
+	// This checks for known type conversions (Timestamp→int64, Timestamp→time.Time, uint32→string, etc.)
+	toCode, fromCode, convType, targetIsPtr := converter.BuildConversionCode(sourceField, targetField)
+	if toCode != "" && fromCode != "" {
+		mapping.ToTargetCode = toCode
+		mapping.FromTargetCode = fromCode
+		mapping.ToTargetConversionType = convType
+		mapping.FromTargetConversionType = convType
+		// Apply pointer override if specified
+		if targetIsPtr != nil {
+			mapping.TargetIsPointer = *targetIsPtr
 		}
-	}
-
-	// uint32 (API) ↔ string (Datastore) for IDs
-	if sourceKind == "uint32" && targetKind == "string" {
-		mapping.ToTargetCode = fmt.Sprintf("strconv.FormatUint(uint64(src.%s), 10)", sourceFieldName)
-		mapping.FromTargetCode = fmt.Sprintf("uint32(converters.MustParseUint(src.%s))", targetFieldName)
-		mapping.ToTargetConversionType = converter.ConvertByTransformer
-		mapping.FromTargetConversionType = converter.ConvertByTransformer
 		addRenderStrategies(mapping)
 		return mapping
 	}

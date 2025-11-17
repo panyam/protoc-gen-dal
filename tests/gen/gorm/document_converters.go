@@ -2,8 +2,8 @@
 package gorm
 
 import (
-	api "github.com/panyam/protoc-gen-dal/tests/gen/go/api"
 	"github.com/panyam/protoc-gen-dal/pkg/converters"
+	api "github.com/panyam/protoc-gen-dal/tests/gen/go/api"
 )
 
 // DocumentToDocumentGormEmpty converts a api.Document to DocumentGormEmpty.
@@ -21,8 +21,23 @@ func DocumentToDocumentGormEmpty(
 	}
 
 	// Initialize struct with inline values
-	*dest = DocumentGormEmpty{}
+	*dest = DocumentGormEmpty{
+		Id:        src.Id,
+		Title:     src.Title,
+		Content:   src.Content,
+		Author:    src.Author,
+		Published: src.Published,
+		ViewCount: src.ViewCount,
+		Tags:      src.Tags,
+	}
 	out = dest
+
+	if src.CreatedAt != nil {
+		out.CreatedAt = converters.TimestampToTime(src.CreatedAt)
+	}
+	if src.UpdatedAt != nil {
+		out.UpdatedAt = converters.TimestampToTime(src.UpdatedAt)
+	}
 
 	// Apply decorator if provided
 	if decorator != nil {
@@ -49,7 +64,17 @@ func DocumentFromDocumentGormEmpty(
 	}
 
 	// Initialize struct with inline values
-	*dest = api.Document{}
+	*dest = api.Document{
+		Id:        src.Id,
+		Title:     src.Title,
+		Content:   src.Content,
+		Author:    src.Author,
+		CreatedAt: converters.TimeToTimestamp(src.CreatedAt),
+		UpdatedAt: converters.TimeToTimestamp(src.UpdatedAt),
+		Published: src.Published,
+		ViewCount: src.ViewCount,
+		Tags:      src.Tags,
+	}
 	out = dest
 
 	// Apply decorator if provided
@@ -78,10 +103,22 @@ func DocumentToDocumentGormPartial(
 
 	// Initialize struct with inline values
 	*dest = DocumentGormPartial{
-		Id:    src.Id,
-		Title: src.Title,
+		Id:        src.Id,
+		Title:     src.Title,
+		Content:   src.Content,
+		Author:    src.Author,
+		Published: src.Published,
+		ViewCount: src.ViewCount,
+		Tags:      src.Tags,
 	}
 	out = dest
+
+	if src.CreatedAt != nil {
+		out.CreatedAt = converters.TimestampToTime(src.CreatedAt)
+	}
+	if src.UpdatedAt != nil {
+		out.UpdatedAt = converters.TimestampToTime(src.UpdatedAt)
+	}
 
 	// Apply decorator if provided
 	if decorator != nil {
@@ -109,8 +146,15 @@ func DocumentFromDocumentGormPartial(
 
 	// Initialize struct with inline values
 	*dest = api.Document{
-		Id:    src.Id,
-		Title: src.Title,
+		Id:        src.Id,
+		Title:     src.Title,
+		Content:   src.Content,
+		Author:    src.Author,
+		CreatedAt: converters.TimeToTimestamp(src.CreatedAt),
+		UpdatedAt: converters.TimeToTimestamp(src.UpdatedAt),
+		Published: src.Published,
+		ViewCount: src.ViewCount,
+		Tags:      src.Tags,
 	}
 	out = dest
 
@@ -140,10 +184,21 @@ func DocumentToDocumentGormSkip(
 
 	// Initialize struct with inline values
 	*dest = DocumentGormSkip{
-		Id:      src.Id,
-		Content: src.Content,
+		Id:        src.Id,
+		Title:     src.Title,
+		Author:    src.Author,
+		Published: src.Published,
+		ViewCount: src.ViewCount,
+		Tags:      src.Tags,
 	}
 	out = dest
+
+	if src.CreatedAt != nil {
+		out.CreatedAt = converters.TimestampToTime(src.CreatedAt)
+	}
+	if src.UpdatedAt != nil {
+		out.UpdatedAt = converters.TimestampToTime(src.UpdatedAt)
+	}
 
 	// Apply decorator if provided
 	if decorator != nil {
@@ -171,8 +226,14 @@ func DocumentFromDocumentGormSkip(
 
 	// Initialize struct with inline values
 	*dest = api.Document{
-		Id:      src.Id,
-		Content: src.Content,
+		Id:        src.Id,
+		Title:     src.Title,
+		Author:    src.Author,
+		CreatedAt: converters.TimeToTimestamp(src.CreatedAt),
+		UpdatedAt: converters.TimeToTimestamp(src.UpdatedAt),
+		Published: src.Published,
+		ViewCount: src.ViewCount,
+		Tags:      src.Tags,
 	}
 	out = dest
 
@@ -201,8 +262,23 @@ func DocumentToDocumentGormExtra(
 	}
 
 	// Initialize struct with inline values
-	*dest = DocumentGormExtra{}
+	*dest = DocumentGormExtra{
+		Id:        src.Id,
+		Title:     src.Title,
+		Content:   src.Content,
+		Author:    src.Author,
+		Published: src.Published,
+		ViewCount: src.ViewCount,
+		Tags:      src.Tags,
+	}
 	out = dest
+
+	if src.CreatedAt != nil {
+		out.CreatedAt = converters.TimestampToTime(src.CreatedAt)
+	}
+	if src.UpdatedAt != nil {
+		out.UpdatedAt = converters.TimestampToTime(src.UpdatedAt)
+	}
 
 	// Apply decorator if provided
 	if decorator != nil {
@@ -229,7 +305,17 @@ func DocumentFromDocumentGormExtra(
 	}
 
 	// Initialize struct with inline values
-	*dest = api.Document{}
+	*dest = api.Document{
+		Id:        src.Id,
+		Title:     src.Title,
+		Content:   src.Content,
+		Author:    src.Author,
+		CreatedAt: converters.TimeToTimestamp(src.CreatedAt),
+		UpdatedAt: converters.TimeToTimestamp(src.UpdatedAt),
+		Published: src.Published,
+		ViewCount: src.ViewCount,
+		Tags:      src.Tags,
+	}
 	out = dest
 
 	// Apply decorator if provided

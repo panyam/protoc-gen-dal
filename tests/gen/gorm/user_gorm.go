@@ -26,11 +26,15 @@ func (*UserGORM) TableName() string {
 
 // UserWithPermissions is the GORM model for api.User
 type UserWithPermissions struct {
-	Id        uint32    `gorm:"primaryKey"`
-	Name      string    `gorm:"<-:create"`
-	Email     string    `gorm:"<-:update"`
-	CreatedAt time.Time `gorm:"->;autoCreateTime"`
-	UpdatedAt time.Time `gorm:"<-;autoUpdateTime"`
+	Id           uint32 `gorm:"primaryKey"`
+	Name         string `gorm:"<-:create"`
+	Email        string `gorm:"<-:update"`
+	Age          uint32
+	CreatedAt    time.Time `gorm:"->;autoCreateTime"`
+	UpdatedAt    time.Time `gorm:"<-;autoUpdateTime"`
+	Birthday     time.Time
+	MemberNumber string
+	ActivatedAt  time.Time
 }
 
 // TableName returns the table name for UserWithPermissions
@@ -42,9 +46,15 @@ func (*UserWithPermissions) TableName() string {
 type UserWithCustomTimestamps struct {
 	Id           uint32 `gorm:"primaryKey"`
 	Name         string
+	Email        string
 	CreatedAt    int64 `gorm:"autoCreateTime"`
+	Age          uint32
 	UpdatedMilli int64 `gorm:"autoUpdateTime:milli"`
+	Birthday     time.Time
 	UpdatedNano  int64 `gorm:"autoUpdateTime:nano"`
+	MemberNumber string
+	ActivatedAt  time.Time
+	UpdatedAt    time.Time
 }
 
 // TableName returns the table name for UserWithCustomTimestamps
@@ -54,12 +64,18 @@ func (*UserWithCustomTimestamps) TableName() string {
 
 // UserWithIndexes is the GORM model for api.User
 type UserWithIndexes struct {
-	Id        uint32 `gorm:"primaryKey"`
-	Name      string `gorm:"index"`
-	Email     string `gorm:"uniqueIndex"`
-	City      string `gorm:"index:idx_city,sort:desc"`
-	FirstName string `gorm:"index:idx_name"`
-	LastName  string `gorm:"index:idx_name"`
+	Id           uint32 `gorm:"primaryKey"`
+	Name         string `gorm:"index"`
+	Email        string `gorm:"uniqueIndex"`
+	Age          uint32
+	City         string `gorm:"index:idx_city,sort:desc"`
+	FirstName    string `gorm:"index:idx_name"`
+	Birthday     time.Time
+	LastName     string `gorm:"index:idx_name"`
+	MemberNumber string
+	ActivatedAt  time.Time
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 }
 
 // TableName returns the table name for UserWithIndexes
@@ -69,10 +85,16 @@ func (*UserWithIndexes) TableName() string {
 
 // UserWithDefaults is the GORM model for api.User
 type UserWithDefaults struct {
-	Id        uint32 `gorm:"primaryKey"`
-	Name      string `gorm:"default:guest"`
-	Active    bool   `gorm:"default:true"`
-	CreatedAt int64  `gorm:"default:CURRENT_TIMESTAMP"`
+	Id           uint32 `gorm:"primaryKey"`
+	Name         string `gorm:"default:guest"`
+	Active       bool   `gorm:"default:true"`
+	Email        string
+	Age          uint32
+	CreatedAt    int64 `gorm:"default:CURRENT_TIMESTAMP"`
+	Birthday     time.Time
+	MemberNumber string
+	ActivatedAt  time.Time
+	UpdatedAt    time.Time
 }
 
 // TableName returns the table name for UserWithDefaults
@@ -136,22 +158,4 @@ type OrganizationGORM struct {
 // TableName returns the table name for OrganizationGORM
 func (*OrganizationGORM) TableName() string {
 	return "organizations"
-}
-
-// MetadataEntry
-type MetadataEntry struct {
-	Key   string
-	Value string
-}
-
-// DepartmentsEntry
-type DepartmentsEntry struct {
-	Key   string
-	Value AuthorGORM
-}
-
-// Timestamp
-type Timestamp struct {
-	Seconds int64
-	Nanos   int32
 }

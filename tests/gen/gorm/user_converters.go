@@ -2,9 +2,10 @@
 package gorm
 
 import (
-	api "github.com/panyam/protoc-gen-dal/tests/gen/go/api"
 	"fmt"
+
 	"github.com/panyam/protoc-gen-dal/pkg/converters"
+	api "github.com/panyam/protoc-gen-dal/tests/gen/go/api"
 )
 
 // UserToUserGORM converts a api.User to UserGORM.
@@ -108,17 +109,25 @@ func UserToUserWithPermissions(
 
 	// Initialize struct with inline values
 	*dest = UserWithPermissions{
-		Id:    src.Id,
-		Name:  src.Name,
-		Email: src.Email,
+		Id:           src.Id,
+		Name:         src.Name,
+		Email:        src.Email,
+		Age:          src.Age,
+		MemberNumber: src.MemberNumber,
 	}
 	out = dest
 
 	if src.CreatedAt != nil {
 		out.CreatedAt = converters.TimestampToTime(src.CreatedAt)
 	}
+	if src.Birthday != nil {
+		out.Birthday = converters.TimestampToTime(src.Birthday)
+	}
 	if src.UpdatedAt != nil {
 		out.UpdatedAt = converters.TimestampToTime(src.UpdatedAt)
+	}
+	if src.ActivatedAt != nil {
+		out.ActivatedAt = converters.TimestampToTime(src.ActivatedAt)
 	}
 
 	// Apply decorator if provided
@@ -147,11 +156,15 @@ func UserFromUserWithPermissions(
 
 	// Initialize struct with inline values
 	*dest = api.User{
-		Id:        src.Id,
-		Name:      src.Name,
-		Email:     src.Email,
-		CreatedAt: converters.TimeToTimestamp(src.CreatedAt),
-		UpdatedAt: converters.TimeToTimestamp(src.UpdatedAt),
+		Id:           src.Id,
+		Name:         src.Name,
+		Email:        src.Email,
+		Age:          src.Age,
+		CreatedAt:    converters.TimeToTimestamp(src.CreatedAt),
+		Birthday:     converters.TimeToTimestamp(src.Birthday),
+		UpdatedAt:    converters.TimeToTimestamp(src.UpdatedAt),
+		MemberNumber: src.MemberNumber,
+		ActivatedAt:  converters.TimeToTimestamp(src.ActivatedAt),
 	}
 	out = dest
 
@@ -181,10 +194,26 @@ func UserToUserWithCustomTimestamps(
 
 	// Initialize struct with inline values
 	*dest = UserWithCustomTimestamps{
-		Id:   src.Id,
-		Name: src.Name,
+		Id:           src.Id,
+		Name:         src.Name,
+		Email:        src.Email,
+		Age:          src.Age,
+		MemberNumber: src.MemberNumber,
 	}
 	out = dest
+
+	if src.CreatedAt != nil {
+		out.CreatedAt = converters.TimestampToInt64(src.CreatedAt)
+	}
+	if src.Birthday != nil {
+		out.Birthday = converters.TimestampToTime(src.Birthday)
+	}
+	if src.ActivatedAt != nil {
+		out.ActivatedAt = converters.TimestampToTime(src.ActivatedAt)
+	}
+	if src.UpdatedAt != nil {
+		out.UpdatedAt = converters.TimestampToTime(src.UpdatedAt)
+	}
 
 	// Apply decorator if provided
 	if decorator != nil {
@@ -212,8 +241,15 @@ func UserFromUserWithCustomTimestamps(
 
 	// Initialize struct with inline values
 	*dest = api.User{
-		Id:   src.Id,
-		Name: src.Name,
+		Id:           src.Id,
+		Name:         src.Name,
+		Email:        src.Email,
+		CreatedAt:    converters.Int64ToTimestamp(src.CreatedAt),
+		Age:          src.Age,
+		Birthday:     converters.TimeToTimestamp(src.Birthday),
+		MemberNumber: src.MemberNumber,
+		ActivatedAt:  converters.TimeToTimestamp(src.ActivatedAt),
+		UpdatedAt:    converters.TimeToTimestamp(src.UpdatedAt),
 	}
 	out = dest
 
@@ -243,11 +279,26 @@ func UserToUserWithIndexes(
 
 	// Initialize struct with inline values
 	*dest = UserWithIndexes{
-		Id:    src.Id,
-		Name:  src.Name,
-		Email: src.Email,
+		Id:           src.Id,
+		Name:         src.Name,
+		Email:        src.Email,
+		Age:          src.Age,
+		MemberNumber: src.MemberNumber,
 	}
 	out = dest
+
+	if src.Birthday != nil {
+		out.Birthday = converters.TimestampToTime(src.Birthday)
+	}
+	if src.ActivatedAt != nil {
+		out.ActivatedAt = converters.TimestampToTime(src.ActivatedAt)
+	}
+	if src.CreatedAt != nil {
+		out.CreatedAt = converters.TimestampToTime(src.CreatedAt)
+	}
+	if src.UpdatedAt != nil {
+		out.UpdatedAt = converters.TimestampToTime(src.UpdatedAt)
+	}
 
 	// Apply decorator if provided
 	if decorator != nil {
@@ -275,9 +326,15 @@ func UserFromUserWithIndexes(
 
 	// Initialize struct with inline values
 	*dest = api.User{
-		Id:    src.Id,
-		Name:  src.Name,
-		Email: src.Email,
+		Id:           src.Id,
+		Name:         src.Name,
+		Email:        src.Email,
+		Age:          src.Age,
+		Birthday:     converters.TimeToTimestamp(src.Birthday),
+		MemberNumber: src.MemberNumber,
+		ActivatedAt:  converters.TimeToTimestamp(src.ActivatedAt),
+		CreatedAt:    converters.TimeToTimestamp(src.CreatedAt),
+		UpdatedAt:    converters.TimeToTimestamp(src.UpdatedAt),
 	}
 	out = dest
 
@@ -307,10 +364,26 @@ func UserToUserWithDefaults(
 
 	// Initialize struct with inline values
 	*dest = UserWithDefaults{
-		Id:   src.Id,
-		Name: src.Name,
+		Id:           src.Id,
+		Name:         src.Name,
+		Email:        src.Email,
+		Age:          src.Age,
+		MemberNumber: src.MemberNumber,
 	}
 	out = dest
+
+	if src.CreatedAt != nil {
+		out.CreatedAt = converters.TimestampToInt64(src.CreatedAt)
+	}
+	if src.Birthday != nil {
+		out.Birthday = converters.TimestampToTime(src.Birthday)
+	}
+	if src.ActivatedAt != nil {
+		out.ActivatedAt = converters.TimestampToTime(src.ActivatedAt)
+	}
+	if src.UpdatedAt != nil {
+		out.UpdatedAt = converters.TimestampToTime(src.UpdatedAt)
+	}
 
 	// Apply decorator if provided
 	if decorator != nil {
@@ -338,8 +411,15 @@ func UserFromUserWithDefaults(
 
 	// Initialize struct with inline values
 	*dest = api.User{
-		Id:   src.Id,
-		Name: src.Name,
+		Id:           src.Id,
+		Name:         src.Name,
+		Email:        src.Email,
+		Age:          src.Age,
+		CreatedAt:    converters.Int64ToTimestamp(src.CreatedAt),
+		Birthday:     converters.TimeToTimestamp(src.Birthday),
+		MemberNumber: src.MemberNumber,
+		ActivatedAt:  converters.TimeToTimestamp(src.ActivatedAt),
+		UpdatedAt:    converters.TimeToTimestamp(src.UpdatedAt),
 	}
 	out = dest
 

@@ -111,3 +111,47 @@ func BuildTimestampConversion(sourceFieldName string) (toCode, fromCode string) 
 	fromCode = fmt.Sprintf("timeToTimestamp(src.%s)", sourceFieldName)
 	return toCode, fromCode
 }
+
+// IsTimestampToInt64 checks if this is a google.protobuf.Timestamp → int64 conversion.
+//
+// Some databases store timestamps as Unix epoch int64 instead of native time types.
+// This detector identifies such conversions.
+//
+// Parameters:
+//   - sourceField: source field descriptor
+//   - targetField: target field descriptor
+//
+// Returns:
+//   - true if source is google.protobuf.Timestamp and target is int64
+func IsTimestampToInt64(sourceField, targetField *protogen.Field) bool {
+	sourceKind := sourceField.Desc.Kind().String()
+	targetKind := targetField.Desc.Kind().String()
+
+	// Source must be message (Timestamp), target must be int64
+	if sourceKind != "message" || targetKind != "int64" {
+		return false
+	}
+
+	if sourceField.Message == nil {
+		return false
+	}
+
+	// Source must be google.protobuf.Timestamp
+	sourceIsTimestamp := string(sourceField.Message.Desc.FullName()) == "google.protobuf.Timestamp"
+
+	return sourceIsTimestamp
+}
+
+// BuildTimestampToInt64Conversion generates conversion code for Timestamp ↔ int64.
+//
+// Parameters:
+//   - sourceFieldName: name of the field to convert
+//
+// Returns:
+//   - toCode: conversion expression for Timestamp→int64 (Unix seconds)
+//   - fromCode: conversion expression for int64→Timestamp
+func BuildTimestampToInt64Conversion(sourceFieldName string) (toCode, fromCode string) {
+	toCode = fmt.Sprintf("converters.TimestampToInt64(src.%s)", sourceFieldName)
+	fromCode = fmt.Sprintf("converters.Int64ToTimestamp(src.%s)", sourceFieldName)
+	return toCode, fromCode
+}

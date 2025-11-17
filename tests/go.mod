@@ -6,6 +6,7 @@ toolchain go1.24.6
 
 require (
 	cloud.google.com/go/datastore v1.21.0
+	github.com/panyam/protoc-gen-dal v0.0.2
 	google.golang.org/protobuf v1.36.7
 )
 
@@ -39,3 +40,5 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250811230008-5f3141c8851a // indirect
 	google.golang.org/grpc v1.74.2 // indirect
 )
+
+replace github.com/panyam/protoc-gen-dal v0.0.2 => ../

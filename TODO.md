@@ -360,6 +360,35 @@ From `tests/protos/gorm/user.proto`:
   - ✅ Removed duplicate helper function declarations from generated files
   - ✅ All tests passing
 
+- ✅ Phase 3.1d - Field Merging (Opt-Out Model) (COMPLETE)
+  - ✅ Created pkg/generator/common/field_merge.go with MergeSourceFields, HasSkipField, ValidateFieldMerge
+  - ✅ Field matching by NAME not NUMBER (allows proto field renumbering)
+  - ✅ Empty target messages inherit all source fields automatically
+  - ✅ Target fields override source fields with same name
+  - ✅ skip_field annotation excludes fields from struct and converters
+  - ✅ Validation ensures skip_field references exist in source
+  - ✅ Updated GORM buildStructData to merge fields before generation
+  - ✅ Updated GORM buildConverterData to use merged fields (respects skip_field)
+  - ✅ Updated Datastore buildStructData to merge fields before generation
+  - ✅ Updated Datastore buildConverterData to use merged fields (respects skip_field)
+  - ✅ Embedded types generated once in _embedded_gorm.go (prevents duplicates)
+  - ✅ Test protos created: DocumentGormEmpty, DocumentGormPartial, DocumentGormSkip, DocumentGormExtra
+  - ✅ All tests passing
+
+- ✅ Phase 3.1e - Generic Type Mapping Registry (COMPLETE)
+  - ✅ Created pkg/generator/converter/type_mappings.go
+  - ✅ Centralized type conversion registry for all generators
+  - ✅ Registered conversions:
+    - google.protobuf.Timestamp → int64 (Unix epoch) - NEW for weewar
+    - google.protobuf.Timestamp → time.Time (native time type)
+    - uint32 → string (ID conversions for Datastore)
+  - ✅ Added converters.TimestampToInt64() and converters.Int64ToTimestamp()
+  - ✅ Updated GORM buildFieldConversion to use generic registry
+  - ✅ Updated Datastore buildFieldMapping to use generic registry
+  - ✅ 100% backward compatible - no migration needed
+  - ✅ Easy to extend with RegisterTypeMapping()
+  - ✅ All tests passing (protoc-gen-dal and weewar)
+
 **Generated Code Features:**
 From `tests/protos/datastore/user.proto`:
 - `user.go`: 8 Datastore entity structs (UserDatastore, UserWithNamespace, UserWithLargeText, UserSimple, AuthorDatastore, ProductDatastore, LibraryDatastore, OrganizationDatastore)

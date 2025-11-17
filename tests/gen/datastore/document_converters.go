@@ -34,8 +34,23 @@ func DocumentToDocumentDatastoreEmpty(
 	}
 
 	// Initialize struct with inline values
-	*dest = DocumentDatastoreEmpty{}
+	*dest = DocumentDatastoreEmpty{
+		Id:        src.Id,
+		Title:     src.Title,
+		Content:   src.Content,
+		Author:    src.Author,
+		Published: src.Published,
+		ViewCount: src.ViewCount,
+		Tags:      src.Tags,
+	}
 	out = dest
+
+	if src.CreatedAt != nil {
+		out.CreatedAt = converters.TimestampToTime(src.CreatedAt)
+	}
+	if src.UpdatedAt != nil {
+		out.UpdatedAt = converters.TimestampToTime(src.UpdatedAt)
+	}
 
 	// Apply decorator if provided
 	if decorator != nil {
@@ -72,7 +87,17 @@ func DocumentFromDocumentDatastoreEmpty(
 	}
 
 	// Initialize struct with inline values
-	*dest = api.Document{}
+	*dest = api.Document{
+		Id:        src.Id,
+		Title:     src.Title,
+		Content:   src.Content,
+		Author:    src.Author,
+		CreatedAt: converters.TimeToTimestamp(src.CreatedAt),
+		UpdatedAt: converters.TimeToTimestamp(src.UpdatedAt),
+		Published: src.Published,
+		ViewCount: src.ViewCount,
+		Tags:      src.Tags,
+	}
 	out = dest
 
 	// Apply decorator if provided
@@ -111,9 +136,22 @@ func DocumentToDocumentDatastorePartial(
 
 	// Initialize struct with inline values
 	*dest = DocumentDatastorePartial{
-		Id: strconv.FormatUint(uint64(src.Id), 10),
+		Id:        strconv.FormatUint(uint64(src.Id), 10),
+		Title:     src.Title,
+		Content:   src.Content,
+		Author:    src.Author,
+		Published: src.Published,
+		ViewCount: src.ViewCount,
+		Tags:      src.Tags,
 	}
 	out = dest
+
+	if src.CreatedAt != nil {
+		out.CreatedAt = converters.TimestampToTime(src.CreatedAt)
+	}
+	if src.UpdatedAt != nil {
+		out.UpdatedAt = converters.TimestampToTime(src.UpdatedAt)
+	}
 
 	// Apply decorator if provided
 	if decorator != nil {
@@ -151,7 +189,15 @@ func DocumentFromDocumentDatastorePartial(
 
 	// Initialize struct with inline values
 	*dest = api.Document{
-		Id: uint32(converters.MustParseUint(src.Id)),
+		Id:        uint32(converters.MustParseUint(src.Id)),
+		Title:     src.Title,
+		Content:   src.Content,
+		Author:    src.Author,
+		CreatedAt: converters.TimeToTimestamp(src.CreatedAt),
+		UpdatedAt: converters.TimeToTimestamp(src.UpdatedAt),
+		Published: src.Published,
+		ViewCount: src.ViewCount,
+		Tags:      src.Tags,
 	}
 	out = dest
 
@@ -191,10 +237,21 @@ func DocumentToDocumentDatastoreSkip(
 
 	// Initialize struct with inline values
 	*dest = DocumentDatastoreSkip{
-		Id:      strconv.FormatUint(uint64(src.Id), 10),
-		Content: src.Content,
+		Id:        strconv.FormatUint(uint64(src.Id), 10),
+		Title:     src.Title,
+		Author:    src.Author,
+		Published: src.Published,
+		ViewCount: src.ViewCount,
+		Tags:      src.Tags,
 	}
 	out = dest
+
+	if src.CreatedAt != nil {
+		out.CreatedAt = converters.TimestampToTime(src.CreatedAt)
+	}
+	if src.UpdatedAt != nil {
+		out.UpdatedAt = converters.TimestampToTime(src.UpdatedAt)
+	}
 
 	// Apply decorator if provided
 	if decorator != nil {
@@ -232,8 +289,14 @@ func DocumentFromDocumentDatastoreSkip(
 
 	// Initialize struct with inline values
 	*dest = api.Document{
-		Id:      uint32(converters.MustParseUint(src.Id)),
-		Content: src.Content,
+		Id:        uint32(converters.MustParseUint(src.Id)),
+		Title:     src.Title,
+		Author:    src.Author,
+		CreatedAt: converters.TimeToTimestamp(src.CreatedAt),
+		UpdatedAt: converters.TimeToTimestamp(src.UpdatedAt),
+		Published: src.Published,
+		ViewCount: src.ViewCount,
+		Tags:      src.Tags,
 	}
 	out = dest
 

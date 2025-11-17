@@ -37,3 +37,21 @@ func TimeToTimestamp(t time.Time) *timestamppb.Timestamp {
 	}
 	return timestamppb.New(t)
 }
+
+// TimestampToInt64 converts a protobuf Timestamp to Unix epoch seconds (int64).
+// Returns 0 if timestamp is nil.
+func TimestampToInt64(ts *timestamppb.Timestamp) int64 {
+	if ts == nil {
+		return 0
+	}
+	return ts.AsTime().Unix()
+}
+
+// Int64ToTimestamp converts Unix epoch seconds (int64) to a protobuf Timestamp.
+// Returns nil if the value is 0.
+func Int64ToTimestamp(seconds int64) *timestamppb.Timestamp {
+	if seconds == 0 {
+		return nil
+	}
+	return timestamppb.New(time.Unix(seconds, 0))
+}

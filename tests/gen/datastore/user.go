@@ -23,6 +23,10 @@ type UserDatastore struct {
 
 	CreatedAt time.Time `datastore:"created_at"`
 
+	MemberNumber string `datastore:"member_number"`
+
+	ActivatedAt time.Time `datastore:"activated_at"`
+
 	UpdatedAt time.Time `datastore:"updated_at"`
 }
 
@@ -40,6 +44,18 @@ type UserWithNamespace struct {
 	Name string `datastore:"name"`
 
 	Email string `datastore:"email"`
+
+	Age uint32 `datastore:"age"`
+
+	Birthday time.Time `datastore:"birthday"`
+
+	MemberNumber string `datastore:"member_number"`
+
+	ActivatedAt time.Time `datastore:"activated_at"`
+
+	CreatedAt time.Time `datastore:"created_at"`
+
+	UpdatedAt time.Time `datastore:"updated_at"`
 }
 
 // Kind returns the Datastore kind name for UserWithNamespace.
@@ -56,6 +72,18 @@ type UserWithLargeText struct {
 	Name string `datastore:"name"`
 
 	Email string `datastore:"email"`
+
+	Age uint32 `datastore:"age"`
+
+	Birthday time.Time `datastore:"birthday"`
+
+	MemberNumber string `datastore:"member_number"`
+
+	ActivatedAt time.Time `datastore:"activated_at"`
+
+	CreatedAt time.Time `datastore:"created_at"`
+
+	UpdatedAt time.Time `datastore:"updated_at"`
 }
 
 // Kind returns the Datastore kind name for UserWithLargeText.
@@ -70,6 +98,20 @@ type UserSimple struct {
 	Id string `datastore:"id"`
 
 	Name string `datastore:"name"`
+
+	Email string `datastore:"email"`
+
+	Age uint32 `datastore:"age"`
+
+	Birthday time.Time `datastore:"birthday"`
+
+	MemberNumber string `datastore:"member_number"`
+
+	ActivatedAt time.Time `datastore:"activated_at"`
+
+	CreatedAt time.Time `datastore:"created_at"`
+
+	UpdatedAt time.Time `datastore:"updated_at"`
 }
 
 // Kind returns the Datastore kind name for UserSimple.

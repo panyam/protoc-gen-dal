@@ -64,14 +64,37 @@ func Generate(messages []*collector.MessageInfo) (*GenerateResult, error) {
 		return &GenerateResult{Files: []*GeneratedFile{}}, nil
 	}
 
+	// Collect all embedded types across ALL messages first
+	// This ensures we generate each embedded type only once in a shared file
+	allEmbeddedTypes := make(map[string]*protogen.Message)
+	for _, msg := range messages {
+		collectEmbeddedTypes(msg.TargetMessage, allEmbeddedTypes)
+	}
+
+	// Filter out embedded types that are already GORM messages
+	// (they'll be generated with their own table)
+	sharedEmbeddedTypes := make(map[string]*protogen.Message)
+	for fullName, embMsg := range allEmbeddedTypes {
+		isGormMsg := false
+		for _, msg := range messages {
+			if msg.TargetMessage == embMsg {
+				isGormMsg = true
+				break
+			}
+		}
+		if !isGormMsg {
+			sharedEmbeddedTypes[fullName] = embMsg
+		}
+	}
+
 	// Group messages by their source proto file
 	fileGroups := common.GroupMessagesByFile(messages)
 
 	var files []*GeneratedFile
 
-	// Generate one file per proto file
+	// Generate one file per proto file (without embedded types)
 	for protoFile, msgs := range fileGroups {
-		content, err := generateFileCode(msgs)
+		content, err := generateFileCodeWithoutEmbedded(msgs)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate code for %s: %w", protoFile, err)
 		}
@@ -82,6 +105,19 @@ func Generate(messages []*collector.MessageInfo) (*GenerateResult, error) {
 
 		files = append(files, &GeneratedFile{
 			Path:    filename,
+			Content: content,
+		})
+	}
+
+	// Generate a single shared file for all embedded types (if any)
+	if len(sharedEmbeddedTypes) > 0 {
+		content, err := generateEmbeddedTypesFile(sharedEmbeddedTypes, messages[0].TargetMessage)
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate embedded types: %w", err)
+		}
+
+		files = append(files, &GeneratedFile{
+			Path:    "_embedded_gorm.go",
 			Content: content,
 		})
 	}
@@ -132,8 +168,9 @@ func GenerateConverters(messages []*collector.MessageInfo) (*GenerateResult, err
 	return &GenerateResult{Files: files}, nil
 }
 
-// generateFileCode generates the complete Go code for all messages in a proto file.
-func generateFileCode(messages []*collector.MessageInfo) (string, error) {
+// generateFileCodeWithoutEmbedded generates Go code for messages in a proto file.
+// Embedded types are NOT included - they're generated separately in _embedded_gorm.go
+func generateFileCodeWithoutEmbedded(messages []*collector.MessageInfo) (string, error) {
 	if len(messages) == 0 {
 		return "", fmt.Errorf("no messages to generate")
 	}
@@ -143,7 +180,6 @@ func generateFileCode(messages []*collector.MessageInfo) (string, error) {
 
 	// Build struct data for all messages with GORM annotations
 	var structs []StructData
-	embeddedTypes := make(map[string]*protogen.Message)
 
 	for _, msg := range messages {
 		structData, err := buildStructData(msg)
@@ -151,34 +187,43 @@ func generateFileCode(messages []*collector.MessageInfo) (string, error) {
 			return "", err
 		}
 		structs = append(structs, structData)
-
-		// Collect embedded message types
-		collectEmbeddedTypes(msg.TargetMessage, embeddedTypes)
 	}
 
-	// Add structs for embedded types that aren't already GORM messages
-	for _, embMsg := range embeddedTypes {
-		// Check if this message is already in our GORM messages
-		isGormMsg := false
-		for _, msg := range messages {
-			if msg.TargetMessage == embMsg {
-				isGormMsg = true
-				break
-			}
-		}
+	// Build template data
+	data := TemplateData{
+		PackageName: packageName,
+		Imports:     []string{"time"}, // time package needed for time.Time fields
+		Structs:     structs,
+	}
 
-		if !isGormMsg {
-			// Build a simple struct for this embedded type (no table name)
-			fields, err := buildFields(embMsg)
-			if err != nil {
-				return "", err
-			}
-			structs = append(structs, StructData{
-				Name:      buildStructName(embMsg),
-				TableName: "", // No table for embedded types
-				Fields:    fields,
-			})
+	// Render the file template
+	return renderTemplate("file.go.tmpl", data)
+}
+
+// generateEmbeddedTypesFile generates a single file containing all shared embedded types.
+// This prevents duplicate type definitions across multiple generated files.
+func generateEmbeddedTypesFile(embeddedTypes map[string]*protogen.Message, sampleMsg *protogen.Message) (string, error) {
+	if len(embeddedTypes) == 0 {
+		return "", fmt.Errorf("no embedded types to generate")
+	}
+
+	// Extract package name (use sample message)
+	packageName := common.ExtractPackageName(sampleMsg)
+
+	// Build struct data for embedded types
+	var structs []StructData
+	for _, embMsg := range embeddedTypes {
+		// Build a simple struct for this embedded type (no table name)
+		// No field merging for embedded types - just use fields as-is
+		fields, err := buildFields(embMsg.Fields)
+		if err != nil {
+			return "", err
 		}
+		structs = append(structs, StructData{
+			Name:      buildStructName(embMsg),
+			TableName: "", // No table for embedded types
+			Fields:    fields,
+		})
 	}
 
 	// Build template data
@@ -314,12 +359,21 @@ func collectEmbeddedTypes(msg *protogen.Message, types map[string]*protogen.Mess
 // buildStructData extracts struct information from a MessageInfo.
 func buildStructData(msg *collector.MessageInfo) (StructData, error) {
 	targetMsg := msg.TargetMessage
+	sourceMsg := msg.SourceMessage
 
 	// Build struct name: e.g., "BookGorm" -> "BookGORM"
 	structName := buildStructName(targetMsg)
 
-	// Build fields
-	fields, err := buildFields(targetMsg)
+	// Validate field merging (skip_field references, source exists, etc.)
+	if err := common.ValidateFieldMerge(sourceMsg, targetMsg, msg.SourceName); err != nil {
+		return StructData{}, err
+	}
+
+	// Merge source and target fields (implements opt-out field model)
+	mergedFields := common.MergeSourceFields(sourceMsg, targetMsg)
+
+	// Build fields from merged list
+	fields, err := buildFields(mergedFields)
 	if err != nil {
 		return StructData{}, err
 	}
@@ -341,6 +395,10 @@ func buildConverterData(msg *collector.MessageInfo, reg *registry.ConverterRegis
 	// Build GORM type name (e.g., "UserGORM", "UserWithPermissions")
 	gormTypeName := buildStructName(msg.TargetMessage)
 
+	// Merge source and target fields (same as buildStructData)
+	// This ensures converters use the same fields as the generated struct
+	mergedFields := common.MergeSourceFields(msg.SourceMessage, msg.TargetMessage)
+
 	// Build field mappings between source and GORM with built-in conversions
 	var fieldMappings []FieldMappingData
 
@@ -350,16 +408,18 @@ func buildConverterData(msg *collector.MessageInfo, reg *registry.ConverterRegis
 		sourceFields[field.GoName] = field
 	}
 
-	for _, targetField := range msg.TargetMessage.Fields {
+	// Iterate over merged fields (not target fields directly)
+	// This ensures skip_field annotations are respected
+	for _, mergedField := range mergedFields {
 		// Check if source has a field with the same name
-		sourceField, exists := sourceFields[targetField.GoName]
+		sourceField, exists := sourceFields[mergedField.GoName]
 		if !exists {
 			// Field only exists in target (e.g., DeletedAt) - skip, decorator will handle
 			continue
 		}
 
 		// Generate conversion code based on type compatibility
-		mapping := buildFieldConversion(sourceField, targetField, reg)
+		mapping := buildFieldConversion(sourceField, mergedField, reg)
 		if mapping == nil {
 			// No conversion possible - skip, decorator must handle
 			continue
@@ -538,7 +598,21 @@ func buildFieldConversion(sourceField, targetField *protogen.Field, reg *registr
 		return mapping
 	}
 
-	// Step 3: Handle specific conversion patterns
+	// Step 3: Check for known type conversions using the generic type mapping registry
+	// This handles Timestamp→int64, Timestamp→time.Time, uint32→string, etc.
+	toCode, fromCode, convType, targetIsPtr := converter.BuildConversionCode(sourceField, targetField)
+	if toCode != "" && fromCode != "" {
+		mapping.ToTargetCode = toCode
+		mapping.FromTargetCode = fromCode
+		mapping.ToTargetConversionType = convType
+		mapping.FromTargetConversionType = convType
+		// Apply pointer override if specified
+		if targetIsPtr != nil {
+			mapping.TargetIsPointer = *targetIsPtr
+		}
+		addRenderStrategies(mapping)
+		return mapping
+	}
 
 	// Same types - direct assignment (override message default)
 	if sourceKind == targetKind && sourceKind != "message" {
@@ -548,19 +622,6 @@ func buildFieldConversion(sourceField, targetField *protogen.Field, reg *registr
 		mapping.FromTargetConversionType = converter.ConvertByAssignment
 	addRenderStrategies(mapping)
 		return mapping
-	}
-
-	// Timestamp (message) to time.Time (message) - both are google.protobuf.Timestamp
-	// The proto uses Timestamp but it maps to time.Time in Go structs
-	if sourceKind == "message" && targetKind == "message" {
-		if converter.IsTimestampToTimeTime(sourceField, targetField) {
-			mapping.ToTargetCode = fmt.Sprintf("converters.TimestampToTime(src.%s)", fieldName)
-			mapping.FromTargetCode = fmt.Sprintf("converters.TimeToTimestamp(src.%s)", fieldName)
-			mapping.ToTargetConversionType = converter.ConvertByTransformer
-			mapping.FromTargetConversionType = converter.ConvertByTransformer
-			addRenderStrategies(mapping)
-			return mapping
-		}
 	}
 
 	// Both are messages - use nested converter if available
@@ -686,11 +747,11 @@ func buildStructName(msg *protogen.Message) string {
 	return name
 }
 
-// buildFields extracts field information from a proto message.
-func buildFields(msg *protogen.Message) ([]FieldData, error) {
+// buildFields extracts field information from a list of proto fields.
+func buildFields(protoFields []*protogen.Field) ([]FieldData, error) {
 	var fields []FieldData
 
-	for _, field := range msg.Fields {
+	for _, field := range protoFields {
 		fieldData, err := buildField(field)
 		if err != nil {
 			return nil, err
