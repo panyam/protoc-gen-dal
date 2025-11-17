@@ -180,6 +180,10 @@ func generateFileCodeWithoutEmbedded(messages []*collector.MessageInfo) (string,
 
 	// Build struct data for all messages with GORM annotations
 	var structs []StructData
+	importsMap := make(common.ImportMap)
+
+	// Always add time package (for time.Time fields)
+	importsMap.Add(common.ImportSpec{Path: "time"})
 
 	for _, msg := range messages {
 		structData, err := buildStructData(msg)
@@ -187,12 +191,30 @@ func generateFileCodeWithoutEmbedded(messages []*collector.MessageInfo) (string,
 			return "", err
 		}
 		structs = append(structs, structData)
+
+		// Add source package import if needed (for enum types)
+		if msg.SourceMessage != nil {
+			sourceImportPath := string(msg.SourceMessage.GoIdent.GoImportPath)
+			// Extract base path without ;packagename suffix for import
+			if idx := strings.LastIndex(sourceImportPath, ";"); idx != -1 {
+				sourceImportPath = sourceImportPath[:idx]
+			}
+			// Use last path component as alias (e.g., "api" from ".../go/api")
+			sourcePkgAlias := common.GetPackageAlias(sourceImportPath)
+			importsMap.Add(common.ImportSpec{
+				Alias: sourcePkgAlias,
+				Path:  sourceImportPath,
+			})
+		}
 	}
+
+	// Convert imports map to sorted slice
+	imports := importsMap.ToSlice()
 
 	// Build template data
 	data := TemplateData{
 		PackageName: packageName,
-		Imports:     []string{"time"}, // time package needed for time.Time fields
+		Imports:     imports,
 		Structs:     structs,
 	}
 
@@ -215,7 +237,13 @@ func generateEmbeddedTypesFile(embeddedTypes map[string]*protogen.Message, sampl
 	for _, embMsg := range embeddedTypes {
 		// Build a simple struct for this embedded type (no table name)
 		// No field merging for embedded types - just use fields as-is
-		fields, err := buildFields(embMsg.Fields)
+		// Extract source package alias for enum types
+		embImportPath := string(embMsg.GoIdent.GoImportPath)
+		if idx := strings.LastIndex(embImportPath, ";"); idx != -1 {
+			embImportPath = embImportPath[:idx]
+		}
+		embSourcePkgAlias := common.GetPackageAlias(embImportPath)
+		fields, err := buildFields(embMsg.Fields, embSourcePkgAlias)
 		if err != nil {
 			return "", err
 		}
@@ -229,7 +257,7 @@ func generateEmbeddedTypesFile(embeddedTypes map[string]*protogen.Message, sampl
 	// Build template data
 	data := TemplateData{
 		PackageName: packageName,
-		Imports:     []string{"time"}, // time package needed for time.Time fields
+		Imports:     []common.ImportSpec{{Path: "time"}}, // time package needed for time.Time fields
 		Structs:     structs,
 	}
 
@@ -372,8 +400,16 @@ func buildStructData(msg *collector.MessageInfo) (StructData, error) {
 	// Merge source and target fields (implements opt-out field model)
 	mergedFields := common.MergeSourceFields(sourceMsg, targetMsg)
 
+	// Extract source package alias for enum type references
+	// Use import path's last component as alias (e.g., "api" from ".../go/api")
+	sourceImportPath := string(sourceMsg.GoIdent.GoImportPath)
+	if idx := strings.LastIndex(sourceImportPath, ";"); idx != -1 {
+		sourceImportPath = sourceImportPath[:idx]
+	}
+	sourcePkgAlias := common.GetPackageAlias(sourceImportPath)
+
 	// Build fields from merged list
-	fields, err := buildFields(mergedFields)
+	fields, err := buildFields(mergedFields, sourcePkgAlias)
 	if err != nil {
 		return StructData{}, err
 	}
@@ -753,11 +789,11 @@ func buildStructName(msg *protogen.Message) string {
 }
 
 // buildFields extracts field information from a list of proto fields.
-func buildFields(protoFields []*protogen.Field) ([]FieldData, error) {
+func buildFields(protoFields []*protogen.Field, sourcePkgName string) ([]FieldData, error) {
 	var fields []FieldData
 
 	for _, field := range protoFields {
-		fieldData, err := buildField(field)
+		fieldData, err := buildField(field, sourcePkgName)
 		if err != nil {
 			return nil, err
 		}
@@ -768,12 +804,12 @@ func buildFields(protoFields []*protogen.Field) ([]FieldData, error) {
 }
 
 // buildField converts a proto field to FieldData.
-func buildField(field *protogen.Field) (FieldData, error) {
+func buildField(field *protogen.Field, sourcePkgName string) (FieldData, error) {
 	// converter.Convert field name to Go naming: id -> ID, title -> Title
 	goName := field.GoName
 
 	// converter.Convert proto type to Go type using shared utility with GORM-specific naming
-	goType := common.ProtoFieldToGoType(field, buildStructName)
+	goType := common.ProtoFieldToGoType(field, buildStructName, sourcePkgName)
 
 	// Extract GORM tags from column options
 	gormTag := extractGormTags(field)

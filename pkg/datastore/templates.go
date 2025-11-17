@@ -31,8 +31,8 @@ type TemplateData struct {
 	// Package is the Go package name
 	Package string
 
-	// Imports is the list of import paths
-	Imports []string
+	// Imports is the list of import specifications with optional aliases
+	Imports []common.ImportSpec
 
 	// Structs is the list of entity structs to generate
 	Structs []*StructData

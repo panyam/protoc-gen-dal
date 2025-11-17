@@ -29,8 +29,8 @@ var templatesFS embed.FS
 // TemplateData contains all data needed to render a complete Go file.
 type TemplateData struct {
 	PackageName string
-	Imports     []string // TODO: Change to []ImportSpec
-	Structs     []StructData // Multiple structs per file
+	Imports     []common.ImportSpec // Import specifications with optional aliases
+	Structs     []StructData         // Multiple structs per file
 }
 
 // StructData contains data for generating a GORM struct.

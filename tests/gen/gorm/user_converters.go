@@ -243,8 +243,8 @@ func UserFromUserWithCustomTimestamps(
 	*dest = api.User{
 		Id:           src.Id,
 		Name:         src.Name,
-		Email:        src.Email,
 		CreatedAt:    converters.Int64ToTimestamp(src.CreatedAt),
+		Email:        src.Email,
 		Age:          src.Age,
 		Birthday:     converters.TimeToTimestamp(src.Birthday),
 		MemberNumber: src.MemberNumber,

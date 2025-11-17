@@ -17,6 +17,7 @@ package datastore
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/panyam/protoc-gen-dal/pkg/collector"
 	"github.com/panyam/protoc-gen-dal/pkg/generator/common"
@@ -117,6 +118,11 @@ func buildTemplateData(messages []*collector.MessageInfo) (*TemplateData, error)
 	pkgName := common.ExtractPackageName(firstMsg)
 
 	var structs []*StructData
+	importsMap := make(common.ImportMap)
+
+	// Always add required packages
+	importsMap.Add(common.ImportSpec{Path: "time"})
+	importsMap.Add(common.ImportSpec{Path: "cloud.google.com/go/datastore"})
 
 	// Build struct data for each message
 	for _, msgInfo := range messages {
@@ -126,14 +132,29 @@ func buildTemplateData(messages []*collector.MessageInfo) (*TemplateData, error)
 				msgInfo.TargetMessage.Desc.Name(), err)
 		}
 		structs = append(structs, structData)
+
+		// Add source package import if needed (for enum types)
+		if msgInfo.SourceMessage != nil {
+			sourceImportPath := string(msgInfo.SourceMessage.GoIdent.GoImportPath)
+			// Extract base path without ;packagename suffix for import
+			if idx := strings.LastIndex(sourceImportPath, ";"); idx != -1 {
+				sourceImportPath = sourceImportPath[:idx]
+			}
+			// Use last path component as alias (e.g., "api" from ".../go/api")
+			sourcePkgAlias := common.GetPackageAlias(sourceImportPath)
+			importsMap.Add(common.ImportSpec{
+				Alias: sourcePkgAlias,
+				Path:  sourceImportPath,
+			})
+		}
 	}
+
+	// Convert imports map to sorted slice
+	imports := importsMap.ToSlice()
 
 	return &TemplateData{
 		Package: pkgName,
-		Imports: []string{
-			"time",
-			"cloud.google.com/go/datastore",
-		},
+		Imports: imports,
 		Structs: structs,
 	}, nil
 }
@@ -152,12 +173,20 @@ func buildStructData(msgInfo *collector.MessageInfo) (*StructData, error) {
 	// Merge source and target fields (implements opt-out field model)
 	mergedFields := common.MergeSourceFields(sourceMsg, targetMsg)
 
+	// Extract source package alias for enum type references
+	// Use import path's last component as alias (e.g., "api" from ".../go/api")
+	sourceImportPath := string(sourceMsg.GoIdent.GoImportPath)
+	if idx := strings.LastIndex(sourceImportPath, ";"); idx != -1 {
+		sourceImportPath = sourceImportPath[:idx]
+	}
+	sourcePkgName := common.GetPackageAlias(sourceImportPath)
+
 	// Extract fields from merged list
 	var fields []*FieldData
 	for _, field := range mergedFields {
 		fieldData := &FieldData{
 			Name: fieldName(field),
-			Type: fieldType(field),
+			Type: fieldType(field, sourcePkgName),
 			Tags: buildFieldTags(field),
 		}
 		fields = append(fields, fieldData)
@@ -185,13 +214,13 @@ func fieldName(field *protogen.Field) string {
 }
 
 // fieldType returns the Go type for a proto field.
-func fieldType(field *protogen.Field) string {
+func fieldType(field *protogen.Field, sourcePkgName string) string {
 	// Use shared utility with Datastore-specific struct naming
 	// This now handles google.protobuf.Timestamp → time.Time automatically
 	structNameFunc := func(msg *protogen.Message) string {
 		return string(msg.Desc.Name())
 	}
-	return common.ProtoFieldToGoType(field, structNameFunc)
+	return common.ProtoFieldToGoType(field, structNameFunc, sourcePkgName)
 }
 
 // buildFieldTags creates struct tags for a field.
@@ -275,9 +304,14 @@ func generateConverterFileCode(messages []*collector.MessageInfo) (string, error
 
 		// Add import for source message package with alias
 		sourceImportPath := string(msg.SourceMessage.GoIdent.GoImportPath)
-		sourcePkgName := common.ExtractPackageName(msg.SourceMessage)
+		// Extract base path without ;packagename suffix for import
+		if idx := strings.LastIndex(sourceImportPath, ";"); idx != -1 {
+			sourceImportPath = sourceImportPath[:idx]
+		}
+		// Use last path component as alias (e.g., "api" from ".../go/api")
+		sourcePkgAlias := common.GetPackageAlias(sourceImportPath)
 		importsMap.Add(common.ImportSpec{
-			Alias: sourcePkgName,
+			Alias: sourcePkgAlias,
 			Path:  sourceImportPath,
 		})
 	}
@@ -324,8 +358,13 @@ func buildConverterData(msgInfo *collector.MessageInfo, reg *registry.ConverterR
 	sourceName := string(sourceMsg.Desc.Name())
 	targetName := string(targetMsg.Desc.Name())
 
-	// Extract source package name for imports (use same logic as extractPackageName)
-	sourcePkgName := common.ExtractPackageName(sourceMsg)
+	// Extract source package alias for imports
+	// Use import path's last component as alias (e.g., "api" from ".../go/api")
+	sourceImportPath := string(sourceMsg.GoIdent.GoImportPath)
+	if idx := strings.LastIndex(sourceImportPath, ";"); idx != -1 {
+		sourceImportPath = sourceImportPath[:idx]
+	}
+	sourcePkgName := common.GetPackageAlias(sourceImportPath)
 
 	// Merge source and target fields (same as buildStructData)
 	// This ensures converters use the same fields as the generated struct

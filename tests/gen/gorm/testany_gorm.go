@@ -3,13 +3,15 @@ package gorm
 
 import (
 	"time"
+
+	api "github.com/panyam/protoc-gen-dal/tests/gen/go/api"
 )
 
 // TestRecord1GORM is the GORM model for api.TestRecord1
 type TestRecord1GORM struct {
 	TimeField time.Time
 	ExtraData []byte
-	AnEnum    SampleEnum
+	AnEnum    api.SampleEnum
 }
 
 // TableName returns the table name for TestRecord1GORM

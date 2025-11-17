@@ -410,6 +410,20 @@ From `tests/protos/gorm/user.proto`:
   - ✅ Added comprehensive tests for well-known type registry
   - ✅ All tests passing (testany.proto and weewar)
 
+- ✅ Phase 3.1g - Enum Type Support (COMPLETE)
+  - ✅ Added enum type detection in ProtoFieldToGoType (field.Enum != nil)
+  - ✅ Enum types properly qualified with source package (e.g., api.SampleEnum)
+  - ✅ Added sourcePkgName parameter to ProtoFieldToGoType for package qualification
+  - ✅ Updated GORM generator to collect source package imports for enum types
+  - ✅ Updated Datastore generator to collect source package imports for enum types
+  - ✅ Changed template Imports from []string to []common.ImportSpec for aliased imports
+  - ✅ Updated templates to render imports with aliases ({{ if .Alias }}{{ .Alias }} {{ end }}"{{ .Path }}")
+  - ✅ Fixed package alias extraction - use GetPackageAlias() instead of ExtractPackageName()
+  - ✅ Consistent package aliases across struct generation and converters
+  - ✅ Enums converted as simple value types (direct assignment in converters)
+  - ✅ Added SampleEnum to testany.proto for testing
+  - ✅ All tests passing - generated code compiles and enums work correctly
+
 **Generated Code Features:**
 From `tests/protos/datastore/user.proto`:
 - `user.go`: 8 Datastore entity structs (UserDatastore, UserWithNamespace, UserWithLargeText, UserSimple, AuthorDatastore, ProductDatastore, LibraryDatastore, OrganizationDatastore)

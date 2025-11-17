@@ -3,8 +3,10 @@ package {{ .PackageName }}
 
 {{ if .Imports }}
 import (
-{{ range .Imports }}	"{{ . }}"
-{{ end }})
+{{- range .Imports }}
+	{{ if .Alias }}{{ .Alias }} {{ end }}"{{ .Path }}"
+{{- end }}
+)
 {{ end }}
 {{ range .Structs }}
 {{ template "struct" . }}

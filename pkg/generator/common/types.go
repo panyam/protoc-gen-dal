@@ -114,20 +114,24 @@ type StructNameFunc func(*protogen.Message) string
 //
 // How it handles different field types:
 //   - Scalars: "string", "int32", etc.
+//   - Enums: "api.SampleEnum" (with package qualifier)
 //   - Messages: Uses structNameFunc to get the target struct name
 //   - google.protobuf.Timestamp: "time.Time" (special case for databases)
 //   - Repeated scalars: "[]string", "[]int32", etc.
+//   - Repeated enums: "[]api.SampleEnum"
 //   - Repeated messages: "[]BookGORM", "[]AuthorDatastore", etc.
 //   - Maps with scalar values: "map[string]int32", "map[string]string", etc.
+//   - Maps with enum values: "map[string]api.SampleEnum"
 //   - Maps with message values: "map[string]BookGORM", "map[uint32]AuthorDatastore", etc.
 //
 // Parameters:
 //   - field: The proto field to convert
 //   - structNameFunc: Function to convert message names to struct names
+//   - sourcePkgName: Package alias for enum types from source package (e.g., "api")
 //
 // Returns:
 //   - the Go type string for the field
-func ProtoFieldToGoType(field *protogen.Field, structNameFunc StructNameFunc) string {
+func ProtoFieldToGoType(field *protogen.Field, structNameFunc StructNameFunc, sourcePkgName string) string {
 	kind := field.Desc.Kind().String()
 
 	// Handle map fields - proto represents maps as special message types
@@ -152,6 +156,22 @@ func ProtoFieldToGoType(field *protogen.Field, structNameFunc StructNameFunc) st
 		}
 
 		return fmt.Sprintf("map[%s]%s", keyType, valueType)
+	}
+
+	// Handle enum types (use the generated enum type for type safety)
+	if kind == "enum" && field.Enum != nil {
+		// Build fully qualified enum type name (e.g., "api.SampleEnum")
+		enumTypeName := string(field.Enum.GoIdent.GoName)
+		if sourcePkgName != "" {
+			enumTypeName = sourcePkgName + "." + enumTypeName
+		}
+
+		// For repeated enum fields: []api.SampleEnum
+		if field.Desc.Cardinality().String() == "repeated" {
+			return "[]" + enumTypeName
+		}
+		// For singular enum fields: api.SampleEnum
+		return enumTypeName
 	}
 
 	// Handle message types (embedded structs, nested objects, etc.)
