@@ -2,31 +2,10 @@
 package gorm
 
 import (
-	"fmt"
-	"time"
-
 	api "github.com/panyam/protoc-gen-dal/tests/gen/go/api"
-
-	"google.golang.org/protobuf/types/known/timestamppb"
+	"fmt"
+	"github.com/panyam/protoc-gen-dal/pkg/converters"
 )
-
-// Helper functions for built-in type conversions
-
-// timestampToTime converts a protobuf Timestamp to time.Time.
-func timestampToTime(ts *timestamppb.Timestamp) time.Time {
-	if ts == nil {
-		return time.Time{}
-	}
-	return ts.AsTime()
-}
-
-// timeToTimestamp converts time.Time to a protobuf Timestamp.
-func timeToTimestamp(t time.Time) *timestamppb.Timestamp {
-	if t.IsZero() {
-		return nil
-	}
-	return timestamppb.New(t)
-}
 
 // UserToUserGORM converts a api.User to UserGORM.
 // The optional decorator function allows custom field transformations.
@@ -53,16 +32,16 @@ func UserToUserGORM(
 	out = dest
 
 	if src.Birthday != nil {
-		out.Birthday = timestampToTime(src.Birthday)
+		out.Birthday = converters.TimestampToTime(src.Birthday)
 	}
 	if src.ActivatedAt != nil {
-		out.ActivatedAt = timestampToTime(src.ActivatedAt)
+		out.ActivatedAt = converters.TimestampToTime(src.ActivatedAt)
 	}
 	if src.CreatedAt != nil {
-		out.CreatedAt = timestampToTime(src.CreatedAt)
+		out.CreatedAt = converters.TimestampToTime(src.CreatedAt)
 	}
 	if src.UpdatedAt != nil {
-		out.UpdatedAt = timestampToTime(src.UpdatedAt)
+		out.UpdatedAt = converters.TimestampToTime(src.UpdatedAt)
 	}
 
 	// Apply decorator if provided
@@ -95,11 +74,11 @@ func UserFromUserGORM(
 		Name:         src.Name,
 		Email:        src.Email,
 		Age:          src.Age,
-		Birthday:     timeToTimestamp(src.Birthday),
+		Birthday:     converters.TimeToTimestamp(src.Birthday),
 		MemberNumber: src.MemberNumber,
-		ActivatedAt:  timeToTimestamp(src.ActivatedAt),
-		CreatedAt:    timeToTimestamp(src.CreatedAt),
-		UpdatedAt:    timeToTimestamp(src.UpdatedAt),
+		ActivatedAt:  converters.TimeToTimestamp(src.ActivatedAt),
+		CreatedAt:    converters.TimeToTimestamp(src.CreatedAt),
+		UpdatedAt:    converters.TimeToTimestamp(src.UpdatedAt),
 	}
 	out = dest
 
@@ -136,10 +115,10 @@ func UserToUserWithPermissions(
 	out = dest
 
 	if src.CreatedAt != nil {
-		out.CreatedAt = timestampToTime(src.CreatedAt)
+		out.CreatedAt = converters.TimestampToTime(src.CreatedAt)
 	}
 	if src.UpdatedAt != nil {
-		out.UpdatedAt = timestampToTime(src.UpdatedAt)
+		out.UpdatedAt = converters.TimestampToTime(src.UpdatedAt)
 	}
 
 	// Apply decorator if provided
@@ -171,8 +150,8 @@ func UserFromUserWithPermissions(
 		Id:        src.Id,
 		Name:      src.Name,
 		Email:     src.Email,
-		CreatedAt: timeToTimestamp(src.CreatedAt),
-		UpdatedAt: timeToTimestamp(src.UpdatedAt),
+		CreatedAt: converters.TimeToTimestamp(src.CreatedAt),
+		UpdatedAt: converters.TimeToTimestamp(src.UpdatedAt),
 	}
 	out = dest
 

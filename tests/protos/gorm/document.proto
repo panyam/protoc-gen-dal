@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+package gorm;
+
+import "dal/v1/annotations.proto";
+import "api/document.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/panyam/protoc-gen-dal/tests/gen/dal;testdal";
+
+// DocumentGormEmpty tests field auto-merge: empty target should get all source fields
+message DocumentGormEmpty {
+  option (dal.v1.gorm) = {
+    source: "api.Document"
+    table: "documents_empty"
+  };
+  // No fields declared - should auto-merge all fields from api.Document
+}
+
+// DocumentGormPartial tests field override: explicitly declared fields override source
+message DocumentGormPartial {
+  option (dal.v1.gorm) = {
+    source: "api.Document"
+    table: "documents_partial"
+  };
+
+  // Override id field with GORM tags
+  uint32 id = 1 [(dal.v1.column) = {
+    gorm_tags: ["primaryKey", "autoIncrement"]
+  }];
+
+  // Override title with custom tags
+  string title = 2 [(dal.v1.column) = {
+    gorm_tags: ["type:varchar(255)", "not null"]
+  }];
+
+  // All other fields (content, author, created_at, updated_at, published, view_count, tags)
+  // should be auto-merged from source
+}
+
+// DocumentGormSkip tests skip_field: exclude specific fields from source
+message DocumentGormSkip {
+  option (dal.v1.gorm) = {
+    source: "api.Document"
+    table: "documents_skip"
+  };
+
+  // Include id with customization
+  uint32 id = 1 [(dal.v1.column) = {
+    gorm_tags: ["primaryKey"]
+  }];
+
+  // Skip the 'content' field from source - sensitive data
+  string content = 3 [(dal.v1.skip_field) = true];
+
+  // All other fields should be auto-merged from source
+}
+
+// DocumentGormExtra tests adding extra fields not in source
+message DocumentGormExtra {
+  option (dal.v1.gorm) = {
+    source: "api.Document"
+    table: "documents_extra"
+  };
+
+  // Auto-merge all fields from source, PLUS:
+
+  // Add extra database-specific field not in API
+  google.protobuf.Timestamp deleted_at = 100 [(dal.v1.column) = {
+    gorm_tags: ["index"]
+  }];
+
+  // Add row version for optimistic locking
+  int32 version = 101 [(dal.v1.column) = {
+    gorm_tags: ["default:1"]
+  }];
+}

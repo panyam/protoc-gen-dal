@@ -6,37 +6,9 @@ import (
 
 	"fmt"
 	"strconv"
-	"time"
 
-	"google.golang.org/protobuf/types/known/timestamppb"
+	"github.com/panyam/protoc-gen-dal/pkg/converters"
 )
-
-// Helper functions for type conversions
-
-// timestampToTime converts a protobuf Timestamp to time.Time.
-func timestampToTime(ts *timestamppb.Timestamp) time.Time {
-	if ts == nil {
-		return time.Time{}
-	}
-	return ts.AsTime()
-}
-
-// timeToTimestamp converts time.Time to a protobuf Timestamp.
-func timeToTimestamp(t time.Time) *timestamppb.Timestamp {
-	if t.IsZero() {
-		return nil
-	}
-	return timestamppb.New(t)
-}
-
-// mustParseUint parses a string to uint64, panics on error (for generated code).
-func mustParseUint(s string) uint64 {
-	val, err := strconv.ParseUint(s, 10, 32)
-	if err != nil {
-		panic("failed to parse uint: " + err.Error())
-	}
-	return val
-}
 
 // UserToUserDatastore converts a User to UserDatastore.
 //
@@ -72,13 +44,13 @@ func UserToUserDatastore(
 	out = dest
 
 	if src.Birthday != nil {
-		out.Birthday = timestampToTime(src.Birthday)
+		out.Birthday = converters.TimestampToTime(src.Birthday)
 	}
 	if src.CreatedAt != nil {
-		out.CreatedAt = timestampToTime(src.CreatedAt)
+		out.CreatedAt = converters.TimestampToTime(src.CreatedAt)
 	}
 	if src.UpdatedAt != nil {
-		out.UpdatedAt = timestampToTime(src.UpdatedAt)
+		out.UpdatedAt = converters.TimestampToTime(src.UpdatedAt)
 	}
 
 	// Apply decorator if provided
@@ -117,13 +89,13 @@ func UserFromUserDatastore(
 
 	// Initialize struct with inline values
 	*dest = api.User{
-		Id:        uint32(mustParseUint(src.Id)),
+		Id:        uint32(converters.MustParseUint(src.Id)),
 		Name:      src.Name,
 		Email:     src.Email,
 		Age:       src.Age,
-		Birthday:  timeToTimestamp(src.Birthday),
-		CreatedAt: timeToTimestamp(src.CreatedAt),
-		UpdatedAt: timeToTimestamp(src.UpdatedAt),
+		Birthday:  converters.TimeToTimestamp(src.Birthday),
+		CreatedAt: converters.TimeToTimestamp(src.CreatedAt),
+		UpdatedAt: converters.TimeToTimestamp(src.UpdatedAt),
 	}
 	out = dest
 
@@ -205,7 +177,7 @@ func UserFromUserWithNamespace(
 
 	// Initialize struct with inline values
 	*dest = api.User{
-		Id:    uint32(mustParseUint(src.Id)),
+		Id:    uint32(converters.MustParseUint(src.Id)),
 		Name:  src.Name,
 		Email: src.Email,
 	}
@@ -289,7 +261,7 @@ func UserFromUserWithLargeText(
 
 	// Initialize struct with inline values
 	*dest = api.User{
-		Id:    uint32(mustParseUint(src.Id)),
+		Id:    uint32(converters.MustParseUint(src.Id)),
 		Name:  src.Name,
 		Email: src.Email,
 	}
@@ -372,7 +344,7 @@ func UserFromUserSimple(
 
 	// Initialize struct with inline values
 	*dest = api.User{
-		Id:   uint32(mustParseUint(src.Id)),
+		Id:   uint32(converters.MustParseUint(src.Id)),
 		Name: src.Name,
 	}
 	out = dest
@@ -540,7 +512,7 @@ func ProductFromProductDatastore(
 
 	// Initialize struct with inline values
 	*dest = api.Product{
-		Id:         uint32(mustParseUint(src.Id)),
+		Id:         uint32(converters.MustParseUint(src.Id)),
 		Name:       src.Name,
 		Tags:       src.Tags,
 		Categories: src.Categories,
@@ -636,7 +608,7 @@ func LibraryFromLibraryDatastore(
 
 	// Initialize struct with inline values
 	*dest = api.Library{
-		Id:   uint32(mustParseUint(src.Id)),
+		Id:   uint32(converters.MustParseUint(src.Id)),
 		Name: src.Name,
 	}
 	out = dest
@@ -740,7 +712,7 @@ func OrganizationFromOrganizationDatastore(
 
 	// Initialize struct with inline values
 	*dest = api.Organization{
-		Id:   uint32(mustParseUint(src.Id)),
+		Id:   uint32(converters.MustParseUint(src.Id)),
 		Name: src.Name,
 	}
 	out = dest

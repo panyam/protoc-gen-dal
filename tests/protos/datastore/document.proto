@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package datastore;
+
+import "dal/v1/annotations.proto";
+import "api/document.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/panyam/protoc-gen-dal/tests/gen/datastore;testdatastore";
+
+// DocumentDatastoreEmpty tests field auto-merge for Datastore
+message DocumentDatastoreEmpty {
+  option (dal.v1.datastore_options) = {
+    source: "api.Document"
+    kind: "DocumentEmpty"
+  };
+  // No fields declared - should auto-merge all fields from api.Document
+}
+
+// DocumentDatastorePartial tests field override for Datastore
+message DocumentDatastorePartial {
+  option (dal.v1.datastore_options) = {
+    source: "api.Document"
+    kind: "DocumentPartial"
+  };
+
+  // Override id field to be stored as string (Datastore keys)
+  string id = 1;
+
+  // All other fields should be auto-merged from source
+}
+
+// DocumentDatastoreSkip tests skip_field for Datastore
+message DocumentDatastoreSkip {
+  option (dal.v1.datastore_options) = {
+    source: "api.Document"
+    kind: "DocumentSkip"
+  };
+
+  // Include id
+  string id = 1;
+
+  // Skip the 'content' field from source
+  string content = 3 [(dal.v1.skip_field) = true];
+
+  // All other fields should be auto-merged from source
+}

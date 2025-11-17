@@ -138,6 +138,12 @@ func (*OrganizationGORM) TableName() string {
 	return "organizations"
 }
 
+// MetadataEntry
+type MetadataEntry struct {
+	Key   string
+	Value string
+}
+
 // DepartmentsEntry
 type DepartmentsEntry struct {
 	Key   string
@@ -148,10 +154,4 @@ type DepartmentsEntry struct {
 type Timestamp struct {
 	Seconds int64
 	Nanos   int32
-}
-
-// MetadataEntry
-type MetadataEntry struct {
-	Key   string
-	Value string
 }

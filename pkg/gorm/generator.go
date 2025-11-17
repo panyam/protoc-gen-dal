@@ -554,8 +554,8 @@ func buildFieldConversion(sourceField, targetField *protogen.Field, reg *registr
 	// The proto uses Timestamp but it maps to time.Time in Go structs
 	if sourceKind == "message" && targetKind == "message" {
 		if converter.IsTimestampToTimeTime(sourceField, targetField) {
-			mapping.ToTargetCode = fmt.Sprintf("timestampToTime(src.%s)", fieldName)
-			mapping.FromTargetCode = fmt.Sprintf("timeToTimestamp(src.%s)", fieldName)
+			mapping.ToTargetCode = fmt.Sprintf("converters.TimestampToTime(src.%s)", fieldName)
+			mapping.FromTargetCode = fmt.Sprintf("converters.TimeToTimestamp(src.%s)", fieldName)
 			mapping.ToTargetConversionType = converter.ConvertByTransformer
 			mapping.FromTargetConversionType = converter.ConvertByTransformer
 			addRenderStrategies(mapping)

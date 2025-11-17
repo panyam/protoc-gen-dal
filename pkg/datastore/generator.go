@@ -519,8 +519,8 @@ func buildFieldMapping(sourceField, targetField *protogen.Field, reg *registry.C
 	// Check this BEFORE the generic "types match" check below
 	if sourceKind == "message" && targetKind == "message" {
 		if converter.IsTimestampToTimeTime(sourceField, targetField) {
-			mapping.ToTargetCode = fmt.Sprintf("timestampToTime(src.%s)", sourceFieldName)
-			mapping.FromTargetCode = fmt.Sprintf("timeToTimestamp(src.%s)", targetFieldName)
+			mapping.ToTargetCode = fmt.Sprintf("converters.TimestampToTime(src.%s)", sourceFieldName)
+			mapping.FromTargetCode = fmt.Sprintf("converters.TimeToTimestamp(src.%s)", targetFieldName)
 			mapping.ToTargetConversionType = converter.ConvertByTransformer
 			mapping.FromTargetConversionType = converter.ConvertByTransformer
 			// IMPORTANT: Override pointer status for time.Time fields
@@ -536,7 +536,7 @@ func buildFieldMapping(sourceField, targetField *protogen.Field, reg *registry.C
 	// uint32 (API) ↔ string (Datastore) for IDs
 	if sourceKind == "uint32" && targetKind == "string" {
 		mapping.ToTargetCode = fmt.Sprintf("strconv.FormatUint(uint64(src.%s), 10)", sourceFieldName)
-		mapping.FromTargetCode = fmt.Sprintf("uint32(mustParseUint(src.%s))", targetFieldName)
+		mapping.FromTargetCode = fmt.Sprintf("uint32(converters.MustParseUint(src.%s))", targetFieldName)
 		mapping.ToTargetConversionType = converter.ConvertByTransformer
 		mapping.FromTargetConversionType = converter.ConvertByTransformer
 		addRenderStrategies(mapping)

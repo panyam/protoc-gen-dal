@@ -351,6 +351,15 @@ From `tests/protos/gorm/user.proto`:
   - ✅ Updated unit tests in pkg/generator/converter
   - ✅ All tests passing (GORM, Datastore, converter utilities)
 
+- ✅ Phase 3.1c - Shared Converters Package (COMPLETE)
+  - ✅ Created pkg/converters with TimestampToTime, TimeToTimestamp, MustParseUint
+  - ✅ Updated GORM template to import converters package instead of declaring helpers
+  - ✅ Updated Datastore template to import converters package
+  - ✅ Updated GORM generator to call converters.TimestampToTime(), converters.TimeToTimestamp()
+  - ✅ Updated Datastore generator to call converters.MustParseUint()
+  - ✅ Removed duplicate helper function declarations from generated files
+  - ✅ All tests passing
+
 **Generated Code Features:**
 From `tests/protos/datastore/user.proto`:
 - `user.go`: 8 Datastore entity structs (UserDatastore, UserWithNamespace, UserWithLargeText, UserSimple, AuthorDatastore, ProductDatastore, LibraryDatastore, OrganizationDatastore)
