@@ -15,6 +15,7 @@ import (
 	_ "github.com/panyam/protoc-gen-dal/tests/gen/go/dal/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const (
@@ -35,10 +36,10 @@ type UserDatastore struct {
 	Email string `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
 	// Age field
 	Age uint32 `protobuf:"varint,4,opt,name=age,proto3" json:"age,omitempty"`
-	// Timestamps stored as int64 (Unix time)
-	Birthday      int64 `protobuf:"varint,5,opt,name=birthday,proto3" json:"birthday,omitempty"`
-	CreatedAt     int64 `protobuf:"varint,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt     int64 `protobuf:"varint,7,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	// Timestamps stored as time.Time (Datastore native support)
+	Birthday      *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=birthday,proto3" json:"birthday,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -101,25 +102,25 @@ func (x *UserDatastore) GetAge() uint32 {
 	return 0
 }
 
-func (x *UserDatastore) GetBirthday() int64 {
+func (x *UserDatastore) GetBirthday() *timestamppb.Timestamp {
 	if x != nil {
 		return x.Birthday
 	}
-	return 0
+	return nil
 }
 
-func (x *UserDatastore) GetCreatedAt() int64 {
+func (x *UserDatastore) GetCreatedAt() *timestamppb.Timestamp {
 	if x != nil {
 		return x.CreatedAt
 	}
-	return 0
+	return nil
 }
 
-func (x *UserDatastore) GetUpdatedAt() int64 {
+func (x *UserDatastore) GetUpdatedAt() *timestamppb.Timestamp {
 	if x != nil {
 		return x.UpdatedAt
 	}
-	return 0
+	return nil
 }
 
 // UserWithNamespace demonstrates namespace support
@@ -572,17 +573,17 @@ var File_datastore_user_proto protoreflect.FileDescriptor
 
 const file_datastore_user_proto_rawDesc = "" +
 	"\n" +
-	"\x14datastore/user.proto\x12\tdatastore\x1a\x18dal/v1/annotations.proto\x1a\x0eapi/user.proto\"\xcb\x01\n" +
+	"\x14datastore/user.proto\x12\tdatastore\x1a\x18dal/v1/annotations.proto\x1a\x0eapi/user.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x9f\x02\n" +
 	"\rUserDatastore\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x14\n" +
 	"\x05email\x18\x03 \x01(\tR\x05email\x12\x10\n" +
-	"\x03age\x18\x04 \x01(\rR\x03age\x12\x1a\n" +
-	"\bbirthday\x18\x05 \x01(\x03R\bbirthday\x12\x1d\n" +
+	"\x03age\x18\x04 \x01(\rR\x03age\x126\n" +
+	"\bbirthday\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\bbirthday\x129\n" +
 	"\n" +
-	"created_at\x18\x06 \x01(\x03R\tcreatedAt\x12\x1d\n" +
+	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\a \x01(\x03R\tupdatedAt:\x14Ҧ\x1d\x10\n" +
+	"updated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt:\x14Ҧ\x1d\x10\n" +
 	"\x04User*\bapi.User\"o\n" +
 	"\x11UserWithNamespace\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
@@ -657,17 +658,21 @@ var file_datastore_user_proto_goTypes = []any{
 	(*OrganizationDatastore)(nil), // 7: datastore.OrganizationDatastore
 	nil,                           // 8: datastore.ProductDatastore.MetadataEntry
 	nil,                           // 9: datastore.OrganizationDatastore.DepartmentsEntry
+	(*timestamppb.Timestamp)(nil), // 10: google.protobuf.Timestamp
 }
 var file_datastore_user_proto_depIdxs = []int32{
-	8, // 0: datastore.ProductDatastore.metadata:type_name -> datastore.ProductDatastore.MetadataEntry
-	4, // 1: datastore.LibraryDatastore.contributors:type_name -> datastore.AuthorDatastore
-	9, // 2: datastore.OrganizationDatastore.departments:type_name -> datastore.OrganizationDatastore.DepartmentsEntry
-	4, // 3: datastore.OrganizationDatastore.DepartmentsEntry.value:type_name -> datastore.AuthorDatastore
-	4, // [4:4] is the sub-list for method output_type
-	4, // [4:4] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	10, // 0: datastore.UserDatastore.birthday:type_name -> google.protobuf.Timestamp
+	10, // 1: datastore.UserDatastore.created_at:type_name -> google.protobuf.Timestamp
+	10, // 2: datastore.UserDatastore.updated_at:type_name -> google.protobuf.Timestamp
+	8,  // 3: datastore.ProductDatastore.metadata:type_name -> datastore.ProductDatastore.MetadataEntry
+	4,  // 4: datastore.LibraryDatastore.contributors:type_name -> datastore.AuthorDatastore
+	9,  // 5: datastore.OrganizationDatastore.departments:type_name -> datastore.OrganizationDatastore.DepartmentsEntry
+	4,  // 6: datastore.OrganizationDatastore.DepartmentsEntry.value:type_name -> datastore.AuthorDatastore
+	7,  // [7:7] is the sub-list for method output_type
+	7,  // [7:7] is the sub-list for method input_type
+	7,  // [7:7] is the sub-list for extension type_name
+	7,  // [7:7] is the sub-list for extension extendee
+	0,  // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_datastore_user_proto_init() }

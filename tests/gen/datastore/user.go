@@ -2,6 +2,8 @@
 package datastore
 
 import (
+	"time"
+
 	"cloud.google.com/go/datastore"
 )
 
@@ -17,11 +19,11 @@ type UserDatastore struct {
 
 	Age uint32 `datastore:"age"`
 
-	Birthday int64 `datastore:"birthday"`
+	Birthday time.Time `datastore:"birthday"`
 
-	CreatedAt int64 `datastore:"created_at"`
+	CreatedAt time.Time `datastore:"created_at"`
 
-	UpdatedAt int64 `datastore:"updated_at"`
+	UpdatedAt time.Time `datastore:"updated_at"`
 }
 
 // Kind returns the Datastore kind name for UserDatastore.

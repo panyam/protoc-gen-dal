@@ -23,26 +23,30 @@ func TestTimestampHelperFunctions(t *testing.T) {
 	code := TimestampHelperFunctions()
 
 	// Check that the code contains expected function signatures
-	if !strings.Contains(code, "func timestampToInt64") {
-		t.Error("TimestampHelperFunctions() should contain timestampToInt64 function")
+	if !strings.Contains(code, "func timestampToTime") {
+		t.Error("TimestampHelperFunctions() should contain timestampToTime function")
 	}
 
-	if !strings.Contains(code, "func int64ToTimestamp") {
-		t.Error("TimestampHelperFunctions() should contain int64ToTimestamp function")
+	if !strings.Contains(code, "func timeToTimestamp") {
+		t.Error("TimestampHelperFunctions() should contain timeToTimestamp function")
 	}
 
 	// Check for key conversion logic
-	if !strings.Contains(code, "ts.AsTime().Unix()") {
-		t.Error("TimestampHelperFunctions() should contain timestamp to Unix conversion")
+	if !strings.Contains(code, "ts.AsTime()") {
+		t.Error("TimestampHelperFunctions() should contain timestamp to time.Time conversion")
 	}
 
-	if !strings.Contains(code, "timestamppb.New(time.Unix(") {
-		t.Error("TimestampHelperFunctions() should contain Unix to timestamp conversion")
+	if !strings.Contains(code, "timestamppb.New(t)") {
+		t.Error("TimestampHelperFunctions() should contain time.Time to timestamp conversion")
 	}
 
-	// Check for nil handling
+	// Check for nil/zero handling
 	if !strings.Contains(code, "if ts == nil") {
 		t.Error("TimestampHelperFunctions() should handle nil timestamps")
+	}
+
+	if !strings.Contains(code, "t.IsZero()") {
+		t.Error("TimestampHelperFunctions() should handle zero time values")
 	}
 }
 

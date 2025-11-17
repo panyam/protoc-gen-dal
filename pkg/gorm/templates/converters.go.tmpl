@@ -17,22 +17,20 @@ import (
 
 // Helper functions for built-in type conversions
 
-// timestampToInt64 converts a protobuf Timestamp to Unix seconds (int64).
-// Returns 0 if timestamp is nil.
-func timestampToInt64(ts *timestamppb.Timestamp) int64 {
+// timestampToTime converts a protobuf Timestamp to time.Time.
+func timestampToTime(ts *timestamppb.Timestamp) time.Time {
 	if ts == nil {
-		return 0
+		return time.Time{}
 	}
-	return ts.AsTime().Unix()
+	return ts.AsTime()
 }
 
-// int64ToTimestamp converts Unix seconds (int64) to a protobuf Timestamp.
-// Returns nil if the input is 0.
-func int64ToTimestamp(seconds int64) *timestamppb.Timestamp {
-	if seconds == 0 {
+// timeToTimestamp converts time.Time to a protobuf Timestamp.
+func timeToTimestamp(t time.Time) *timestamppb.Timestamp {
+	if t.IsZero() {
 		return nil
 	}
-	return timestamppb.New(time.Unix(seconds, 0))
+	return timestamppb.New(t)
 }
 
 {{ range .Converters }}

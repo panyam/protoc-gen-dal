@@ -172,20 +172,20 @@ func TestBuildTimestampConversion(t *testing.T) {
 		{
 			name:            "CreatedAt field",
 			sourceFieldName: "CreatedAt",
-			wantToCode:      "timestampToInt64(src.CreatedAt)",
-			wantFromCode:    "int64ToTimestamp(src.CreatedAt)",
+			wantToCode:      "timestampToTime(src.CreatedAt)",
+			wantFromCode:    "timeToTimestamp(src.CreatedAt)",
 		},
 		{
 			name:            "UpdatedAt field",
 			sourceFieldName: "UpdatedAt",
-			wantToCode:      "timestampToInt64(src.UpdatedAt)",
-			wantFromCode:    "int64ToTimestamp(src.UpdatedAt)",
+			wantToCode:      "timestampToTime(src.UpdatedAt)",
+			wantFromCode:    "timeToTimestamp(src.UpdatedAt)",
 		},
 		{
 			name:            "Birthday field",
 			sourceFieldName: "Birthday",
-			wantToCode:      "timestampToInt64(src.Birthday)",
-			wantFromCode:    "int64ToTimestamp(src.Birthday)",
+			wantToCode:      "timestampToTime(src.Birthday)",
+			wantFromCode:    "timeToTimestamp(src.Birthday)",
 		},
 	}
 

@@ -15,6 +15,7 @@ import (
 	_ "github.com/panyam/protoc-gen-dal/tests/gen/go/dal/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const (
@@ -35,17 +36,17 @@ type UserGorm struct {
 	Email string `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
 	// Unsigned integer
 	Age uint32 `protobuf:"varint,4,opt,name=age,proto3" json:"age,omitempty"`
-	// Timestamp stored as int64 (Unix time)
-	Birthday int64 `protobuf:"varint,5,opt,name=birthday,proto3" json:"birthday,omitempty"`
+	// Timestamp stored as time.Time (GORM and Datastore native support)
+	Birthday *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=birthday,proto3" json:"birthday,omitempty"`
 	// Nullable string field
 	MemberNumber string `protobuf:"bytes,6,opt,name=member_number,json=memberNumber,proto3" json:"member_number,omitempty"`
 	// Nullable timestamp
-	ActivatedAt int64 `protobuf:"varint,7,opt,name=activated_at,json=activatedAt,proto3" json:"activated_at,omitempty"`
+	ActivatedAt *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=activated_at,json=activatedAt,proto3" json:"activated_at,omitempty"`
 	// Auto-managed timestamps (GORM conventions)
-	CreatedAt int64 `protobuf:"varint,8,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt int64 `protobuf:"varint,9,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	CreatedAt *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	// Soft delete support (gorm.DeletedAt equivalent)
-	DeletedAt     int64 `protobuf:"varint,10,opt,name=deleted_at,json=deletedAt,proto3" json:"deleted_at,omitempty"`
+	DeletedAt     *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=deleted_at,json=deletedAt,proto3" json:"deleted_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -108,11 +109,11 @@ func (x *UserGorm) GetAge() uint32 {
 	return 0
 }
 
-func (x *UserGorm) GetBirthday() int64 {
+func (x *UserGorm) GetBirthday() *timestamppb.Timestamp {
 	if x != nil {
 		return x.Birthday
 	}
-	return 0
+	return nil
 }
 
 func (x *UserGorm) GetMemberNumber() string {
@@ -122,32 +123,32 @@ func (x *UserGorm) GetMemberNumber() string {
 	return ""
 }
 
-func (x *UserGorm) GetActivatedAt() int64 {
+func (x *UserGorm) GetActivatedAt() *timestamppb.Timestamp {
 	if x != nil {
 		return x.ActivatedAt
 	}
-	return 0
+	return nil
 }
 
-func (x *UserGorm) GetCreatedAt() int64 {
+func (x *UserGorm) GetCreatedAt() *timestamppb.Timestamp {
 	if x != nil {
 		return x.CreatedAt
 	}
-	return 0
+	return nil
 }
 
-func (x *UserGorm) GetUpdatedAt() int64 {
+func (x *UserGorm) GetUpdatedAt() *timestamppb.Timestamp {
 	if x != nil {
 		return x.UpdatedAt
 	}
-	return 0
+	return nil
 }
 
-func (x *UserGorm) GetDeletedAt() int64 {
+func (x *UserGorm) GetDeletedAt() *timestamppb.Timestamp {
 	if x != nil {
 		return x.DeletedAt
 	}
-	return 0
+	return nil
 }
 
 // UserWithPermissions demonstrates field-level permission tags
@@ -159,9 +160,9 @@ type UserWithPermissions struct {
 	// Update-only field
 	Email string `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
 	// Read-only field
-	CreatedAt int64 `protobuf:"varint,4,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	CreatedAt *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	// Read and write
-	UpdatedAt     int64 `protobuf:"varint,5,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -217,18 +218,18 @@ func (x *UserWithPermissions) GetEmail() string {
 	return ""
 }
 
-func (x *UserWithPermissions) GetCreatedAt() int64 {
+func (x *UserWithPermissions) GetCreatedAt() *timestamppb.Timestamp {
 	if x != nil {
 		return x.CreatedAt
 	}
-	return 0
+	return nil
 }
 
-func (x *UserWithPermissions) GetUpdatedAt() int64 {
+func (x *UserWithPermissions) GetUpdatedAt() *timestamppb.Timestamp {
 	if x != nil {
 		return x.UpdatedAt
 	}
-	return 0
+	return nil
 }
 
 // UserWithCustomTimestamps demonstrates different timestamp tracking modes
@@ -809,34 +810,34 @@ var File_gorm_user_proto protoreflect.FileDescriptor
 
 const file_gorm_user_proto_rawDesc = "" +
 	"\n" +
-	"\x0fgorm/user.proto\x12\x04gorm\x1a\x18dal/v1/annotations.proto\x1a\x0eapi/user.proto\"\xa1\x04\n" +
+	"\x0fgorm/user.proto\x12\x04gorm\x1a\x18dal/v1/annotations.proto\x1a\x0eapi/user.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x87\x05\n" +
 	"\bUserGorm\x12/\n" +
 	"\x02id\x18\x01 \x01(\rB\x1f\x92\xa6\x1d\x1bR\n" +
 	"primaryKeyR\rautoIncrementR\x02id\x125\n" +
 	"\x04name\x18\x02 \x01(\tB!\x92\xa6\x1d\x1dR\x11type:varchar(100)R\bnot nullR\x04name\x12:\n" +
 	"\x05email\x18\x03 \x01(\tB$\x92\xa6\x1d R\vuniqueIndexR\x11type:varchar(100)R\x05email\x12\"\n" +
 	"\x03age\x18\x04 \x01(\rB\x10\x92\xa6\x1d\fR\n" +
-	"type:uint8R\x03age\x12-\n" +
-	"\bbirthday\x18\x05 \x01(\x03B\x11\x92\xa6\x1d\rR\vtype:bigintR\bbirthday\x12;\n" +
-	"\rmember_number\x18\x06 \x01(\tB\x16\x92\xa6\x1d\x12R\x10type:varchar(50)R\fmemberNumber\x124\n" +
-	"\factivated_at\x18\a \x01(\x03B\x11\x92\xa6\x1d\rR\vtype:bigintR\vactivatedAt\x123\n" +
+	"type:uint8R\x03age\x126\n" +
+	"\bbirthday\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\bbirthday\x12;\n" +
+	"\rmember_number\x18\x06 \x01(\tB\x16\x92\xa6\x1d\x12R\x10type:varchar(50)R\fmemberNumber\x12=\n" +
+	"\factivated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\vactivatedAt\x12O\n" +
 	"\n" +
-	"created_at\x18\b \x01(\x03B\x14\x92\xa6\x1d\x10R\x0eautoCreateTimeR\tcreatedAt\x123\n" +
+	"created_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampB\x14\x92\xa6\x1d\x10R\x0eautoCreateTimeR\tcreatedAt\x12O\n" +
 	"\n" +
-	"updated_at\x18\t \x01(\x03B\x14\x92\xa6\x1d\x10R\x0eautoUpdateTimeR\tupdatedAt\x12*\n" +
+	"updated_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampB\x14\x92\xa6\x1d\x10R\x0eautoUpdateTimeR\tupdatedAt\x12F\n" +
 	"\n" +
 	"deleted_at\x18\n" +
-	" \x01(\x03B\v\x92\xa6\x1d\aR\x05indexR\tdeletedAt:\x15ʦ\x1d\x11\n" +
-	"\bapi.User\x12\x05users\"\x97\x02\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampB\v\x92\xa6\x1d\aR\x05indexR\tdeletedAt:\x15ʦ\x1d\x11\n" +
+	"\bapi.User\x12\x05users\"\xcf\x02\n" +
 	"\x13UserWithPermissions\x12 \n" +
 	"\x02id\x18\x01 \x01(\rB\x10\x92\xa6\x1d\fR\n" +
 	"primaryKeyR\x02id\x12#\n" +
 	"\x04name\x18\x02 \x01(\tB\x0f\x92\xa6\x1d\vR\t<-:createR\x04name\x12%\n" +
-	"\x05email\x18\x03 \x01(\tB\x0f\x92\xa6\x1d\vR\t<-:updateR\x05email\x127\n" +
+	"\x05email\x18\x03 \x01(\tB\x0f\x92\xa6\x1d\vR\t<-:updateR\x05email\x12S\n" +
 	"\n" +
-	"created_at\x18\x04 \x01(\x03B\x18\x92\xa6\x1d\x14R\x02->R\x0eautoCreateTimeR\tcreatedAt\x127\n" +
+	"created_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampB\x18\x92\xa6\x1d\x14R\x02->R\x0eautoCreateTimeR\tcreatedAt\x12S\n" +
 	"\n" +
-	"updated_at\x18\x05 \x01(\x03B\x18\x92\xa6\x1d\x14R\x02<-R\x0eautoUpdateTimeR\tupdatedAt: ʦ\x1d\x1c\n" +
+	"updated_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampB\x18\x92\xa6\x1d\x14R\x02<-R\x0eautoUpdateTimeR\tupdatedAt: ʦ\x1d\x1c\n" +
 	"\bapi.User\x12\x10users_with_perms\"\xa7\x02\n" +
 	"\x18UserWithCustomTimestamps\x12 \n" +
 	"\x02id\x18\x01 \x01(\rB\x10\x92\xa6\x1d\fR\n" +
@@ -940,18 +941,26 @@ var file_gorm_user_proto_goTypes = []any{
 	(*OrganizationGorm)(nil),         // 9: gorm.OrganizationGorm
 	nil,                              // 10: gorm.ProductGorm.MetadataEntry
 	nil,                              // 11: gorm.OrganizationGorm.DepartmentsEntry
+	(*timestamppb.Timestamp)(nil),    // 12: google.protobuf.Timestamp
 }
 var file_gorm_user_proto_depIdxs = []int32{
-	5,  // 0: gorm.BlogGorm.author:type_name -> gorm.AuthorGorm
-	10, // 1: gorm.ProductGorm.metadata:type_name -> gorm.ProductGorm.MetadataEntry
-	5,  // 2: gorm.LibraryGorm.contributors:type_name -> gorm.AuthorGorm
-	11, // 3: gorm.OrganizationGorm.departments:type_name -> gorm.OrganizationGorm.DepartmentsEntry
-	5,  // 4: gorm.OrganizationGorm.DepartmentsEntry.value:type_name -> gorm.AuthorGorm
-	5,  // [5:5] is the sub-list for method output_type
-	5,  // [5:5] is the sub-list for method input_type
-	5,  // [5:5] is the sub-list for extension type_name
-	5,  // [5:5] is the sub-list for extension extendee
-	0,  // [0:5] is the sub-list for field type_name
+	12, // 0: gorm.UserGorm.birthday:type_name -> google.protobuf.Timestamp
+	12, // 1: gorm.UserGorm.activated_at:type_name -> google.protobuf.Timestamp
+	12, // 2: gorm.UserGorm.created_at:type_name -> google.protobuf.Timestamp
+	12, // 3: gorm.UserGorm.updated_at:type_name -> google.protobuf.Timestamp
+	12, // 4: gorm.UserGorm.deleted_at:type_name -> google.protobuf.Timestamp
+	12, // 5: gorm.UserWithPermissions.created_at:type_name -> google.protobuf.Timestamp
+	12, // 6: gorm.UserWithPermissions.updated_at:type_name -> google.protobuf.Timestamp
+	5,  // 7: gorm.BlogGorm.author:type_name -> gorm.AuthorGorm
+	10, // 8: gorm.ProductGorm.metadata:type_name -> gorm.ProductGorm.MetadataEntry
+	5,  // 9: gorm.LibraryGorm.contributors:type_name -> gorm.AuthorGorm
+	11, // 10: gorm.OrganizationGorm.departments:type_name -> gorm.OrganizationGorm.DepartmentsEntry
+	5,  // 11: gorm.OrganizationGorm.DepartmentsEntry.value:type_name -> gorm.AuthorGorm
+	12, // [12:12] is the sub-list for method output_type
+	12, // [12:12] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_gorm_user_proto_init() }

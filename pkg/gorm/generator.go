@@ -184,7 +184,7 @@ func generateFileCode(messages []*collector.MessageInfo) (string, error) {
 	// Build template data
 	data := TemplateData{
 		PackageName: packageName,
-		Imports:     []string{}, // TODO: Determine required imports
+		Imports:     []string{"time"}, // time package needed for time.Time fields
 		Structs:     structs,
 	}
 
@@ -550,14 +550,15 @@ func buildFieldConversion(sourceField, targetField *protogen.Field, reg *registr
 		return mapping
 	}
 
-	// Timestamp (message) to int64 - built-in transformer without error
-	if sourceKind == "message" && targetKind == "int64" {
-		if sourceField.Message != nil && string(sourceField.Message.Desc.FullName()) == "google.protobuf.Timestamp" {
-			mapping.ToTargetCode = fmt.Sprintf("timestampToInt64(src.%s)", fieldName)
-			mapping.FromTargetCode = fmt.Sprintf("int64ToTimestamp(src.%s)", fieldName)
+	// Timestamp (message) to time.Time (message) - both are google.protobuf.Timestamp
+	// The proto uses Timestamp but it maps to time.Time in Go structs
+	if sourceKind == "message" && targetKind == "message" {
+		if converter.IsTimestampToTimeTime(sourceField, targetField) {
+			mapping.ToTargetCode = fmt.Sprintf("timestampToTime(src.%s)", fieldName)
+			mapping.FromTargetCode = fmt.Sprintf("timeToTimestamp(src.%s)", fieldName)
 			mapping.ToTargetConversionType = converter.ConvertByTransformer
 			mapping.FromTargetConversionType = converter.ConvertByTransformer
-	addRenderStrategies(mapping)
+			addRenderStrategies(mapping)
 			return mapping
 		}
 	}

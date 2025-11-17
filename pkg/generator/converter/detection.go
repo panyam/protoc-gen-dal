@@ -21,30 +21,37 @@ import (
 	"google.golang.org/protobuf/compiler/protogen"
 )
 
-// IsTimestampToInt64 checks if this is a google.protobuf.Timestamp → int64 conversion.
+// IsTimestampToTimeTime checks if this is a google.protobuf.Timestamp → time.Time conversion.
 //
 // This is a common built-in conversion where protobuf Timestamp messages are stored
-// as Unix epoch seconds (int64) in the database.
+// as time.Time in the database (supported natively by both GORM and Datastore).
 //
 // Parameters:
 //   - sourceField: source field descriptor
 //   - targetField: target field descriptor
 //
 // Returns:
-//   - true if source is google.protobuf.Timestamp and target is int64
-func IsTimestampToInt64(sourceField, targetField *protogen.Field) bool {
+//   - true if source is google.protobuf.Timestamp and target is time.Time (also a message)
+func IsTimestampToTimeTime(sourceField, targetField *protogen.Field) bool {
 	sourceKind := sourceField.Desc.Kind().String()
 	targetKind := targetField.Desc.Kind().String()
 
-	if sourceKind != "message" || targetKind != "int64" {
+	// Both should be messages
+	if sourceKind != "message" || targetKind != "message" {
 		return false
 	}
 
-	if sourceField.Message == nil {
+	if sourceField.Message == nil || targetField.Message == nil {
 		return false
 	}
 
-	return string(sourceField.Message.Desc.FullName()) == "google.protobuf.Timestamp"
+	// Source must be google.protobuf.Timestamp
+	// Target must be google.protobuf.Timestamp (for proto representation of time.Time)
+	// Note: In proto files, we still use google.protobuf.Timestamp, but it maps to time.Time in Go
+	sourceIsTimestamp := string(sourceField.Message.Desc.FullName()) == "google.protobuf.Timestamp"
+	targetIsTimestamp := string(targetField.Message.Desc.FullName()) == "google.protobuf.Timestamp"
+
+	return sourceIsTimestamp && targetIsTimestamp
 }
 
 // IsNumericConversion checks if both source and target are numeric types.
@@ -91,17 +98,16 @@ func BuildNumericCast(sourceFieldName, targetKind string) string {
 	return fmt.Sprintf("%s(src.%s)", targetGoType, sourceFieldName)
 }
 
-// BuildTimestampConversion generates conversion code for Timestamp ↔ int64.
+// BuildTimestampConversion generates conversion code for Timestamp ↔ time.Time.
 //
 // Parameters:
 //   - sourceFieldName: name of the field to convert
-//   - toInt64: true for Timestamp→int64, false for int64→Timestamp
 //
 // Returns:
-//   - toCode: conversion expression for source→target
-//   - fromCode: conversion expression for target→source
+//   - toCode: conversion expression for Timestamp→time.Time
+//   - fromCode: conversion expression for time.Time→Timestamp
 func BuildTimestampConversion(sourceFieldName string) (toCode, fromCode string) {
-	toCode = fmt.Sprintf("timestampToInt64(src.%s)", sourceFieldName)
-	fromCode = fmt.Sprintf("int64ToTimestamp(src.%s)", sourceFieldName)
+	toCode = fmt.Sprintf("timestampToTime(src.%s)", sourceFieldName)
+	fromCode = fmt.Sprintf("timeToTimestamp(src.%s)", sourceFieldName)
 	return toCode, fromCode
 }

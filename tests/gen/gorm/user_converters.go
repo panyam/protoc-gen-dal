@@ -12,22 +12,20 @@ import (
 
 // Helper functions for built-in type conversions
 
-// timestampToInt64 converts a protobuf Timestamp to Unix seconds (int64).
-// Returns 0 if timestamp is nil.
-func timestampToInt64(ts *timestamppb.Timestamp) int64 {
+// timestampToTime converts a protobuf Timestamp to time.Time.
+func timestampToTime(ts *timestamppb.Timestamp) time.Time {
 	if ts == nil {
-		return 0
+		return time.Time{}
 	}
-	return ts.AsTime().Unix()
+	return ts.AsTime()
 }
 
-// int64ToTimestamp converts Unix seconds (int64) to a protobuf Timestamp.
-// Returns nil if the input is 0.
-func int64ToTimestamp(seconds int64) *timestamppb.Timestamp {
-	if seconds == 0 {
+// timeToTimestamp converts time.Time to a protobuf Timestamp.
+func timeToTimestamp(t time.Time) *timestamppb.Timestamp {
+	if t.IsZero() {
 		return nil
 	}
-	return timestamppb.New(time.Unix(seconds, 0))
+	return timestamppb.New(t)
 }
 
 // UserToUserGORM converts a api.User to UserGORM.
@@ -55,16 +53,16 @@ func UserToUserGORM(
 	out = dest
 
 	if src.Birthday != nil {
-		out.Birthday = timestampToInt64(src.Birthday)
+		out.Birthday = timestampToTime(src.Birthday)
 	}
 	if src.ActivatedAt != nil {
-		out.ActivatedAt = timestampToInt64(src.ActivatedAt)
+		out.ActivatedAt = timestampToTime(src.ActivatedAt)
 	}
 	if src.CreatedAt != nil {
-		out.CreatedAt = timestampToInt64(src.CreatedAt)
+		out.CreatedAt = timestampToTime(src.CreatedAt)
 	}
 	if src.UpdatedAt != nil {
-		out.UpdatedAt = timestampToInt64(src.UpdatedAt)
+		out.UpdatedAt = timestampToTime(src.UpdatedAt)
 	}
 
 	// Apply decorator if provided
@@ -97,11 +95,11 @@ func UserFromUserGORM(
 		Name:         src.Name,
 		Email:        src.Email,
 		Age:          src.Age,
-		Birthday:     int64ToTimestamp(src.Birthday),
+		Birthday:     timeToTimestamp(src.Birthday),
 		MemberNumber: src.MemberNumber,
-		ActivatedAt:  int64ToTimestamp(src.ActivatedAt),
-		CreatedAt:    int64ToTimestamp(src.CreatedAt),
-		UpdatedAt:    int64ToTimestamp(src.UpdatedAt),
+		ActivatedAt:  timeToTimestamp(src.ActivatedAt),
+		CreatedAt:    timeToTimestamp(src.CreatedAt),
+		UpdatedAt:    timeToTimestamp(src.UpdatedAt),
 	}
 	out = dest
 
@@ -138,10 +136,10 @@ func UserToUserWithPermissions(
 	out = dest
 
 	if src.CreatedAt != nil {
-		out.CreatedAt = timestampToInt64(src.CreatedAt)
+		out.CreatedAt = timestampToTime(src.CreatedAt)
 	}
 	if src.UpdatedAt != nil {
-		out.UpdatedAt = timestampToInt64(src.UpdatedAt)
+		out.UpdatedAt = timestampToTime(src.UpdatedAt)
 	}
 
 	// Apply decorator if provided
@@ -173,8 +171,8 @@ func UserFromUserWithPermissions(
 		Id:        src.Id,
 		Name:      src.Name,
 		Email:     src.Email,
-		CreatedAt: int64ToTimestamp(src.CreatedAt),
-		UpdatedAt: int64ToTimestamp(src.UpdatedAt),
+		CreatedAt: timeToTimestamp(src.CreatedAt),
+		UpdatedAt: timeToTimestamp(src.UpdatedAt),
 	}
 	out = dest
 
@@ -209,10 +207,6 @@ func UserToUserWithCustomTimestamps(
 	}
 	out = dest
 
-	if src.CreatedAt != nil {
-		out.CreatedAt = timestampToInt64(src.CreatedAt)
-	}
-
 	// Apply decorator if provided
 	if decorator != nil {
 		if err := decorator(src, dest); err != nil {
@@ -239,9 +233,8 @@ func UserFromUserWithCustomTimestamps(
 
 	// Initialize struct with inline values
 	*dest = api.User{
-		Id:        src.Id,
-		Name:      src.Name,
-		CreatedAt: int64ToTimestamp(src.CreatedAt),
+		Id:   src.Id,
+		Name: src.Name,
 	}
 	out = dest
 
@@ -340,10 +333,6 @@ func UserToUserWithDefaults(
 	}
 	out = dest
 
-	if src.CreatedAt != nil {
-		out.CreatedAt = timestampToInt64(src.CreatedAt)
-	}
-
 	// Apply decorator if provided
 	if decorator != nil {
 		if err := decorator(src, dest); err != nil {
@@ -370,9 +359,8 @@ func UserFromUserWithDefaults(
 
 	// Initialize struct with inline values
 	*dest = api.User{
-		Id:        src.Id,
-		Name:      src.Name,
-		CreatedAt: int64ToTimestamp(src.CreatedAt),
+		Id:   src.Id,
+		Name: src.Name,
 	}
 	out = dest
 

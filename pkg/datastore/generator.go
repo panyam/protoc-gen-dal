@@ -132,6 +132,7 @@ func buildTemplateData(messages []*collector.MessageInfo) (*TemplateData, error)
 	return &TemplateData{
 		Package: pkgName,
 		Imports: []string{
+			"time",
 			"cloud.google.com/go/datastore",
 		},
 		Structs: structs,
@@ -177,47 +178,12 @@ func fieldName(field *protogen.Field) string {
 
 // fieldType returns the Go type for a proto field.
 func fieldType(field *protogen.Field) string {
-	kind := field.Desc.Kind().String()
-
-	// Handle map fields (proto maps generate as message types with IsMap() == true)
-	if field.Desc.IsMap() {
-		// Extract key and value types from the map entry message
-		mapEntry := field.Message
-		keyField := mapEntry.Fields[0]   // maps always have key at index 0
-		valueField := mapEntry.Fields[1] // maps always have value at index 1
-
-		keyType := common.ProtoScalarToGo(keyField.Desc.Kind().String())
-
-		// Check if value is a message type or scalar
-		var valueType string
-		if valueField.Desc.Kind().String() == "message" {
-			// Map value is a message type - use the struct name
-			valueType = string(valueField.Message.Desc.Name())
-		} else {
-			// Map value is a scalar type
-			valueType = common.ProtoScalarToGo(valueField.Desc.Kind().String())
-		}
-
-		return fmt.Sprintf("map[%s]%s", keyType, valueType)
+	// Use shared utility with Datastore-specific struct naming
+	// This now handles google.protobuf.Timestamp → time.Time automatically
+	structNameFunc := func(msg *protogen.Message) string {
+		return string(msg.Desc.Name())
 	}
-
-	// Handle message types (embedded structs, etc.)
-	if kind == "message" {
-		// For repeated message fields
-		if field.Desc.Cardinality().String() == "repeated" {
-			return "[]" + string(field.Message.Desc.Name())
-		}
-		// For singular message fields, use the struct name
-		return string(field.Message.Desc.Name())
-	}
-
-	// Handle repeated scalar fields
-	if field.Desc.Cardinality().String() == "repeated" {
-		elemType := common.ProtoScalarToGo(kind)
-		return "[]" + elemType
-	}
-
-	return common.ProtoScalarToGo(kind)
+	return common.ProtoFieldToGoType(field, structNameFunc)
 }
 
 
@@ -545,16 +511,27 @@ func buildFieldMapping(sourceField, targetField *protogen.Field, reg *registry.C
 		}
 	}
 
-	// Check if types match - if so, simple assignment
-	if sourceKind == targetKind {
-		mapping.ToTargetConversionType = converter.ConvertByAssignment
-		mapping.FromTargetConversionType = converter.ConvertByAssignment
-		addRenderStrategies(mapping)
-		return mapping
-	}
-
-	// Handle common type conversions
+	// Handle common type conversions BEFORE generic type matching
 	// Note: ToTargetCode is for API → Datastore, FromTargetCode is for Datastore → API
+
+	// Timestamp (API) ↔ time.Time (Datastore)
+	// Both source and target are google.protobuf.Timestamp in proto, but target maps to time.Time in Go
+	// Check this BEFORE the generic "types match" check below
+	if sourceKind == "message" && targetKind == "message" {
+		if converter.IsTimestampToTimeTime(sourceField, targetField) {
+			mapping.ToTargetCode = fmt.Sprintf("timestampToTime(src.%s)", sourceFieldName)
+			mapping.FromTargetCode = fmt.Sprintf("timeToTimestamp(src.%s)", targetFieldName)
+			mapping.ToTargetConversionType = converter.ConvertByTransformer
+			mapping.FromTargetConversionType = converter.ConvertByTransformer
+			// IMPORTANT: Override pointer status for time.Time fields
+			// In ToTarget direction (API → Datastore): source is *timestamppb.Timestamp (pointer), target is time.Time (value)
+			// In FromTarget direction (Datastore → API): source is time.Time (value), target is *timestamppb.Timestamp (pointer)
+			// The TargetIsPointer is false because time.Time in Datastore structs is a value type
+			mapping.TargetIsPointer = false
+			addRenderStrategies(mapping)
+			return mapping
+		}
+	}
 
 	// uint32 (API) ↔ string (Datastore) for IDs
 	if sourceKind == "uint32" && targetKind == "string" {
@@ -566,14 +543,10 @@ func buildFieldMapping(sourceField, targetField *protogen.Field, reg *registry.C
 		return mapping
 	}
 
-	// Timestamp (API) ↔ int64 (Datastore)
-	if sourceKind == "message" && sourceField.Message != nil &&
-		string(sourceField.Message.Desc.FullName()) == "google.protobuf.Timestamp" &&
-		targetKind == "int64" {
-		mapping.ToTargetCode = fmt.Sprintf("timestampToInt64(src.%s)", sourceFieldName)
-		mapping.FromTargetCode = fmt.Sprintf("int64ToTimestamp(src.%s)", targetFieldName)
-		mapping.ToTargetConversionType = converter.ConvertByTransformer
-		mapping.FromTargetConversionType = converter.ConvertByTransformer
+	// Check if types match - if so, simple assignment
+	if sourceKind == targetKind {
+		mapping.ToTargetConversionType = converter.ConvertByAssignment
+		mapping.FromTargetConversionType = converter.ConvertByAssignment
 		addRenderStrategies(mapping)
 		return mapping
 	}

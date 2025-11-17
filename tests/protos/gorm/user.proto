@@ -4,6 +4,7 @@ package gorm;
 
 import "dal/v1/annotations.proto";
 import "api/user.proto";  // Import API protos so they're available for source references
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/panyam/protoc-gen-dal/tests/gen/dal;testdal";
 
@@ -34,10 +35,8 @@ message UserGorm {
     gorm_tags: ["type:uint8"]
   }];
 
-  // Timestamp stored as int64 (Unix time)
-  int64 birthday = 5 [(dal.v1.column) = {
-    gorm_tags: ["type:bigint"]
-  }];
+  // Timestamp stored as time.Time (GORM and Datastore native support)
+  google.protobuf.Timestamp birthday = 5;
 
   // Nullable string field
   string member_number = 6 [(dal.v1.column) = {
@@ -45,21 +44,19 @@ message UserGorm {
   }];
 
   // Nullable timestamp
-  int64 activated_at = 7 [(dal.v1.column) = {
-    gorm_tags: ["type:bigint"]
-  }];
+  google.protobuf.Timestamp activated_at = 7;
 
   // Auto-managed timestamps (GORM conventions)
-  int64 created_at = 8 [(dal.v1.column) = {
+  google.protobuf.Timestamp created_at = 8 [(dal.v1.column) = {
     gorm_tags: ["autoCreateTime"]
   }];
 
-  int64 updated_at = 9 [(dal.v1.column) = {
+  google.protobuf.Timestamp updated_at = 9 [(dal.v1.column) = {
     gorm_tags: ["autoUpdateTime"]
   }];
 
   // Soft delete support (gorm.DeletedAt equivalent)
-  int64 deleted_at = 10 [(dal.v1.column) = {
+  google.protobuf.Timestamp deleted_at = 10 [(dal.v1.column) = {
     gorm_tags: ["index"]
   }];
 }
@@ -86,12 +83,12 @@ message UserWithPermissions {
   }];
 
   // Read-only field
-  int64 created_at = 4 [(dal.v1.column) = {
+  google.protobuf.Timestamp created_at = 4 [(dal.v1.column) = {
     gorm_tags: ["->", "autoCreateTime"]
   }];
 
   // Read and write
-  int64 updated_at = 5 [(dal.v1.column) = {
+  google.protobuf.Timestamp updated_at = 5 [(dal.v1.column) = {
     gorm_tags: ["<-", "autoUpdateTime"]
   }];
 }

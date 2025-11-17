@@ -13,20 +13,20 @@ import (
 
 // Helper functions for type conversions
 
-// timestampToInt64 converts a protobuf Timestamp to Unix seconds (int64).
-func timestampToInt64(ts *timestamppb.Timestamp) int64 {
+// timestampToTime converts a protobuf Timestamp to time.Time.
+func timestampToTime(ts *timestamppb.Timestamp) time.Time {
 	if ts == nil {
-		return 0
+		return time.Time{}
 	}
-	return ts.AsTime().Unix()
+	return ts.AsTime()
 }
 
-// int64ToTimestamp converts Unix seconds to a protobuf Timestamp.
-func int64ToTimestamp(seconds int64) *timestamppb.Timestamp {
-	if seconds == 0 {
+// timeToTimestamp converts time.Time to a protobuf Timestamp.
+func timeToTimestamp(t time.Time) *timestamppb.Timestamp {
+	if t.IsZero() {
 		return nil
 	}
-	return timestamppb.New(time.Unix(seconds, 0))
+	return timestamppb.New(t)
 }
 
 // mustParseUint parses a string to uint64, panics on error (for generated code).
@@ -72,13 +72,13 @@ func UserToUserDatastore(
 	out = dest
 
 	if src.Birthday != nil {
-		out.Birthday = timestampToInt64(src.Birthday)
+		out.Birthday = timestampToTime(src.Birthday)
 	}
 	if src.CreatedAt != nil {
-		out.CreatedAt = timestampToInt64(src.CreatedAt)
+		out.CreatedAt = timestampToTime(src.CreatedAt)
 	}
 	if src.UpdatedAt != nil {
-		out.UpdatedAt = timestampToInt64(src.UpdatedAt)
+		out.UpdatedAt = timestampToTime(src.UpdatedAt)
 	}
 
 	// Apply decorator if provided
@@ -121,9 +121,9 @@ func UserFromUserDatastore(
 		Name:      src.Name,
 		Email:     src.Email,
 		Age:       src.Age,
-		Birthday:  int64ToTimestamp(src.Birthday),
-		CreatedAt: int64ToTimestamp(src.CreatedAt),
-		UpdatedAt: int64ToTimestamp(src.UpdatedAt),
+		Birthday:  timeToTimestamp(src.Birthday),
+		CreatedAt: timeToTimestamp(src.CreatedAt),
+		UpdatedAt: timeToTimestamp(src.UpdatedAt),
 	}
 	out = dest
 

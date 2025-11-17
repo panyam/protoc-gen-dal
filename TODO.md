@@ -333,12 +333,23 @@ From `tests/protos/gorm/user.proto`:
   - ✅ Basic struct generation with datastore tags
   - ✅ Kind() method generation
   - ✅ Binary created (protoc-gen-dal-datastore)
-  - ✅ Converter generation with type conversions (uint32↔string, Timestamp↔int64)
+  - ✅ Converter generation with type conversions (uint32↔string, Timestamp↔time.Time)
   - ✅ Integration test with buf generate (all tests pass)
   - ✅ Full repeated/map field support (primitives and messages)
   - ✅ Converter registry for nested message conversions
   - ✅ Loop-based conversion for repeated/map message types
   - ⏸️ LoadKey/SaveKey deferred (not essential for MVP)
+
+- ✅ Phase 3.1b - Timestamp Migration to time.Time (COMPLETE)
+  - ✅ Updated ProtoFieldToGoType() to map google.protobuf.Timestamp → time.Time
+  - ✅ Renamed helper functions: timestampToInt64 → timestampToTime, int64ToTimestamp → timeToTimestamp
+  - ✅ Updated GORM and Datastore generators to detect Timestamp→Timestamp conversion
+  - ✅ Fixed pointer status handling for time.Time fields (value type, not pointer)
+  - ✅ Added "time" package import to generated struct files
+  - ✅ Updated all templates to use new helper function names
+  - ✅ Updated proto test definitions to use google.protobuf.Timestamp
+  - ✅ Updated unit tests in pkg/generator/converter
+  - ✅ All tests passing (GORM, Datastore, converter utilities)
 
 **Generated Code Features:**
 From `tests/protos/datastore/user.proto`:

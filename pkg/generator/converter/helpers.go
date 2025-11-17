@@ -16,24 +16,27 @@ package converter
 
 // TimestampHelperFunctions returns the Go source code for timestamp conversion helpers.
 //
-// These helper functions convert between google.protobuf.Timestamp and int64 (Unix seconds).
-// Used by both GORM and Datastore converters when storing timestamps as integers.
+// These helper functions convert between google.protobuf.Timestamp and time.Time.
+// Used by both GORM and Datastore converters when storing timestamps.
 //
 // Returns:
-//   - Go source code string containing timestampToInt64 and int64ToTimestamp functions
+//   - Go source code string containing timestampToTime and timeToTimestamp functions
 func TimestampHelperFunctions() string {
 	return `
-// timestampToInt64 converts a protobuf Timestamp to Unix epoch seconds.
-func timestampToInt64(ts *timestamppb.Timestamp) int64 {
+// timestampToTime converts a protobuf Timestamp to time.Time.
+func timestampToTime(ts *timestamppb.Timestamp) time.Time {
 	if ts == nil {
-		return 0
+		return time.Time{}
 	}
-	return ts.AsTime().Unix()
+	return ts.AsTime()
 }
 
-// int64ToTimestamp converts Unix epoch seconds to a protobuf Timestamp.
-func int64ToTimestamp(seconds int64) *timestamppb.Timestamp {
-	return timestamppb.New(time.Unix(seconds, 0))
+// timeToTimestamp converts time.Time to a protobuf Timestamp.
+func timeToTimestamp(t time.Time) *timestamppb.Timestamp {
+	if t.IsZero() {
+		return nil
+	}
+	return timestamppb.New(t)
 }
 `
 }

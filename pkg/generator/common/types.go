@@ -71,6 +71,7 @@ type StructNameFunc func(*protogen.Message) string
 // How it handles different field types:
 //   - Scalars: "string", "int32", etc.
 //   - Messages: Uses structNameFunc to get the target struct name
+//   - google.protobuf.Timestamp: "time.Time" (special case for databases)
 //   - Repeated scalars: "[]string", "[]int32", etc.
 //   - Repeated messages: "[]BookGORM", "[]AuthorDatastore", etc.
 //   - Maps with scalar values: "map[string]int32", "map[string]string", etc.
@@ -111,6 +112,16 @@ func ProtoFieldToGoType(field *protogen.Field, structNameFunc StructNameFunc) st
 
 	// Handle message types (embedded structs, nested objects, etc.)
 	if kind == "message" {
+		// Special case: google.protobuf.Timestamp maps to time.Time for database storage
+		if field.Message != nil && string(field.Message.Desc.FullName()) == "google.protobuf.Timestamp" {
+			// For repeated timestamp fields: []time.Time
+			if field.Desc.Cardinality().String() == "repeated" {
+				return "[]time.Time"
+			}
+			// For singular timestamp fields: time.Time
+			return "time.Time"
+		}
+
 		// For repeated message fields: []BookGORM, []AuthorDatastore
 		if field.Desc.Cardinality().String() == "repeated" {
 			return "[]" + structNameFunc(field.Message)

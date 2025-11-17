@@ -4,6 +4,7 @@ package datastore;
 
 import "dal/v1/annotations.proto";
 import "api/user.proto";  // Import API protos so they're available for source references
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/panyam/protoc-gen-dal/tests/gen/datastore;testdatastore";
 
@@ -26,10 +27,10 @@ message UserDatastore {
   // Age field
   uint32 age = 4;
 
-  // Timestamps stored as int64 (Unix time)
-  int64 birthday = 5;
-  int64 created_at = 6;
-  int64 updated_at = 7;
+  // Timestamps stored as time.Time (Datastore native support)
+  google.protobuf.Timestamp birthday = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
 }
 
 // UserWithNamespace demonstrates namespace support
