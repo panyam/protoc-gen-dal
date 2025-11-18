@@ -55,9 +55,25 @@ type GenerateResult struct {
 // Returns:
 //   - GenerateResult containing all generated files
 //   - error if generation fails
+// buildStructName generates the Datastore struct name from the target message name.
+// For Datastore, we keep the name as-is (e.g., "UserDatastore" stays "UserDatastore")
+func buildStructName(msg *protogen.Message) string {
+	return string(msg.Desc.Name())
+}
+
 func Generate(messages []*collector.MessageInfo) (*GenerateResult, error) {
 	if len(messages) == 0 {
 		return &GenerateResult{Files: []*GeneratedFile{}}, nil
+	}
+
+	// Build message registry for source → target lookups
+	// This allows us to find AuthorDatastore (or any user-defined name) when we see api.Author in a field
+	msgRegistry := common.NewMessageRegistry(messages, buildStructName)
+
+	// Validate that all referenced message types have explicit definitions
+	// Users must define all needed types (with flexible naming via 'source' annotation)
+	if err := msgRegistry.ValidateMissingTypes(messages); err != nil {
+		return nil, fmt.Errorf("validation failed: %w", err)
 	}
 
 	// Group messages by their source proto file
@@ -67,7 +83,7 @@ func Generate(messages []*collector.MessageInfo) (*GenerateResult, error) {
 
 	// Generate one file per proto file
 	for protoFile, msgs := range fileGroups {
-		content, err := generateFileCode(msgs)
+		content, err := generateFileCode(msgs, msgRegistry)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate code for %s: %w", protoFile, err)
 		}
@@ -86,13 +102,13 @@ func Generate(messages []*collector.MessageInfo) (*GenerateResult, error) {
 }
 
 // generateFileCode generates the complete Go code for all messages in a proto file.
-func generateFileCode(messages []*collector.MessageInfo) (string, error) {
+func generateFileCode(messages []*collector.MessageInfo, registry *common.MessageRegistry) (string, error) {
 	if len(messages) == 0 {
 		return "", fmt.Errorf("no messages to generate")
 	}
 
 	// Build template data
-	data, err := buildTemplateData(messages)
+	data, err := buildTemplateData(messages, registry)
 	if err != nil {
 		return "", fmt.Errorf("failed to build template data: %w", err)
 	}
@@ -107,7 +123,7 @@ func generateFileCode(messages []*collector.MessageInfo) (string, error) {
 }
 
 // buildTemplateData extracts metadata from messages for template rendering.
-func buildTemplateData(messages []*collector.MessageInfo) (*TemplateData, error) {
+func buildTemplateData(messages []*collector.MessageInfo, registry *common.MessageRegistry) (*TemplateData, error) {
 	if len(messages) == 0 {
 		return nil, fmt.Errorf("no messages provided")
 	}
@@ -126,7 +142,7 @@ func buildTemplateData(messages []*collector.MessageInfo) (*TemplateData, error)
 
 	// Build struct data for each message
 	for _, msgInfo := range messages {
-		structData, err := buildStructData(msgInfo)
+		structData, err := buildStructData(msgInfo, registry)
 		if err != nil {
 			return nil, fmt.Errorf("failed to build struct data for %s: %w",
 				msgInfo.TargetMessage.Desc.Name(), err)
@@ -160,7 +176,7 @@ func buildTemplateData(messages []*collector.MessageInfo) (*TemplateData, error)
 }
 
 // buildStructData extracts metadata for a single struct/entity.
-func buildStructData(msgInfo *collector.MessageInfo) (*StructData, error) {
+func buildStructData(msgInfo *collector.MessageInfo, registry *common.MessageRegistry) (*StructData, error) {
 	targetMsg := msgInfo.TargetMessage
 	sourceMsg := msgInfo.SourceMessage
 	structName := string(targetMsg.Desc.Name())
@@ -175,18 +191,21 @@ func buildStructData(msgInfo *collector.MessageInfo) (*StructData, error) {
 
 	// Extract source package alias for enum type references
 	// Use import path's last component as alias (e.g., "api" from ".../go/api")
-	sourceImportPath := string(sourceMsg.GoIdent.GoImportPath)
-	if idx := strings.LastIndex(sourceImportPath, ";"); idx != -1 {
-		sourceImportPath = sourceImportPath[:idx]
+	var sourcePkgName string
+	if sourceMsg != nil {
+		sourceImportPath := string(sourceMsg.GoIdent.GoImportPath)
+		if idx := strings.LastIndex(sourceImportPath, ";"); idx != -1 {
+			sourceImportPath = sourceImportPath[:idx]
+		}
+		sourcePkgName = common.GetPackageAlias(sourceImportPath)
 	}
-	sourcePkgName := common.GetPackageAlias(sourceImportPath)
 
 	// Extract fields from merged list
 	var fields []*FieldData
 	for _, field := range mergedFields {
 		fieldData := &FieldData{
 			Name: fieldName(field),
-			Type: fieldType(field, sourcePkgName),
+			Type: fieldType(field, sourcePkgName, registry),
 			Tags: buildFieldTags(field),
 		}
 		fields = append(fields, fieldData)
@@ -214,13 +233,11 @@ func fieldName(field *protogen.Field) string {
 }
 
 // fieldType returns the Go type for a proto field.
-func fieldType(field *protogen.Field, sourcePkgName string) string {
+func fieldType(field *protogen.Field, sourcePkgName string, registry *common.MessageRegistry) string {
 	// Use shared utility with Datastore-specific struct naming
 	// This now handles google.protobuf.Timestamp → time.Time automatically
-	structNameFunc := func(msg *protogen.Message) string {
-		return string(msg.Desc.Name())
-	}
-	return common.ProtoFieldToGoType(field, structNameFunc, sourcePkgName)
+	// The registry allows looking up target types for message fields (e.g., api.Author → AuthorDatastore)
+	return common.ProtoFieldToGoType(field, buildStructName, sourcePkgName, registry)
 }
 
 // buildFieldTags creates struct tags for a field.

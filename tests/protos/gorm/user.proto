@@ -192,6 +192,14 @@ message AuthorGorm {
   string email = 2;
 }
 
+// BlogAsIsGorm is a "plain" embedding where we use same types as the source
+message BlogAsIsGorm {
+  option (dal.v1.gorm) = {
+    source: "api.Blog"
+    table: "blogs"
+  };
+}
+
 // BlogGorm demonstrates embedded structs with prefix
 message BlogGorm {
   option (dal.v1.gorm) = {

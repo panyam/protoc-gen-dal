@@ -64,6 +64,16 @@ func Generate(messages []*collector.MessageInfo) (*GenerateResult, error) {
 		return &GenerateResult{Files: []*GeneratedFile{}}, nil
 	}
 
+	// Build message registry for source → target lookups
+	// This allows us to find AuthorGORM (or any user-defined name) when we see api.Author in a field
+	msgRegistry := common.NewMessageRegistry(messages, buildStructName)
+
+	// Validate that all referenced message types have explicit definitions
+	// Users must define all needed types (with flexible naming via 'source' annotation)
+	if err := msgRegistry.ValidateMissingTypes(messages); err != nil {
+		return nil, fmt.Errorf("validation failed: %w", err)
+	}
+
 	// Collect all embedded types across ALL messages first
 	// This ensures we generate each embedded type only once in a shared file
 	allEmbeddedTypes := make(map[string]*protogen.Message)
@@ -94,7 +104,7 @@ func Generate(messages []*collector.MessageInfo) (*GenerateResult, error) {
 
 	// Generate one file per proto file (without embedded types)
 	for protoFile, msgs := range fileGroups {
-		content, err := generateFileCodeWithoutEmbedded(msgs)
+		content, err := generateFileCodeWithoutEmbedded(msgs, msgRegistry)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate code for %s: %w", protoFile, err)
 		}
@@ -111,7 +121,7 @@ func Generate(messages []*collector.MessageInfo) (*GenerateResult, error) {
 
 	// Generate a single shared file for all embedded types (if any)
 	if len(sharedEmbeddedTypes) > 0 {
-		content, err := generateEmbeddedTypesFile(sharedEmbeddedTypes, messages[0].TargetMessage)
+		content, err := generateEmbeddedTypesFile(sharedEmbeddedTypes, messages[0].TargetMessage, msgRegistry)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate embedded types: %w", err)
 		}
@@ -170,7 +180,7 @@ func GenerateConverters(messages []*collector.MessageInfo) (*GenerateResult, err
 
 // generateFileCodeWithoutEmbedded generates Go code for messages in a proto file.
 // Embedded types are NOT included - they're generated separately in _embedded_gorm.go
-func generateFileCodeWithoutEmbedded(messages []*collector.MessageInfo) (string, error) {
+func generateFileCodeWithoutEmbedded(messages []*collector.MessageInfo, registry *common.MessageRegistry) (string, error) {
 	if len(messages) == 0 {
 		return "", fmt.Errorf("no messages to generate")
 	}
@@ -186,7 +196,7 @@ func generateFileCodeWithoutEmbedded(messages []*collector.MessageInfo) (string,
 	importsMap.Add(common.ImportSpec{Path: "time"})
 
 	for _, msg := range messages {
-		structData, err := buildStructData(msg)
+		structData, err := buildStructData(msg, registry)
 		if err != nil {
 			return "", err
 		}
@@ -224,7 +234,7 @@ func generateFileCodeWithoutEmbedded(messages []*collector.MessageInfo) (string,
 
 // generateEmbeddedTypesFile generates a single file containing all shared embedded types.
 // This prevents duplicate type definitions across multiple generated files.
-func generateEmbeddedTypesFile(embeddedTypes map[string]*protogen.Message, sampleMsg *protogen.Message) (string, error) {
+func generateEmbeddedTypesFile(embeddedTypes map[string]*protogen.Message, sampleMsg *protogen.Message, registry *common.MessageRegistry) (string, error) {
 	if len(embeddedTypes) == 0 {
 		return "", fmt.Errorf("no embedded types to generate")
 	}
@@ -243,7 +253,7 @@ func generateEmbeddedTypesFile(embeddedTypes map[string]*protogen.Message, sampl
 			embImportPath = embImportPath[:idx]
 		}
 		embSourcePkgAlias := common.GetPackageAlias(embImportPath)
-		fields, err := buildFields(embMsg.Fields, embSourcePkgAlias)
+		fields, err := buildFields(embMsg.Fields, embSourcePkgAlias, registry)
 		if err != nil {
 			return "", err
 		}
@@ -385,7 +395,7 @@ func collectEmbeddedTypes(msg *protogen.Message, types map[string]*protogen.Mess
 }
 
 // buildStructData extracts struct information from a MessageInfo.
-func buildStructData(msg *collector.MessageInfo) (StructData, error) {
+func buildStructData(msg *collector.MessageInfo, registry *common.MessageRegistry) (StructData, error) {
 	targetMsg := msg.TargetMessage
 	sourceMsg := msg.SourceMessage
 
@@ -402,14 +412,17 @@ func buildStructData(msg *collector.MessageInfo) (StructData, error) {
 
 	// Extract source package alias for enum type references
 	// Use import path's last component as alias (e.g., "api" from ".../go/api")
-	sourceImportPath := string(sourceMsg.GoIdent.GoImportPath)
-	if idx := strings.LastIndex(sourceImportPath, ";"); idx != -1 {
-		sourceImportPath = sourceImportPath[:idx]
+	var sourcePkgAlias string
+	if sourceMsg != nil {
+		sourceImportPath := string(sourceMsg.GoIdent.GoImportPath)
+		if idx := strings.LastIndex(sourceImportPath, ";"); idx != -1 {
+			sourceImportPath = sourceImportPath[:idx]
+		}
+		sourcePkgAlias = common.GetPackageAlias(sourceImportPath)
 	}
-	sourcePkgAlias := common.GetPackageAlias(sourceImportPath)
 
 	// Build fields from merged list
-	fields, err := buildFields(mergedFields, sourcePkgAlias)
+	fields, err := buildFields(mergedFields, sourcePkgAlias, registry)
 	if err != nil {
 		return StructData{}, err
 	}
@@ -789,11 +802,11 @@ func buildStructName(msg *protogen.Message) string {
 }
 
 // buildFields extracts field information from a list of proto fields.
-func buildFields(protoFields []*protogen.Field, sourcePkgName string) ([]FieldData, error) {
+func buildFields(protoFields []*protogen.Field, sourcePkgName string, registry *common.MessageRegistry) ([]FieldData, error) {
 	var fields []FieldData
 
 	for _, field := range protoFields {
-		fieldData, err := buildField(field, sourcePkgName)
+		fieldData, err := buildField(field, sourcePkgName, registry)
 		if err != nil {
 			return nil, err
 		}
@@ -804,12 +817,13 @@ func buildFields(protoFields []*protogen.Field, sourcePkgName string) ([]FieldDa
 }
 
 // buildField converts a proto field to FieldData.
-func buildField(field *protogen.Field, sourcePkgName string) (FieldData, error) {
+func buildField(field *protogen.Field, sourcePkgName string, registry *common.MessageRegistry) (FieldData, error) {
 	// converter.Convert field name to Go naming: id -> ID, title -> Title
 	goName := field.GoName
 
 	// converter.Convert proto type to Go type using shared utility with GORM-specific naming
-	goType := common.ProtoFieldToGoType(field, buildStructName, sourcePkgName)
+	// Pass the registry so it can look up target types for message fields
+	goType := common.ProtoFieldToGoType(field, buildStructName, sourcePkgName, registry)
 
 	// Extract GORM tags from column options
 	gormTag := extractGormTags(field)

@@ -523,6 +523,43 @@ func (x *AuthorGorm) GetEmail() string {
 	return ""
 }
 
+// BlogAsIsGorm is a "plain" embedding where we use same types as the source
+type BlogAsIsGorm struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BlogAsIsGorm) Reset() {
+	*x = BlogAsIsGorm{}
+	mi := &file_gorm_user_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BlogAsIsGorm) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BlogAsIsGorm) ProtoMessage() {}
+
+func (x *BlogAsIsGorm) ProtoReflect() protoreflect.Message {
+	mi := &file_gorm_user_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BlogAsIsGorm.ProtoReflect.Descriptor instead.
+func (*BlogAsIsGorm) Descriptor() ([]byte, []int) {
+	return file_gorm_user_proto_rawDescGZIP(), []int{6}
+}
+
 // BlogGorm demonstrates embedded structs with prefix
 type BlogGorm struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -537,7 +574,7 @@ type BlogGorm struct {
 
 func (x *BlogGorm) Reset() {
 	*x = BlogGorm{}
-	mi := &file_gorm_user_proto_msgTypes[6]
+	mi := &file_gorm_user_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -549,7 +586,7 @@ func (x *BlogGorm) String() string {
 func (*BlogGorm) ProtoMessage() {}
 
 func (x *BlogGorm) ProtoReflect() protoreflect.Message {
-	mi := &file_gorm_user_proto_msgTypes[6]
+	mi := &file_gorm_user_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -562,7 +599,7 @@ func (x *BlogGorm) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BlogGorm.ProtoReflect.Descriptor instead.
 func (*BlogGorm) Descriptor() ([]byte, []int) {
-	return file_gorm_user_proto_rawDescGZIP(), []int{6}
+	return file_gorm_user_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *BlogGorm) GetId() uint32 {
@@ -612,7 +649,7 @@ type ProductGorm struct {
 
 func (x *ProductGorm) Reset() {
 	*x = ProductGorm{}
-	mi := &file_gorm_user_proto_msgTypes[7]
+	mi := &file_gorm_user_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -624,7 +661,7 @@ func (x *ProductGorm) String() string {
 func (*ProductGorm) ProtoMessage() {}
 
 func (x *ProductGorm) ProtoReflect() protoreflect.Message {
-	mi := &file_gorm_user_proto_msgTypes[7]
+	mi := &file_gorm_user_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -637,7 +674,7 @@ func (x *ProductGorm) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProductGorm.ProtoReflect.Descriptor instead.
 func (*ProductGorm) Descriptor() ([]byte, []int) {
-	return file_gorm_user_proto_rawDescGZIP(), []int{7}
+	return file_gorm_user_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ProductGorm) GetId() uint32 {
@@ -695,7 +732,7 @@ type LibraryGorm struct {
 
 func (x *LibraryGorm) Reset() {
 	*x = LibraryGorm{}
-	mi := &file_gorm_user_proto_msgTypes[8]
+	mi := &file_gorm_user_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -707,7 +744,7 @@ func (x *LibraryGorm) String() string {
 func (*LibraryGorm) ProtoMessage() {}
 
 func (x *LibraryGorm) ProtoReflect() protoreflect.Message {
-	mi := &file_gorm_user_proto_msgTypes[8]
+	mi := &file_gorm_user_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -720,7 +757,7 @@ func (x *LibraryGorm) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LibraryGorm.ProtoReflect.Descriptor instead.
 func (*LibraryGorm) Descriptor() ([]byte, []int) {
-	return file_gorm_user_proto_rawDescGZIP(), []int{8}
+	return file_gorm_user_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *LibraryGorm) GetId() uint32 {
@@ -757,7 +794,7 @@ type OrganizationGorm struct {
 
 func (x *OrganizationGorm) Reset() {
 	*x = OrganizationGorm{}
-	mi := &file_gorm_user_proto_msgTypes[9]
+	mi := &file_gorm_user_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -769,7 +806,7 @@ func (x *OrganizationGorm) String() string {
 func (*OrganizationGorm) ProtoMessage() {}
 
 func (x *OrganizationGorm) ProtoReflect() protoreflect.Message {
-	mi := &file_gorm_user_proto_msgTypes[9]
+	mi := &file_gorm_user_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -782,7 +819,7 @@ func (x *OrganizationGorm) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OrganizationGorm.ProtoReflect.Descriptor instead.
 func (*OrganizationGorm) Descriptor() ([]byte, []int) {
-	return file_gorm_user_proto_rawDescGZIP(), []int{9}
+	return file_gorm_user_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *OrganizationGorm) GetId() uint32 {
@@ -871,7 +908,9 @@ const file_gorm_user_proto_rawDesc = "" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email:\x10ʦ\x1d\f\n" +
 	"\n" +
-	"api.Author\"\x88\x02\n" +
+	"api.Author\"%\n" +
+	"\fBlogAsIsGorm:\x15ʦ\x1d\x11\n" +
+	"\bapi.Blog\x12\x05blogs\"\x88\x02\n" +
 	"\bBlogGorm\x12/\n" +
 	"\x02id\x18\x01 \x01(\rB\x1f\x92\xa6\x1d\x1bR\n" +
 	"primaryKeyR\rautoIncrementR\x02id\x12P\n" +
@@ -927,7 +966,7 @@ func file_gorm_user_proto_rawDescGZIP() []byte {
 	return file_gorm_user_proto_rawDescData
 }
 
-var file_gorm_user_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_gorm_user_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_gorm_user_proto_goTypes = []any{
 	(*UserGorm)(nil),                 // 0: gorm.UserGorm
 	(*UserWithPermissions)(nil),      // 1: gorm.UserWithPermissions
@@ -935,26 +974,27 @@ var file_gorm_user_proto_goTypes = []any{
 	(*UserWithIndexes)(nil),          // 3: gorm.UserWithIndexes
 	(*UserWithDefaults)(nil),         // 4: gorm.UserWithDefaults
 	(*AuthorGorm)(nil),               // 5: gorm.AuthorGorm
-	(*BlogGorm)(nil),                 // 6: gorm.BlogGorm
-	(*ProductGorm)(nil),              // 7: gorm.ProductGorm
-	(*LibraryGorm)(nil),              // 8: gorm.LibraryGorm
-	(*OrganizationGorm)(nil),         // 9: gorm.OrganizationGorm
-	nil,                              // 10: gorm.ProductGorm.MetadataEntry
-	nil,                              // 11: gorm.OrganizationGorm.DepartmentsEntry
-	(*timestamppb.Timestamp)(nil),    // 12: google.protobuf.Timestamp
+	(*BlogAsIsGorm)(nil),             // 6: gorm.BlogAsIsGorm
+	(*BlogGorm)(nil),                 // 7: gorm.BlogGorm
+	(*ProductGorm)(nil),              // 8: gorm.ProductGorm
+	(*LibraryGorm)(nil),              // 9: gorm.LibraryGorm
+	(*OrganizationGorm)(nil),         // 10: gorm.OrganizationGorm
+	nil,                              // 11: gorm.ProductGorm.MetadataEntry
+	nil,                              // 12: gorm.OrganizationGorm.DepartmentsEntry
+	(*timestamppb.Timestamp)(nil),    // 13: google.protobuf.Timestamp
 }
 var file_gorm_user_proto_depIdxs = []int32{
-	12, // 0: gorm.UserGorm.birthday:type_name -> google.protobuf.Timestamp
-	12, // 1: gorm.UserGorm.activated_at:type_name -> google.protobuf.Timestamp
-	12, // 2: gorm.UserGorm.created_at:type_name -> google.protobuf.Timestamp
-	12, // 3: gorm.UserGorm.updated_at:type_name -> google.protobuf.Timestamp
-	12, // 4: gorm.UserGorm.deleted_at:type_name -> google.protobuf.Timestamp
-	12, // 5: gorm.UserWithPermissions.created_at:type_name -> google.protobuf.Timestamp
-	12, // 6: gorm.UserWithPermissions.updated_at:type_name -> google.protobuf.Timestamp
+	13, // 0: gorm.UserGorm.birthday:type_name -> google.protobuf.Timestamp
+	13, // 1: gorm.UserGorm.activated_at:type_name -> google.protobuf.Timestamp
+	13, // 2: gorm.UserGorm.created_at:type_name -> google.protobuf.Timestamp
+	13, // 3: gorm.UserGorm.updated_at:type_name -> google.protobuf.Timestamp
+	13, // 4: gorm.UserGorm.deleted_at:type_name -> google.protobuf.Timestamp
+	13, // 5: gorm.UserWithPermissions.created_at:type_name -> google.protobuf.Timestamp
+	13, // 6: gorm.UserWithPermissions.updated_at:type_name -> google.protobuf.Timestamp
 	5,  // 7: gorm.BlogGorm.author:type_name -> gorm.AuthorGorm
-	10, // 8: gorm.ProductGorm.metadata:type_name -> gorm.ProductGorm.MetadataEntry
+	11, // 8: gorm.ProductGorm.metadata:type_name -> gorm.ProductGorm.MetadataEntry
 	5,  // 9: gorm.LibraryGorm.contributors:type_name -> gorm.AuthorGorm
-	11, // 10: gorm.OrganizationGorm.departments:type_name -> gorm.OrganizationGorm.DepartmentsEntry
+	12, // 10: gorm.OrganizationGorm.departments:type_name -> gorm.OrganizationGorm.DepartmentsEntry
 	5,  // 11: gorm.OrganizationGorm.DepartmentsEntry.value:type_name -> gorm.AuthorGorm
 	12, // [12:12] is the sub-list for method output_type
 	12, // [12:12] is the sub-list for method input_type
@@ -974,7 +1014,7 @@ func file_gorm_user_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_gorm_user_proto_rawDesc), len(file_gorm_user_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   12,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

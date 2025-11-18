@@ -31,8 +31,8 @@ type UserWithPermissions struct {
 	Email        string    `gorm:"<-:update"`
 	CreatedAt    time.Time `gorm:"->;autoCreateTime"`
 	Age          uint32
-	Birthday     time.Time
 	UpdatedAt    time.Time `gorm:"<-;autoUpdateTime"`
+	Birthday     time.Time
 	MemberNumber string
 	ActivatedAt  time.Time
 }
@@ -48,8 +48,8 @@ type UserWithCustomTimestamps struct {
 	Name         string
 	Email        string
 	CreatedAt    int64 `gorm:"autoCreateTime"`
-	UpdatedMilli int64 `gorm:"autoUpdateTime:milli"`
 	Age          uint32
+	UpdatedMilli int64 `gorm:"autoUpdateTime:milli"`
 	Birthday     time.Time
 	UpdatedNano  int64 `gorm:"autoUpdateTime:nano"`
 	MemberNumber string
@@ -67,10 +67,10 @@ type UserWithIndexes struct {
 	Id           uint32 `gorm:"primaryKey"`
 	Name         string `gorm:"index"`
 	Email        string `gorm:"uniqueIndex"`
-	Age          uint32
 	City         string `gorm:"index:idx_city,sort:desc"`
-	FirstName    string `gorm:"index:idx_name"`
+	Age          uint32
 	Birthday     time.Time
+	FirstName    string `gorm:"index:idx_name"`
 	MemberNumber string
 	LastName     string `gorm:"index:idx_name"`
 	ActivatedAt  time.Time
@@ -89,8 +89,8 @@ type UserWithDefaults struct {
 	Name         string `gorm:"default:guest"`
 	Active       bool   `gorm:"default:true"`
 	Email        string
-	Age          uint32
 	CreatedAt    int64 `gorm:"default:CURRENT_TIMESTAMP"`
+	Age          uint32
 	Birthday     time.Time
 	MemberNumber string
 	ActivatedAt  time.Time
@@ -106,6 +106,19 @@ func (*UserWithDefaults) TableName() string {
 type AuthorGORM struct {
 	Name  string
 	Email string
+}
+
+// BlogAsIsGORM is the GORM model for api.Blog
+type BlogAsIsGORM struct {
+	Id      uint32
+	Author  AuthorGORM
+	Upvotes int32
+	Title   string
+}
+
+// TableName returns the table name for BlogAsIsGORM
+func (*BlogAsIsGORM) TableName() string {
+	return "blogs"
 }
 
 // BlogGORM is the GORM model for api.Blog

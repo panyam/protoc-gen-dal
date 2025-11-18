@@ -115,7 +115,7 @@ type StructNameFunc func(*protogen.Message) string
 // How it handles different field types:
 //   - Scalars: "string", "int32", etc.
 //   - Enums: "api.SampleEnum" (with package qualifier)
-//   - Messages: Uses structNameFunc to get the target struct name
+//   - Messages: Uses registry to find target type, falls back to structNameFunc
 //   - google.protobuf.Timestamp: "time.Time" (special case for databases)
 //   - Repeated scalars: "[]string", "[]int32", etc.
 //   - Repeated enums: "[]api.SampleEnum"
@@ -128,11 +128,27 @@ type StructNameFunc func(*protogen.Message) string
 //   - field: The proto field to convert
 //   - structNameFunc: Function to convert message names to struct names
 //   - sourcePkgName: Package alias for enum types from source package (e.g., "api")
+//   - registry: Optional message registry for looking up target types (can be nil for backward compatibility)
 //
 // Returns:
 //   - the Go type string for the field
-func ProtoFieldToGoType(field *protogen.Field, structNameFunc StructNameFunc, sourcePkgName string) string {
+func ProtoFieldToGoType(field *protogen.Field, structNameFunc StructNameFunc, sourcePkgName string, registry *MessageRegistry) string {
 	kind := field.Desc.Kind().String()
+
+	// Helper function to get struct name for a message
+	// Uses registry if available to find the correct target type
+	getMessageTypeName := func(msg *protogen.Message) string {
+		if registry != nil {
+			// Look up the target message in the registry
+			targetMsg := registry.LookupTargetMessage(msg)
+			if targetMsg != nil {
+				// Found a target - use its struct name
+				return registry.GetStructName(targetMsg)
+			}
+		}
+		// Fall back to direct struct name (legacy behavior or when registry not available)
+		return structNameFunc(msg)
+	}
 
 	// Handle map fields - proto represents maps as special message types
 	// We want to generate native Go maps: map[K]V
@@ -149,7 +165,7 @@ func ProtoFieldToGoType(field *protogen.Field, structNameFunc StructNameFunc, so
 		var valueType string
 		if valueField.Desc.Kind().String() == "message" {
 			// Map value is a message type - use the target struct name
-			valueType = structNameFunc(valueField.Message)
+			valueType = getMessageTypeName(valueField.Message)
 		} else {
 			// Map value is a scalar type
 			valueType = ProtoScalarToGo(valueField.Desc.Kind().String())
@@ -188,10 +204,10 @@ func ProtoFieldToGoType(field *protogen.Field, structNameFunc StructNameFunc, so
 
 		// For repeated message fields: []BookGORM, []AuthorDatastore
 		if field.Desc.Cardinality().String() == "repeated" {
-			return "[]" + structNameFunc(field.Message)
+			return "[]" + getMessageTypeName(field.Message)
 		}
 		// For singular message fields: BookGORM, AuthorDatastore
-		return structNameFunc(field.Message)
+		return getMessageTypeName(field.Message)
 	}
 
 	// Handle repeated scalar fields: []string, []int32, etc.

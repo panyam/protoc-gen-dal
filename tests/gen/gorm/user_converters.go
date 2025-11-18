@@ -120,11 +120,11 @@ func UserToUserWithPermissions(
 	if src.CreatedAt != nil {
 		out.CreatedAt = converters.TimestampToTime(src.CreatedAt)
 	}
-	if src.Birthday != nil {
-		out.Birthday = converters.TimestampToTime(src.Birthday)
-	}
 	if src.UpdatedAt != nil {
 		out.UpdatedAt = converters.TimestampToTime(src.UpdatedAt)
+	}
+	if src.Birthday != nil {
+		out.Birthday = converters.TimestampToTime(src.Birthday)
 	}
 	if src.ActivatedAt != nil {
 		out.ActivatedAt = converters.TimestampToTime(src.ActivatedAt)
@@ -161,8 +161,8 @@ func UserFromUserWithPermissions(
 		Email:        src.Email,
 		Age:          src.Age,
 		CreatedAt:    converters.TimeToTimestamp(src.CreatedAt),
-		Birthday:     converters.TimeToTimestamp(src.Birthday),
 		UpdatedAt:    converters.TimeToTimestamp(src.UpdatedAt),
+		Birthday:     converters.TimeToTimestamp(src.Birthday),
 		MemberNumber: src.MemberNumber,
 		ActivatedAt:  converters.TimeToTimestamp(src.ActivatedAt),
 	}
@@ -414,8 +414,8 @@ func UserFromUserWithDefaults(
 		Id:           src.Id,
 		Name:         src.Name,
 		Email:        src.Email,
-		Age:          src.Age,
 		CreatedAt:    converters.Int64ToTimestamp(src.CreatedAt),
+		Age:          src.Age,
 		Birthday:     converters.TimeToTimestamp(src.Birthday),
 		MemberNumber: src.MemberNumber,
 		ActivatedAt:  converters.TimeToTimestamp(src.ActivatedAt),
@@ -482,6 +482,70 @@ func AuthorFromAuthorGORM(
 	*dest = api.Author{
 		Name:  src.Name,
 		Email: src.Email,
+	}
+	out = dest
+
+	// Apply decorator if provided
+	if decorator != nil {
+		if err := decorator(dest, src); err != nil {
+			return nil, err
+		}
+	}
+
+	return out, nil
+}
+
+// BlogToBlogAsIsGORM converts a api.Blog to BlogAsIsGORM.
+// The optional decorator function allows custom field transformations.
+func BlogToBlogAsIsGORM(
+	src *api.Blog,
+	dest *BlogAsIsGORM,
+	decorator func(*api.Blog, *BlogAsIsGORM) error,
+) (out *BlogAsIsGORM, err error) {
+	if src == nil {
+		return nil, nil
+	}
+	if dest == nil {
+		dest = &BlogAsIsGORM{}
+	}
+
+	// Initialize struct with inline values
+	*dest = BlogAsIsGORM{
+		Id:      src.Id,
+		Upvotes: src.Upvotes,
+		Title:   src.Title,
+	}
+	out = dest
+
+	// Apply decorator if provided
+	if decorator != nil {
+		if err := decorator(src, dest); err != nil {
+			return nil, err
+		}
+	}
+
+	return dest, nil
+}
+
+// BlogFromBlogAsIsGORM converts a BlogAsIsGORM back to api.Blog.
+// The optional decorator function allows custom field transformations.
+func BlogFromBlogAsIsGORM(
+	dest *api.Blog,
+	src *BlogAsIsGORM,
+	decorator func(dest *api.Blog, src *BlogAsIsGORM) error,
+) (out *api.Blog, err error) {
+	if src == nil {
+		return nil, nil
+	}
+	if dest == nil {
+		dest = &api.Blog{}
+	}
+
+	// Initialize struct with inline values
+	*dest = api.Blog{
+		Id:      src.Id,
+		Upvotes: src.Upvotes,
+		Title:   src.Title,
 	}
 	out = dest
 
