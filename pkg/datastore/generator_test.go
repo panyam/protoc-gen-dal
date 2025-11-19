@@ -136,9 +136,9 @@ func TestGenerateDatastore_SimpleMessage(t *testing.T) {
 // for converting between API messages and Datastore entities.
 //
 // This test verifies:
-// - ToDatastore converter function with decorator parameter
-// - FromDatastore converter function with decorator parameter
-// - Reuses GORM converter infrastructure (built-in types, decorators)
+// - ToDatastore converter function
+// - FromDatastore converter function
+// - Reuses GORM converter infrastructure (built-in types)
 func TestGenerateConverters(t *testing.T) {
 	// Given: A User message with Datastore mapping
 	plugin := createTestPlugin(t, &testProtoSet{
@@ -210,11 +210,6 @@ func TestGenerateConverters(t *testing.T) {
 	// Should accept dest parameter for in-place conversion
 	if !strings.Contains(converterCode, "dest *UserDatastore") {
 		t.Error("Expected dest *UserDatastore parameter")
-	}
-
-	// Should accept decorator function
-	if !strings.Contains(converterCode, "decorator func(*") {
-		t.Error("Expected decorator parameter in ToDatastore")
 	}
 
 	// Should have FromDatastore converter

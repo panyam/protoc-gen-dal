@@ -479,7 +479,7 @@ for i, dbBook := range dbBooks {
 **Missing converter for nested type:**
 ```
 Warning: No converter found for field 'Author'. Skipping automatic conversion.
-Add source annotation or handle in decorator.
+Add source annotation.
 ```
 
 Solution: Add `source` annotation to nested message:

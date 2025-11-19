@@ -65,7 +65,6 @@ protos/
 
 **Generated code must be compile-time safe:**
 - ✅ Typed structs: `BookGORM`, `BookFirestore`
-- ✅ Typed decorators: `func(*Book, *BookGORM) error`
 - ❌ NO `map[string]any` dictionaries
 - ❌ NO string-based transformer registries
 - ❌ NO runtime map lookups

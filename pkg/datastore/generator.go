@@ -55,6 +55,7 @@ type GenerateResult struct {
 // Returns:
 //   - GenerateResult containing all generated files
 //   - error if generation fails
+//
 // buildStructName generates the Datastore struct name from the target message name.
 // For Datastore, we keep the name as-is (e.g., "UserDatastore" stays "UserDatastore")
 func buildStructName(msg *protogen.Message) string {
@@ -250,7 +251,7 @@ func buildFieldTags(field *protogen.Field) string {
 // GenerateConverters generates converter functions for transforming between
 // API messages and Datastore entities.
 //
-// This generates ToDatastore and FromDatastore converter functions with decorator support:
+// This generates ToDatastore and FromDatastore converter functions:
 // - ToDatastore: Converts API message to Datastore entity
 // - FromDatastore: Converts Datastore entity back to API message
 //
@@ -406,7 +407,7 @@ func buildConverterData(msgInfo *collector.MessageInfo, reg *registry.ConverterR
 
 		mapping := buildFieldMapping(sourceField, mergedField, reg, sourcePkgName)
 
-		// Skip fields marked as ConvertIgnore (no conversion available, decorator handles)
+		// Skip fields marked as ConvertIgnore (no conversion available)
 		if mapping.ToTargetConversionType == converter.ConvertIgnore {
 			continue
 		}
@@ -609,14 +610,14 @@ func buildFieldMapping(sourceField, targetField *protogen.Field, reg *registry.C
 	}
 
 	// If we got here, we have incompatible types with no known conversion
-	// Log warning and skip field (decorator must handle it)
+	// Log warning and skip field (caller must handle it)
 	log.Printf("WARNING: No type conversion found for field %q: %s (%s) → %s (%s).",
 		sourceFieldName,
 		converter.GetTypeName(sourceField), sourceKind,
 		converter.GetTypeName(targetField), targetKind)
-	log.Printf("         Field will be skipped in converter - handle in decorator function.")
+	log.Printf("         Field will be skipped in converter - will be handled by caller.")
 
-	// Skip this field - decorator must handle it
+	// Skip this field - caller must handle it
 	mapping.ToTargetConversionType = converter.ConvertIgnore
 	mapping.FromTargetConversionType = converter.ConvertIgnore
 	// NOTE: Do NOT call addRenderStrategies - we want to skip this field entirely

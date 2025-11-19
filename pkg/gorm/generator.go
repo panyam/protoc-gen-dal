@@ -138,7 +138,7 @@ func Generate(messages []*collector.MessageInfo) (*GenerateResult, error) {
 // GenerateConverters generates converter functions for transforming between
 // API messages and GORM structs.
 //
-// This generates ToGORM and FromGORM converter functions with decorator support:
+// This generates ToGORM and FromGORM converter functions:
 // - ToGORM: converter.Converts API message to GORM struct
 // - FromGORM: converter.Converts GORM struct back to API message
 //
@@ -463,14 +463,14 @@ func buildConverterData(msg *collector.MessageInfo, reg *registry.ConverterRegis
 		// Check if source has a field with the same name
 		sourceField, exists := sourceFields[mergedField.GoName]
 		if !exists {
-			// Field only exists in target (e.g., DeletedAt) - skip, decorator will handle
+			// Field only exists in target (e.g., DeletedAt) - skip, caller will handle
 			continue
 		}
 
 		// Generate conversion code based on type compatibility
 		mapping := buildFieldConversion(sourceField, mergedField, reg)
 		if mapping == nil {
-			// No conversion possible - skip, decorator must handle
+			// No conversion possible - skip, caller must handle
 			continue
 		}
 
@@ -603,7 +603,7 @@ func buildFieldConversion(sourceField, targetField *protogen.Field, reg *registr
 			mapping.ToTargetConversionType = converter.ConvertByAssignment
 			mapping.FromTargetConversionType = converter.ConvertByAssignment
 			// Return early - no further processing needed for primitive maps
-	addRenderStrategies(mapping)
+			addRenderStrategies(mapping)
 			return mapping
 		}
 	} else if sourceField.Desc.IsList() {
@@ -623,7 +623,7 @@ func buildFieldConversion(sourceField, targetField *protogen.Field, reg *registr
 			mapping.ToTargetConversionType = converter.ConvertByAssignment
 			mapping.FromTargetConversionType = converter.ConvertByAssignment
 			// Return early - no further processing needed for primitive slices
-	addRenderStrategies(mapping)
+			addRenderStrategies(mapping)
 			return mapping
 		}
 	} else if sourceKind == "message" || targetKind == "message" {
@@ -643,7 +643,7 @@ func buildFieldConversion(sourceField, targetField *protogen.Field, reg *registr
 		mapping.FromTargetCode = fromTargetCode
 		mapping.ToTargetConversionType = converter.ConvertByTransformer
 		mapping.FromTargetConversionType = converter.ConvertByTransformer
-	addRenderStrategies(mapping)
+		addRenderStrategies(mapping)
 		return mapping
 	}
 
@@ -669,7 +669,7 @@ func buildFieldConversion(sourceField, targetField *protogen.Field, reg *registr
 		mapping.FromTargetCode = fmt.Sprintf("src.%s", fieldName)
 		mapping.ToTargetConversionType = converter.ConvertByAssignment
 		mapping.FromTargetConversionType = converter.ConvertByAssignment
-	addRenderStrategies(mapping)
+		addRenderStrategies(mapping)
 		return mapping
 	}
 
@@ -709,10 +709,10 @@ func buildFieldConversion(sourceField, targetField *protogen.Field, reg *registr
 					mapping.SourceElementType = sourceTypeName
 				}
 				// Keep default converter.ConvertByTransformerWithError (already set in Step 1)
-	addRenderStrategies(mapping)
+				addRenderStrategies(mapping)
 				return mapping
 			}
-			// No converter available - warn user and skip (decorator must handle)
+			// No converter available - warn user and skip (caller must handle)
 			if mapping.IsRepeated {
 				log.Printf("WARNING: Field '%s' is []%s but no converter found for element type.\n",
 					fieldName, sourceTypeName)
@@ -725,7 +725,7 @@ func buildFieldConversion(sourceField, targetField *protogen.Field, reg *registr
 			}
 			log.Printf("         If you want automatic conversion, add 'source' annotation to %s message.\n",
 				targetMsg.Desc.Name())
-			log.Printf("         Skipping field - handle in decorator function.\n\n")
+			log.Printf("         Skipping field - handle by caller function.\n\n")
 			return nil
 		}
 	}
@@ -736,7 +736,7 @@ func buildFieldConversion(sourceField, targetField *protogen.Field, reg *registr
 		mapping.FromTargetCode = fmt.Sprintf("%s(src.%s)", common.ProtoKindToGoType(sourceKind), fieldName)
 		mapping.ToTargetConversionType = converter.ConvertByAssignment
 		mapping.FromTargetConversionType = converter.ConvertByAssignment
-	addRenderStrategies(mapping)
+		addRenderStrategies(mapping)
 		return mapping
 	}
 
@@ -745,7 +745,7 @@ func buildFieldConversion(sourceField, targetField *protogen.Field, reg *registr
 		fieldName,
 		converter.GetTypeName(sourceField), sourceKind,
 		converter.GetTypeName(targetField), targetKind)
-	log.Printf("         Field will be skipped in converter - handle in decorator function.")
+	log.Printf("         Field will be skipped in converter - handle by caller function.")
 	return nil
 }
 

@@ -25,7 +25,7 @@ package converter
 type ConversionType int
 
 const (
-	// ConvertIgnore means skip this field in generated converter (decorator handles it)
+	// ConvertIgnore means skip this field in generated converter (caller handles it)
 	ConvertIgnore ConversionType = iota
 
 	// ConvertByAssignment means direct assignment: out.Field = src.Field
@@ -86,11 +86,11 @@ const (
 
 // FieldCharacteristics captures the properties of a field that affect rendering strategy.
 type FieldCharacteristics struct {
-	IsPointer          bool   // Whether field is a pointer type
-	IsRepeated         bool   // Whether field is a repeated (slice)
-	IsMap              bool   // Whether field is a map
-	HasMessageElements bool   // For repeated: are elements messages?
-	HasMessageValues   bool   // For map: are values messages?
+	IsPointer          bool // Whether field is a pointer type
+	IsRepeated         bool // Whether field is a repeated (slice)
+	IsMap              bool // Whether field is a map
+	HasMessageElements bool // For repeated: are elements messages?
+	HasMessageValues   bool // For map: are values messages?
 }
 
 // DetermineRenderStrategy decides how to render a field conversion in the template.
@@ -168,14 +168,14 @@ type ClassifiedField struct {
 	SetterExpr string // For setter strategies: "src.Field" or "converter(src.Field, nil, nil)"
 
 	// Metadata for rendering
-	HasNilCheck   bool   // Whether to wrap setter in "if src.Field != nil"
-	IsPointer     bool   // Whether target field is pointer
-	IsRepeated    bool   // Whether field is repeated
-	IsMap         bool   // Whether field is map
+	HasNilCheck bool // Whether to wrap setter in "if src.Field != nil"
+	IsPointer   bool // Whether target field is pointer
+	IsRepeated  bool // Whether field is repeated
+	IsMap       bool // Whether field is map
 
 	// For loop-based strategies
-	ConverterFunc string // Name of converter function (e.g., "AuthorToAuthorGORM")
-	ElementType   string // Element/value type (e.g., "AuthorGORM")
+	ConverterFunc     string // Name of converter function (e.g., "AuthorToAuthorGORM")
+	ElementType       string // Element/value type (e.g., "AuthorGORM")
 	SourceElementType string // Source element/value type (e.g., "Author")
 }
 

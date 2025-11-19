@@ -15,12 +15,7 @@ import (
 
 {{ range .Converters }}
 // {{ .SourceType }}To{{ .TargetType }} converts a {{ .SourcePkgName }}.{{ .SourceType }} to {{ .TargetType }}.
-// The optional decorator function allows custom field transformations.
-func {{ .SourceType }}To{{ .TargetType }}(
-	src *{{ .SourcePkgName }}.{{ .SourceType }},
-	dest *{{ .TargetType }},
-	decorator func(*{{ .SourcePkgName }}.{{ .SourceType }}, *{{ .TargetType }}) error,
-) (out *{{ .TargetType }}, err error) {
+func {{ .SourceType }}To{{ .TargetType }}(src *{{ .SourcePkgName }}.{{ .SourceType }}, dest *{{ .TargetType }}) (out *{{ .TargetType }}, err error) {
 	if src == nil {
 		return nil, nil
 	}
@@ -114,23 +109,11 @@ func {{ .SourceType }}To{{ .TargetType }}(
 		{{- end }}
 	{{- end }}
 
-	// Apply decorator if provided
-	if decorator != nil {
-		if err := decorator(src, dest); err != nil {
-			return nil, err
-		}
-	}
-
 	return dest, nil
 }
 
 // {{ .SourceType }}From{{ .TargetType }} converts a {{ .TargetType }} back to {{ .SourcePkgName }}.{{ .SourceType }}.
-// The optional decorator function allows custom field transformations.
-func {{ .SourceType }}From{{ .TargetType }}(
-	dest *{{ .SourcePkgName }}.{{ .SourceType }},
-	src *{{ .TargetType }},
-	decorator func(dest *{{ .SourcePkgName }}.{{ .SourceType }}, src *{{ .TargetType }}) error,
-) (out *{{ .SourcePkgName }}.{{ .SourceType }}, err error) {
+func {{ .SourceType }}From{{ .TargetType }}(dest *{{ .SourcePkgName }}.{{ .SourceType }}, src *{{ .TargetType }}) (out *{{ .SourcePkgName }}.{{ .SourceType }}, err error) {
 	if src == nil {
 		return nil, nil
 	}
@@ -221,13 +204,6 @@ func {{ .SourceType }}From{{ .TargetType }}(
 	}
 		{{- end }}
 	{{- end }}
-
-	// Apply decorator if provided
-	if decorator != nil {
-		if err := decorator(dest, src); err != nil {
-			return nil, err
-		}
-	}
 
 	return out, nil
 }

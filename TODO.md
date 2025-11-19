@@ -30,7 +30,6 @@
 - [x] Add TargetGorm to collector
 - [x] Implement extractGormInfo() function
 - [x] **TEST**: Generates converter functions (BookToBookGORM, BookFromBookGORM)
-- [x] Implement typed converter generation with decorator support
 - [x] Implement built-in type converters (Timestamp ↔ int64, numeric types)
 - [x] Implement custom converter annotations (to_func/from_func with ConverterFunc)
 - [x] Implement converter registry for nested message conversions
@@ -104,7 +103,6 @@
 - [ ] **TEST**: Repository.FindByID() works
 - [ ] Implement basic CRUD methods
 - [ ] **TEST**: Decorator works in repository methods
-- [ ] Wire decorator through repository
 
 ## Phase 3: Additional Targets
 
@@ -239,7 +237,7 @@
 **Recently Completed:**
 - ✅ Phase 1.3 & 1.4 - Complete GORM generator with advanced converter system
 - ✅ Struct generation with pointer receiver TableName() methods
-- ✅ Converter functions with decorator pattern and in-place conversion
+- ✅ Converter functions with in-place conversion
 - ✅ Built-in type converters (Timestamp ↔ int64, numeric types)
 - ✅ Custom converter annotations (to_func/from_func with ConverterFunc message)
 - ✅ Converter registry for nested message conversions
@@ -269,7 +267,7 @@ From `tests/protos/gorm/user.proto`:
 
 **Converter Features:**
 - Smart field mapping with ConversionType categorization
-- Priority: custom converters > built-in > skip (decorator handles)
+- Priority: custom converters > built-in > skip
 - Nested conversions: Automatic via registry, requires explicit `source` annotation
 - In-place conversion via dest parameter (avoids allocations)
 - Pointer vs value handling: `optional` keyword → pointer, otherwise value
@@ -280,7 +278,7 @@ From `tests/protos/gorm/user.proto`:
   - Message values in maps → loop-based conversion with value converter
 
 **Phase 2 Status:**
-- ✅ Phase 2.1 - Already complete via built-in converters and decorators
+- ✅ Phase 2.1 - Already complete via built-in converters
 - ✅ Phase 2.2 - Complete (applicative conversion for collections)
 - ✅ Phase 2.3 - Already supported via native gorm_tags (no abstraction needed)
 - ✅ Phase 2.4 - Already supported via native gorm_tags (no abstraction needed)

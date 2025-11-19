@@ -134,8 +134,8 @@ func TestGenerateGORM_SimpleMessage(t *testing.T) {
 // for converting between API messages and GORM structs.
 //
 // This test verifies:
-// - ToGORM converter function with decorator parameter
-// - FromGORM converter function with decorator parameter
+// - ToGORM converter function
+// - FromGORM converter function
 // - Pointer receivers to avoid struct copying
 func TestGenerateConverters(t *testing.T) {
 	// Given: A Book message with GORM mapping
@@ -205,11 +205,6 @@ func TestGenerateConverters(t *testing.T) {
 	// Should accept dest parameter for in-place conversion
 	if !strings.Contains(converterCode, "dest *BookGORM") {
 		t.Error("Expected dest *BookGORM parameter in ToGORM")
-	}
-
-	// Should accept decorator function
-	if !strings.Contains(converterCode, "decorator func(*") {
-		t.Error("Expected decorator parameter in ToGORM")
 	}
 
 	// Should return named GORM struct pointer and error

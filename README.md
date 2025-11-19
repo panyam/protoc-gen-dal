@@ -84,17 +84,9 @@ func (UserGORM) TableName() string {
 
 **Generated converters** (`gen/gorm/user_converters.go`):
 ```go
-func UserToUserGORM(
-    src *api.User,
-    dest *UserGORM,
-    decorator func(*api.User, *UserGORM) error,
-) (out *UserGORM, err error)
+func UserToUserGORM(src *api.User, dest *UserGORM) (out *UserGORM, err error)
 
-func UserFromUserGORM(
-    dest *api.User,
-    src *UserGORM,
-    decorator func(*api.User, *UserGORM) error,
-) (out *api.User, err error)
+func UserFromUserGORM(dest *api.User, src *UserGORM) (out *api.User, err error)
 ```
 
 **Usage**:
@@ -170,20 +162,6 @@ map<string, string> metadata = 1 [(dal.v1.column) = {
 ```protobuf
 map<string, Author> authors_by_id = 1;  // API
 map<string, AuthorGORM> authors_by_id = 1;  // GORM
-```
-
-### Custom Transformations
-
-Use decorator functions for custom field transformations:
-
-```go
-decorator := func(src *api.User, dest *UserGORM) error {
-    // Custom logic here
-    dest.NormalizedEmail = strings.ToLower(src.Email)
-    return nil
-}
-
-dbUser, err := UserToUserGORM(apiUser, nil, decorator)
 ```
 
 ### In-place Conversion

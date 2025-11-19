@@ -381,32 +381,6 @@ for _, dsUser := range fetchedUsers {
 }
 ```
 
-## Custom Transformations
-
-Use decorators for custom logic:
-
-```go
-// Add metadata on save
-saveDecorator := func(src *api.User, dest *datastore.UserDatastore) error {
-    // Custom transformations
-    dest.Email = strings.ToLower(src.Email)
-    return nil
-}
-
-dsUser, err := datastore.UserToUserDatastore(apiUser, nil, saveDecorator)
-
-// Populate Key field on load
-loadDecorator := func(dest *api.User, src *datastore.UserDatastore) error {
-    // Access Key field if needed
-    if src.Key != nil {
-        dest.Id = uint32(src.Key.ID)
-    }
-    return nil
-}
-
-apiUser, err := datastore.UserFromUserDatastore(nil, &dsUser, loadDecorator)
-```
-
 ## In-place Conversion
 
 Reuse structs to avoid allocations:
