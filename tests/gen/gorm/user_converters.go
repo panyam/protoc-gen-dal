@@ -252,8 +252,8 @@ func UserFromUserWithCustomTimestamps(
 	*dest = api.User{
 		Id:           src.Id,
 		Name:         src.Name,
-		Email:        src.Email,
 		CreatedAt:    converters.Int64ToTimestamp(src.CreatedAt),
+		Email:        src.Email,
 		Age:          src.Age,
 		Birthday:     converters.TimeToTimestamp(src.Birthday),
 		MemberNumber: src.MemberNumber,
@@ -571,7 +571,7 @@ func BlogFromBlogAsIsGORM(
 	}
 	out = dest
 
-	_, err = AuthorFromAuthorGORM(out.Author, &src.Author, nil)
+	out.Author, err = AuthorFromAuthorGORM(nil, &src.Author, nil)
 	if err != nil {
 		return nil, fmt.Errorf("converting Author: %w", err)
 	}
@@ -647,7 +647,7 @@ func BlogFromBlogGORM(
 	}
 	out = dest
 
-	_, err = AuthorFromAuthorGORM(out.Author, &src.Author, nil)
+	out.Author, err = AuthorFromAuthorGORM(nil, &src.Author, nil)
 	if err != nil {
 		return nil, fmt.Errorf("converting Author: %w", err)
 	}

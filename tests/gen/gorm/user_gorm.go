@@ -67,8 +67,8 @@ type UserWithIndexes struct {
 	Id           uint32 `gorm:"primaryKey"`
 	Name         string `gorm:"index"`
 	Email        string `gorm:"uniqueIndex"`
-	Age          uint32
 	City         string `gorm:"index:idx_city,sort:desc"`
+	Age          uint32
 	Birthday     time.Time
 	FirstName    string `gorm:"index:idx_name"`
 	LastName     string `gorm:"index:idx_name"`
@@ -89,8 +89,9 @@ type UserWithDefaults struct {
 	Name         string `gorm:"default:guest"`
 	Active       bool   `gorm:"default:true"`
 	Email        string
-	Age          uint32
+	Active       bool  `gorm:"default:true"`
 	CreatedAt    int64 `gorm:"default:CURRENT_TIMESTAMP"`
+	Age          uint32
 	Birthday     time.Time
 	MemberNumber string
 	ActivatedAt  time.Time

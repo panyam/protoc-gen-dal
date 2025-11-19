@@ -188,7 +188,7 @@ func {{ .SourceType }}From{{ .TargetType }}(
 			{{ if .FromTargetConverterFunc }}
 				{{- /* Use converter function (message type conversions) */ -}}
 				{{- if .TargetIsPointer }}if src.{{ .TargetField }} != nil { {{ end }}
-	      _, err = {{ .FromTargetConverterFunc }}(out.{{ .SourceField }}, {{ fieldRef "src" .TargetField .TargetIsPointer }}, nil)
+	      out.{{ .SourceField }}, err = {{ .FromTargetConverterFunc }}(nil, {{ fieldRef "src" .TargetField .TargetIsPointer }}, nil)
 				{{- if needsErrorCheck .FromTargetConversionType }}
         if err != nil {
           return nil, fmt.Errorf("converting {{ .SourceField }}: %w", err)

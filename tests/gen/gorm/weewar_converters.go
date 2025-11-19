@@ -417,19 +417,19 @@ func WorldFromWorldGORM(
 	}
 	out = dest
 
-	_, err = WorldDataFromWorldDataGORM(out.WorldData, &src.WorldData, nil)
+	out.WorldData, err = WorldDataFromWorldDataGORM(nil, &src.WorldData, nil)
 	if err != nil {
 		return nil, fmt.Errorf("converting WorldData: %w", err)
 	}
-	_, err = GameConfigurationFromGameConfigurationGORM(out.DefaultGameConfig, &src.DefaultGameConfig, nil)
+	out.DefaultGameConfig, err = GameConfigurationFromGameConfigurationGORM(nil, &src.DefaultGameConfig, nil)
 	if err != nil {
 		return nil, fmt.Errorf("converting DefaultGameConfig: %w", err)
 	}
-	_, err = IndexInfoFromIndexInfoGORM(out.ScreenshotIndexInfo, &src.ScreenshotIndexInfo, nil)
+	out.ScreenshotIndexInfo, err = IndexInfoFromIndexInfoGORM(nil, &src.ScreenshotIndexInfo, nil)
 	if err != nil {
 		return nil, fmt.Errorf("converting ScreenshotIndexInfo: %w", err)
 	}
-	_, err = IndexInfoFromIndexInfoGORM(out.SearchIndexInfo, &src.SearchIndexInfo, nil)
+	out.SearchIndexInfo, err = IndexInfoFromIndexInfoGORM(nil, &src.SearchIndexInfo, nil)
 	if err != nil {
 		return nil, fmt.Errorf("converting SearchIndexInfo: %w", err)
 	}
@@ -633,15 +633,15 @@ func GameFromGameGORM(
 	}
 	out = dest
 
-	_, err = GameConfigurationFromGameConfigurationGORM(out.Config, &src.Config, nil)
+	out.Config, err = GameConfigurationFromGameConfigurationGORM(nil, &src.Config, nil)
 	if err != nil {
 		return nil, fmt.Errorf("converting Config: %w", err)
 	}
-	_, err = IndexInfoFromIndexInfoGORM(out.ScreenshotIndexInfo, &src.ScreenshotIndexInfo, nil)
+	out.ScreenshotIndexInfo, err = IndexInfoFromIndexInfoGORM(nil, &src.ScreenshotIndexInfo, nil)
 	if err != nil {
 		return nil, fmt.Errorf("converting ScreenshotIndexInfo: %w", err)
 	}
-	_, err = IndexInfoFromIndexInfoGORM(out.SearchIndexInfo, &src.SearchIndexInfo, nil)
+	out.SearchIndexInfo, err = IndexInfoFromIndexInfoGORM(nil, &src.SearchIndexInfo, nil)
 	if err != nil {
 		return nil, fmt.Errorf("converting SearchIndexInfo: %w", err)
 	}
@@ -734,11 +734,11 @@ func GameConfigurationFromGameConfigurationGORM(
 	*dest = api.GameConfiguration{}
 	out = dest
 
-	_, err = IncomeConfigFromIncomeConfigGORM(out.IncomeConfigs, &src.IncomeConfigs, nil)
+	out.IncomeConfigs, err = IncomeConfigFromIncomeConfigGORM(nil, &src.IncomeConfigs, nil)
 	if err != nil {
 		return nil, fmt.Errorf("converting IncomeConfigs: %w", err)
 	}
-	_, err = GameSettingsFromGameSettingsGORM(out.Settings, &src.Settings, nil)
+	out.Settings, err = GameSettingsFromGameSettingsGORM(nil, &src.Settings, nil)
 	if err != nil {
 		return nil, fmt.Errorf("converting Settings: %w", err)
 	}
@@ -1128,7 +1128,7 @@ func GameStateFromGameStateGORM(
 	}
 	out = dest
 
-	_, err = WorldDataFromWorldDataGORM(out.WorldData, &src.WorldData, nil)
+	out.WorldData, err = WorldDataFromWorldDataGORM(nil, &src.WorldData, nil)
 	if err != nil {
 		return nil, fmt.Errorf("converting WorldData: %w", err)
 	}

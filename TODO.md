@@ -517,6 +517,45 @@ From `tests/protos/datastore/user.proto`:
 - Benefits: Consistent behavior, easier maintenance, foundation for future targets
 - Custom converters now supported by both GORM and Datastore (previously GORM-only)
 
+- ✅ Phase 3.1k - Comprehensive Converter Tests & Critical Bug Fix (COMPLETE)
+  - ✅ Created tests/tests/gorm/ folder structure mirroring source protos
+  - ✅ Wrote user_converters_test.go (27KB)
+    - ✅ User: Basic fields, timestamps (Birthday), repeated primitives (Roles)
+    - ✅ Author: Name and Email fields
+    - ✅ Blog: Nested message conversion (Blog.Author field)
+    - ✅ Product: Repeated primitives (Tags), maps (Metadata)
+    - ✅ Library: Repeated messages (Contributors []Author)
+    - ✅ Organization: Maps with messages (Departments map[string]Author)
+    - ✅ All with round-trip verification and nil handling
+  - ✅ Wrote testany_converters_test.go (10KB)
+    - ✅ google.protobuf.Any field serialization/deserialization
+    - ✅ Any field with different message types (Author, User, Product)
+    - ✅ Enum conversion (SampleEnum with all values)
+    - ✅ Timestamp field conversion (time.Time)
+    - ✅ Nil Any and nil Timestamp handling
+  - ✅ Wrote document_converters_test.go (18KB)
+    - ✅ DocumentGormEmpty: Inherits all fields from source
+    - ✅ DocumentGormPartial: Overrides specific fields
+    - ✅ DocumentGormSkip: Uses skip_field to exclude fields
+    - ✅ DocumentGormExtra: Adds new fields not in source
+    - ✅ Field merging opt-out model verification
+  - ✅ Wrote weewar_converters_test.go (21KB)
+    - ✅ World: 3-level nested structures (World → WorldData → Tiles/Units)
+    - ✅ WorldChange: Oneof field handling (UnitMovedChange, UnitDamagedChange)
+    - ✅ Complex nested message round-trip conversion
+    - ✅ Repeated nested messages with multiple levels
+  - ✅ **CRITICAL BUG FIX**: Nested message converter templates
+    - ✅ Bug: FromTarget converters discarded return value of nested conversions
+    - ✅ Line 171 in pkg/gorm/templates/converters.go.tmpl
+    - ✅ Line 191 in pkg/datastore/templates/converters.go.tmpl
+    - ✅ Changed: `_, err = ConverterFunc(out.Field, ...)` → `out.Field, err = ConverterFunc(nil, ...)`
+    - ✅ Impact: ALL nested message conversions now work correctly
+    - ✅ Regenerated all converters with `make buf`
+  - ✅ Test Results: 45+ test cases, 100% pass rate
+  - ✅ Coverage: timestamps, Any fields, enums, nested messages (2-3 levels), repeated fields, maps, field merging, oneof
+
+**Bug Impact:** Before the fix, Blog.Author and World.WorldData were always nil after round-trip conversion. The template was calling the nested converter but discarding the return value, leaving the destination field nil. This affected every FromTarget converter with nested message fields in both GORM and Datastore generators.
+
 **Next:**
 1. **Phase 3.2**: postgres-raw (Go + database/sql)
 2. **Phase 3.3**: firestore (Go)

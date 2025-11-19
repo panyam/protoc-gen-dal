@@ -518,22 +518,22 @@ func WorldFromWorldDatastore(
 	}
 	out = dest
 
-	_, err = WorldDataFromWorldDataDatastore(out.WorldData, &src.WorldData, nil)
+	out.WorldData, err = WorldDataFromWorldDataDatastore(nil, &src.WorldData, nil)
 	if err != nil {
 		return nil, fmt.Errorf("converting WorldData: %w", err)
 	}
 
-	_, err = GameConfigurationFromGameConfigurationDatastore(out.DefaultGameConfig, &src.DefaultGameConfig, nil)
+	out.DefaultGameConfig, err = GameConfigurationFromGameConfigurationDatastore(nil, &src.DefaultGameConfig, nil)
 	if err != nil {
 		return nil, fmt.Errorf("converting DefaultGameConfig: %w", err)
 	}
 
-	_, err = IndexInfoFromIndexInfoDatastore(out.ScreenshotIndexInfo, &src.ScreenshotIndexInfo, nil)
+	out.ScreenshotIndexInfo, err = IndexInfoFromIndexInfoDatastore(nil, &src.ScreenshotIndexInfo, nil)
 	if err != nil {
 		return nil, fmt.Errorf("converting ScreenshotIndexInfo: %w", err)
 	}
 
-	_, err = IndexInfoFromIndexInfoDatastore(out.SearchIndexInfo, &src.SearchIndexInfo, nil)
+	out.SearchIndexInfo, err = IndexInfoFromIndexInfoDatastore(nil, &src.SearchIndexInfo, nil)
 	if err != nil {
 		return nil, fmt.Errorf("converting SearchIndexInfo: %w", err)
 	}
@@ -777,17 +777,17 @@ func GameFromGameDatastore(
 	}
 	out = dest
 
-	_, err = GameConfigurationFromGameConfigurationDatastore(out.Config, &src.Config, nil)
+	out.Config, err = GameConfigurationFromGameConfigurationDatastore(nil, &src.Config, nil)
 	if err != nil {
 		return nil, fmt.Errorf("converting Config: %w", err)
 	}
 
-	_, err = IndexInfoFromIndexInfoDatastore(out.ScreenshotIndexInfo, &src.ScreenshotIndexInfo, nil)
+	out.ScreenshotIndexInfo, err = IndexInfoFromIndexInfoDatastore(nil, &src.ScreenshotIndexInfo, nil)
 	if err != nil {
 		return nil, fmt.Errorf("converting ScreenshotIndexInfo: %w", err)
 	}
 
-	_, err = IndexInfoFromIndexInfoDatastore(out.SearchIndexInfo, &src.SearchIndexInfo, nil)
+	out.SearchIndexInfo, err = IndexInfoFromIndexInfoDatastore(nil, &src.SearchIndexInfo, nil)
 	if err != nil {
 		return nil, fmt.Errorf("converting SearchIndexInfo: %w", err)
 	}
@@ -900,12 +900,12 @@ func GameConfigurationFromGameConfigurationDatastore(
 	*dest = api.GameConfiguration{}
 	out = dest
 
-	_, err = IncomeConfigFromIncomeConfigDatastore(out.IncomeConfigs, &src.IncomeConfigs, nil)
+	out.IncomeConfigs, err = IncomeConfigFromIncomeConfigDatastore(nil, &src.IncomeConfigs, nil)
 	if err != nil {
 		return nil, fmt.Errorf("converting IncomeConfigs: %w", err)
 	}
 
-	_, err = GameSettingsFromGameSettingsDatastore(out.Settings, &src.Settings, nil)
+	out.Settings, err = GameSettingsFromGameSettingsDatastore(nil, &src.Settings, nil)
 	if err != nil {
 		return nil, fmt.Errorf("converting Settings: %w", err)
 	}
@@ -1395,7 +1395,7 @@ func GameStateFromGameStateDatastore(
 	}
 	out = dest
 
-	_, err = WorldDataFromWorldDataDatastore(out.WorldData, &src.WorldData, nil)
+	out.WorldData, err = WorldDataFromWorldDataDatastore(nil, &src.WorldData, nil)
 	if err != nil {
 		return nil, fmt.Errorf("converting WorldData: %w", err)
 	}

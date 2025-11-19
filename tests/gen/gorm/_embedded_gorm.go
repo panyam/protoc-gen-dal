@@ -24,3 +24,21 @@ type Timestamp struct {
 	Seconds int64
 	Nanos   int32
 }
+
+// MetadataEntry
+type MetadataEntry struct {
+	Key   string
+	Value string
+}
+
+// DepartmentsEntry
+type DepartmentsEntry struct {
+	Key   string
+	Value AuthorGORM
+}
+
+// Any
+type Any struct {
+	TypeUrl string
+	Value   []byte
+}
