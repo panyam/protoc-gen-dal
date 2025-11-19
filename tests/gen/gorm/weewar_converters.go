@@ -2,6 +2,8 @@
 package gorm
 
 import (
+	"fmt"
+
 	"github.com/panyam/protoc-gen-dal/pkg/converters"
 	api "github.com/panyam/protoc-gen-dal/tests/gen/go/api"
 )
@@ -29,6 +31,7 @@ func IndexInfoToIndexInfoGORM(
 	if src.LastUpdatedAt != nil {
 		out.LastUpdatedAt = converters.TimestampToTime(src.LastUpdatedAt)
 	}
+
 	if src.LastIndexedAt != nil {
 		out.LastIndexedAt = converters.TimestampToTime(src.LastIndexedAt)
 	}
@@ -178,6 +181,16 @@ func UnitToUnitGORM(
 	}
 	out = dest
 
+	if src.AttackHistory != nil {
+		out.AttackHistory = make([]AttackRecordGORM, len(src.AttackHistory))
+		for i, item := range src.AttackHistory {
+			_, err = AttackRecordToAttackRecordGORM(item, &out.AttackHistory[i], nil)
+			if err != nil {
+				return nil, fmt.Errorf("converting AttackHistory[%d]: %w", i, err)
+			}
+		}
+	}
+
 	// Apply decorator if provided
 	if decorator != nil {
 		if err := decorator(src, dest); err != nil {
@@ -218,6 +231,16 @@ func UnitFromUnitGORM(
 		ChosenAlternative:       src.ChosenAlternative,
 	}
 	out = dest
+
+	if src.AttackHistory != nil {
+		out.AttackHistory = make([]*api.AttackRecord, len(src.AttackHistory))
+		for i, item := range src.AttackHistory {
+			out.AttackHistory[i], err = AttackRecordFromAttackRecordGORM(nil, &item, nil)
+			if err != nil {
+				return nil, fmt.Errorf("converting AttackHistory[%d]: %w", i, err)
+			}
+		}
+	}
 
 	// Apply decorator if provided
 	if decorator != nil {
@@ -325,8 +348,34 @@ func WorldToWorldGORM(
 	if src.CreatedAt != nil {
 		out.CreatedAt = converters.TimestampToTime(src.CreatedAt)
 	}
+
 	if src.UpdatedAt != nil {
 		out.UpdatedAt = converters.TimestampToTime(src.UpdatedAt)
+	}
+
+	if src.WorldData != nil {
+		_, err = WorldDataToWorldDataGORM(src.WorldData, &out.WorldData, nil)
+		if err != nil {
+			return nil, fmt.Errorf("converting WorldData: %w", err)
+		}
+	}
+	if src.DefaultGameConfig != nil {
+		_, err = GameConfigurationToGameConfigurationGORM(src.DefaultGameConfig, &out.DefaultGameConfig, nil)
+		if err != nil {
+			return nil, fmt.Errorf("converting DefaultGameConfig: %w", err)
+		}
+	}
+	if src.ScreenshotIndexInfo != nil {
+		_, err = IndexInfoToIndexInfoGORM(src.ScreenshotIndexInfo, &out.ScreenshotIndexInfo, nil)
+		if err != nil {
+			return nil, fmt.Errorf("converting ScreenshotIndexInfo: %w", err)
+		}
+	}
+	if src.SearchIndexInfo != nil {
+		_, err = IndexInfoToIndexInfoGORM(src.SearchIndexInfo, &out.SearchIndexInfo, nil)
+		if err != nil {
+			return nil, fmt.Errorf("converting SearchIndexInfo: %w", err)
+		}
 	}
 
 	// Apply decorator if provided
@@ -368,6 +417,23 @@ func WorldFromWorldGORM(
 	}
 	out = dest
 
+	_, err = WorldDataFromWorldDataGORM(out.WorldData, &src.WorldData, nil)
+	if err != nil {
+		return nil, fmt.Errorf("converting WorldData: %w", err)
+	}
+	_, err = GameConfigurationFromGameConfigurationGORM(out.DefaultGameConfig, &src.DefaultGameConfig, nil)
+	if err != nil {
+		return nil, fmt.Errorf("converting DefaultGameConfig: %w", err)
+	}
+	_, err = IndexInfoFromIndexInfoGORM(out.ScreenshotIndexInfo, &src.ScreenshotIndexInfo, nil)
+	if err != nil {
+		return nil, fmt.Errorf("converting ScreenshotIndexInfo: %w", err)
+	}
+	_, err = IndexInfoFromIndexInfoGORM(out.SearchIndexInfo, &src.SearchIndexInfo, nil)
+	if err != nil {
+		return nil, fmt.Errorf("converting SearchIndexInfo: %w", err)
+	}
+
 	// Apply decorator if provided
 	if decorator != nil {
 		if err := decorator(dest, src); err != nil {
@@ -396,6 +462,25 @@ func WorldDataToWorldDataGORM(
 	*dest = WorldDataGORM{}
 	out = dest
 
+	if src.Tiles != nil {
+		out.Tiles = make([]TileGORM, len(src.Tiles))
+		for i, item := range src.Tiles {
+			_, err = TileToTileGORM(item, &out.Tiles[i], nil)
+			if err != nil {
+				return nil, fmt.Errorf("converting Tiles[%d]: %w", i, err)
+			}
+		}
+	}
+	if src.Units != nil {
+		out.Units = make([]UnitGORM, len(src.Units))
+		for i, item := range src.Units {
+			_, err = UnitToUnitGORM(item, &out.Units[i], nil)
+			if err != nil {
+				return nil, fmt.Errorf("converting Units[%d]: %w", i, err)
+			}
+		}
+	}
+
 	// Apply decorator if provided
 	if decorator != nil {
 		if err := decorator(src, dest); err != nil {
@@ -423,6 +508,25 @@ func WorldDataFromWorldDataGORM(
 	// Initialize struct with inline values
 	*dest = api.WorldData{}
 	out = dest
+
+	if src.Tiles != nil {
+		out.Tiles = make([]*api.Tile, len(src.Tiles))
+		for i, item := range src.Tiles {
+			out.Tiles[i], err = TileFromTileGORM(nil, &item, nil)
+			if err != nil {
+				return nil, fmt.Errorf("converting Tiles[%d]: %w", i, err)
+			}
+		}
+	}
+	if src.Units != nil {
+		out.Units = make([]*api.Unit, len(src.Units))
+		for i, item := range src.Units {
+			out.Units[i], err = UnitFromUnitGORM(nil, &item, nil)
+			if err != nil {
+				return nil, fmt.Errorf("converting Units[%d]: %w", i, err)
+			}
+		}
+	}
 
 	// Apply decorator if provided
 	if decorator != nil {
@@ -465,8 +569,28 @@ func GameToGameGORM(
 	if src.CreatedAt != nil {
 		out.CreatedAt = converters.TimestampToTime(src.CreatedAt)
 	}
+
 	if src.UpdatedAt != nil {
 		out.UpdatedAt = converters.TimestampToTime(src.UpdatedAt)
+	}
+
+	if src.Config != nil {
+		_, err = GameConfigurationToGameConfigurationGORM(src.Config, &out.Config, nil)
+		if err != nil {
+			return nil, fmt.Errorf("converting Config: %w", err)
+		}
+	}
+	if src.ScreenshotIndexInfo != nil {
+		_, err = IndexInfoToIndexInfoGORM(src.ScreenshotIndexInfo, &out.ScreenshotIndexInfo, nil)
+		if err != nil {
+			return nil, fmt.Errorf("converting ScreenshotIndexInfo: %w", err)
+		}
+	}
+	if src.SearchIndexInfo != nil {
+		_, err = IndexInfoToIndexInfoGORM(src.SearchIndexInfo, &out.SearchIndexInfo, nil)
+		if err != nil {
+			return nil, fmt.Errorf("converting SearchIndexInfo: %w", err)
+		}
 	}
 
 	// Apply decorator if provided
@@ -509,6 +633,19 @@ func GameFromGameGORM(
 	}
 	out = dest
 
+	_, err = GameConfigurationFromGameConfigurationGORM(out.Config, &src.Config, nil)
+	if err != nil {
+		return nil, fmt.Errorf("converting Config: %w", err)
+	}
+	_, err = IndexInfoFromIndexInfoGORM(out.ScreenshotIndexInfo, &src.ScreenshotIndexInfo, nil)
+	if err != nil {
+		return nil, fmt.Errorf("converting ScreenshotIndexInfo: %w", err)
+	}
+	_, err = IndexInfoFromIndexInfoGORM(out.SearchIndexInfo, &src.SearchIndexInfo, nil)
+	if err != nil {
+		return nil, fmt.Errorf("converting SearchIndexInfo: %w", err)
+	}
+
 	// Apply decorator if provided
 	if decorator != nil {
 		if err := decorator(dest, src); err != nil {
@@ -537,6 +674,38 @@ func GameConfigurationToGameConfigurationGORM(
 	*dest = GameConfigurationGORM{}
 	out = dest
 
+	if src.IncomeConfigs != nil {
+		_, err = IncomeConfigToIncomeConfigGORM(src.IncomeConfigs, &out.IncomeConfigs, nil)
+		if err != nil {
+			return nil, fmt.Errorf("converting IncomeConfigs: %w", err)
+		}
+	}
+	if src.Settings != nil {
+		_, err = GameSettingsToGameSettingsGORM(src.Settings, &out.Settings, nil)
+		if err != nil {
+			return nil, fmt.Errorf("converting Settings: %w", err)
+		}
+	}
+
+	if src.Players != nil {
+		out.Players = make([]GamePlayerGORM, len(src.Players))
+		for i, item := range src.Players {
+			_, err = GamePlayerToGamePlayerGORM(item, &out.Players[i], nil)
+			if err != nil {
+				return nil, fmt.Errorf("converting Players[%d]: %w", i, err)
+			}
+		}
+	}
+	if src.Teams != nil {
+		out.Teams = make([]GameTeamGORM, len(src.Teams))
+		for i, item := range src.Teams {
+			_, err = GameTeamToGameTeamGORM(item, &out.Teams[i], nil)
+			if err != nil {
+				return nil, fmt.Errorf("converting Teams[%d]: %w", i, err)
+			}
+		}
+	}
+
 	// Apply decorator if provided
 	if decorator != nil {
 		if err := decorator(src, dest); err != nil {
@@ -564,6 +733,34 @@ func GameConfigurationFromGameConfigurationGORM(
 	// Initialize struct with inline values
 	*dest = api.GameConfiguration{}
 	out = dest
+
+	_, err = IncomeConfigFromIncomeConfigGORM(out.IncomeConfigs, &src.IncomeConfigs, nil)
+	if err != nil {
+		return nil, fmt.Errorf("converting IncomeConfigs: %w", err)
+	}
+	_, err = GameSettingsFromGameSettingsGORM(out.Settings, &src.Settings, nil)
+	if err != nil {
+		return nil, fmt.Errorf("converting Settings: %w", err)
+	}
+
+	if src.Players != nil {
+		out.Players = make([]*api.GamePlayer, len(src.Players))
+		for i, item := range src.Players {
+			out.Players[i], err = GamePlayerFromGamePlayerGORM(nil, &item, nil)
+			if err != nil {
+				return nil, fmt.Errorf("converting Players[%d]: %w", i, err)
+			}
+		}
+	}
+	if src.Teams != nil {
+		out.Teams = make([]*api.GameTeam, len(src.Teams))
+		for i, item := range src.Teams {
+			out.Teams[i], err = GameTeamFromGameTeamGORM(nil, &item, nil)
+			if err != nil {
+				return nil, fmt.Errorf("converting Teams[%d]: %w", i, err)
+			}
+		}
+	}
 
 	// Apply decorator if provided
 	if decorator != nil {
@@ -885,6 +1082,13 @@ func GameStateToGameStateGORM(
 		out.UpdatedAt = converters.TimestampToTime(src.UpdatedAt)
 	}
 
+	if src.WorldData != nil {
+		_, err = WorldDataToWorldDataGORM(src.WorldData, &out.WorldData, nil)
+		if err != nil {
+			return nil, fmt.Errorf("converting WorldData: %w", err)
+		}
+	}
+
 	// Apply decorator if provided
 	if decorator != nil {
 		if err := decorator(src, dest); err != nil {
@@ -924,6 +1128,11 @@ func GameStateFromGameStateGORM(
 	}
 	out = dest
 
+	_, err = WorldDataFromWorldDataGORM(out.WorldData, &src.WorldData, nil)
+	if err != nil {
+		return nil, fmt.Errorf("converting WorldData: %w", err)
+	}
+
 	// Apply decorator if provided
 	if decorator != nil {
 		if err := decorator(dest, src); err != nil {
@@ -954,6 +1163,16 @@ func GameMoveHistoryToGameMoveHistoryGORM(
 	}
 	out = dest
 
+	if src.Groups != nil {
+		out.Groups = make([]GameMoveGroupGORM, len(src.Groups))
+		for i, item := range src.Groups {
+			_, err = GameMoveGroupToGameMoveGroupGORM(item, &out.Groups[i], nil)
+			if err != nil {
+				return nil, fmt.Errorf("converting Groups[%d]: %w", i, err)
+			}
+		}
+	}
+
 	// Apply decorator if provided
 	if decorator != nil {
 		if err := decorator(src, dest); err != nil {
@@ -983,6 +1202,16 @@ func GameMoveHistoryFromGameMoveHistoryGORM(
 		GameId: src.GameId,
 	}
 	out = dest
+
+	if src.Groups != nil {
+		out.Groups = make([]*api.GameMoveGroup, len(src.Groups))
+		for i, item := range src.Groups {
+			out.Groups[i], err = GameMoveGroupFromGameMoveGroupGORM(nil, &item, nil)
+			if err != nil {
+				return nil, fmt.Errorf("converting Groups[%d]: %w", i, err)
+			}
+		}
+	}
 
 	// Apply decorator if provided
 	if decorator != nil {
@@ -1015,8 +1244,19 @@ func GameMoveGroupToGameMoveGroupGORM(
 	if src.StartedAt != nil {
 		out.StartedAt = converters.TimestampToTime(src.StartedAt)
 	}
+
 	if src.EndedAt != nil {
 		out.EndedAt = converters.TimestampToTime(src.EndedAt)
+	}
+
+	if src.Moves != nil {
+		out.Moves = make([]GameMoveGORM, len(src.Moves))
+		for i, item := range src.Moves {
+			_, err = GameMoveToGameMoveGORM(item, &out.Moves[i], nil)
+			if err != nil {
+				return nil, fmt.Errorf("converting Moves[%d]: %w", i, err)
+			}
+		}
 	}
 
 	// Apply decorator if provided
@@ -1049,6 +1289,16 @@ func GameMoveGroupFromGameMoveGroupGORM(
 		EndedAt:   converters.TimeToTimestamp(src.EndedAt),
 	}
 	out = dest
+
+	if src.Moves != nil {
+		out.Moves = make([]*api.GameMove, len(src.Moves))
+		for i, item := range src.Moves {
+			out.Moves[i], err = GameMoveFromGameMoveGORM(nil, &item, nil)
+			if err != nil {
+				return nil, fmt.Errorf("converting Moves[%d]: %w", i, err)
+			}
+		}
+	}
 
 	// Apply decorator if provided
 	if decorator != nil {

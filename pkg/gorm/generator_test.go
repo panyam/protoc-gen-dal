@@ -267,6 +267,9 @@ type testField struct {
 	number     int32
 	typeName   string
 	columnOpts *dalv1.ColumnOptions
+	repeated   bool
+	isMap      bool
+	mapKeyType string // For map fields: "int32", "string", etc.
 }
 
 func createTestPlugin(t *testing.T, protoSet *testProtoSet) *protogen.Plugin {
@@ -314,7 +317,7 @@ func buildFileDescriptor(t *testing.T, file testFile) *descriptorpb.FileDescript
 	}
 
 	for _, msg := range file.messages {
-		msgDesc := buildMessageDescriptor(t, msg)
+		msgDesc := buildMessageDescriptorWithPackage(t, msg, file.pkg)
 		fileDesc.MessageType = append(fileDesc.MessageType, msgDesc)
 	}
 
@@ -322,6 +325,10 @@ func buildFileDescriptor(t *testing.T, file testFile) *descriptorpb.FileDescript
 }
 
 func buildMessageDescriptor(t *testing.T, msg testMessage) *descriptorpb.DescriptorProto {
+	return buildMessageDescriptorWithPackage(t, msg, "")
+}
+
+func buildMessageDescriptorWithPackage(t *testing.T, msg testMessage, pkg string) *descriptorpb.DescriptorProto {
 	t.Helper()
 
 	msgDesc := &descriptorpb.DescriptorProto{
@@ -330,28 +337,83 @@ func buildMessageDescriptor(t *testing.T, msg testMessage) *descriptorpb.Descrip
 
 	// Add fields
 	for _, field := range msg.fields {
-		fieldDesc := &descriptorpb.FieldDescriptorProto{
-			Name:   proto.String(field.name),
-			Number: proto.Int32(field.number),
-		}
+		if field.isMap {
+			// Map fields require a nested entry message
+			// Capitalize first letter of field name
+			fieldName := field.name
+			if len(fieldName) > 0 {
+				fieldName = strings.ToUpper(fieldName[:1]) + fieldName[1:]
+			}
+			entryMsgName := fieldName + "Entry"
+			entryMsg := &descriptorpb.DescriptorProto{
+				Name: proto.String(entryMsgName),
+				Options: &descriptorpb.MessageOptions{
+					MapEntry: proto.Bool(true),
+				},
+				Field: []*descriptorpb.FieldDescriptorProto{
+					{
+						Name:   proto.String("key"),
+						Number: proto.Int32(1),
+						Type:   getFieldType(field.mapKeyType),
+						Label:  descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL.Enum(),
+					},
+					{
+						Name:     proto.String("value"),
+						Number:   proto.Int32(2),
+						Type:     getFieldType(field.typeName),
+						TypeName: getTypeName(field.typeName),
+						Label:    descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL.Enum(),
+					},
+				},
+			}
+			msgDesc.NestedType = append(msgDesc.NestedType, entryMsg)
 
-		switch field.typeName {
-		case "string":
-			fieldDesc.Type = descriptorpb.FieldDescriptorProto_TYPE_STRING.Enum()
-		case "int32":
-			fieldDesc.Type = descriptorpb.FieldDescriptorProto_TYPE_INT32.Enum()
-		case "int64":
-			fieldDesc.Type = descriptorpb.FieldDescriptorProto_TYPE_INT64.Enum()
-		}
+			// Add the map field itself
+			fullEntryName := "." + pkg + "." + msg.name + "." + entryMsgName
+			if pkg == "" {
+				fullEntryName = "." + msg.name + "." + entryMsgName
+			}
+			fieldDesc := &descriptorpb.FieldDescriptorProto{
+				Name:     proto.String(field.name),
+				Number:   proto.Int32(field.number),
+				Type:     descriptorpb.FieldDescriptorProto_TYPE_MESSAGE.Enum(),
+				TypeName: proto.String(fullEntryName),
+				Label:    descriptorpb.FieldDescriptorProto_LABEL_REPEATED.Enum(),
+			}
+			msgDesc.Field = append(msgDesc.Field, fieldDesc)
+		} else {
+			fieldDesc := &descriptorpb.FieldDescriptorProto{
+				Name:   proto.String(field.name),
+				Number: proto.Int32(field.number),
+			}
 
-		// Add column options if present
-		if field.columnOpts != nil {
-			opts := &descriptorpb.FieldOptions{}
-			proto.SetExtension(opts, dalv1.E_Column, field.columnOpts)
-			fieldDesc.Options = opts
-		}
+			switch field.typeName {
+			case "string":
+				fieldDesc.Type = descriptorpb.FieldDescriptorProto_TYPE_STRING.Enum()
+			case "int32":
+				fieldDesc.Type = descriptorpb.FieldDescriptorProto_TYPE_INT32.Enum()
+			case "int64":
+				fieldDesc.Type = descriptorpb.FieldDescriptorProto_TYPE_INT64.Enum()
+			default:
+				// If not a scalar type, assume it's a message type
+				fieldDesc.Type = descriptorpb.FieldDescriptorProto_TYPE_MESSAGE.Enum()
+				fieldDesc.TypeName = proto.String("." + field.typeName)
+			}
 
-		msgDesc.Field = append(msgDesc.Field, fieldDesc)
+			// Set label for repeated fields
+			if field.repeated {
+				fieldDesc.Label = descriptorpb.FieldDescriptorProto_LABEL_REPEATED.Enum()
+			}
+
+			// Add column options if present
+			if field.columnOpts != nil {
+				opts := &descriptorpb.FieldOptions{}
+				proto.SetExtension(opts, dalv1.E_Column, field.columnOpts)
+				fieldDesc.Options = opts
+			}
+
+			msgDesc.Field = append(msgDesc.Field, fieldDesc)
+		}
 	}
 
 	// Add GORM options if present
@@ -362,4 +424,28 @@ func buildMessageDescriptor(t *testing.T, msg testMessage) *descriptorpb.Descrip
 	}
 
 	return msgDesc
+}
+
+// getFieldType returns the proto field type enum for a type name
+func getFieldType(typeName string) *descriptorpb.FieldDescriptorProto_Type {
+	switch typeName {
+	case "string":
+		return descriptorpb.FieldDescriptorProto_TYPE_STRING.Enum()
+	case "int32":
+		return descriptorpb.FieldDescriptorProto_TYPE_INT32.Enum()
+	case "int64":
+		return descriptorpb.FieldDescriptorProto_TYPE_INT64.Enum()
+	default:
+		return descriptorpb.FieldDescriptorProto_TYPE_MESSAGE.Enum()
+	}
+}
+
+// getTypeName returns the full type name for message types, nil for scalars
+func getTypeName(typeName string) *string {
+	switch typeName {
+	case "string", "int32", "int64":
+		return nil
+	default:
+		return proto.String("." + typeName)
+	}
 }

@@ -184,8 +184,8 @@ type GameMoveGroupGORM struct {
 
 // MoveUnitActionGORM is the GORM model for api.MoveUnitAction
 type MoveUnitActionGORM struct {
-	ReconstructedPath []byte
 	FromQ             int32
+	ReconstructedPath []byte
 	FromR             int32
 	ToQ               int32
 	ToR               int32

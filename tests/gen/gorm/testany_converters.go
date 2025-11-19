@@ -31,6 +31,7 @@ func TestRecord1ToTestRecord1GORM(
 	if src.TimeField != nil {
 		out.TimeField = converters.TimestampToTime(src.TimeField)
 	}
+
 	if src.ExtraData != nil {
 		out.ExtraData, err = converters.AnyToBytes(src.ExtraData)
 		if err != nil {

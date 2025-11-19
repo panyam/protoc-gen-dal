@@ -38,7 +38,7 @@ func {{ .SourceType }}To{{ .TargetType }}(
 
 	{{/* Post-construction setters */}}
 	{{- range .ToTargetSetterFields }}
-		{{- if isSetterSimple .ToTargetRenderStrategy }}
+		{{ if isSetterSimple .ToTargetRenderStrategy }}
 			{{- if .SourceIsPointer }}
 	if src.{{ .SourceField }} != nil {
 		out.{{ .TargetField }} = {{ .ToTargetCode }}
@@ -46,7 +46,7 @@ func {{ .SourceType }}To{{ .TargetType }}(
 			{{- else }}
 	out.{{ .TargetField }} = {{ .ToTargetCode }}
 			{{- end }}
-		{{- else if isSetterTransform .ToTargetRenderStrategy }}
+		{{ else if isSetterTransform .ToTargetRenderStrategy }}
 			{{- if .SourceIsPointer }}
 	if src.{{ .SourceField }} != nil {
 		out.{{ .TargetField }} = {{ .ToTargetCode }}
@@ -54,7 +54,7 @@ func {{ .SourceType }}To{{ .TargetType }}(
 			{{- else }}
 	out.{{ .TargetField }} = {{ .ToTargetCode }}
 			{{- end }}
-		{{- else if or (isSetterWithError .ToTargetRenderStrategy) (isSetterIgnoreError .ToTargetRenderStrategy) }}
+		{{ else if or (isSetterWithError .ToTargetRenderStrategy) (isSetterIgnoreError .ToTargetRenderStrategy) }}
 			{{- if .ToTargetConverterFunc }}
 				{{- /* Use converter function (message type conversions) */ -}}
 				{{- if .SourceIsPointer }}if src.{{ .SourceField }} != nil { {{ end }}

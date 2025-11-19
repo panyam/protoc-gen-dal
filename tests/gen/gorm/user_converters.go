@@ -35,12 +35,15 @@ func UserToUserGORM(
 	if src.Birthday != nil {
 		out.Birthday = converters.TimestampToTime(src.Birthday)
 	}
+
 	if src.ActivatedAt != nil {
 		out.ActivatedAt = converters.TimestampToTime(src.ActivatedAt)
 	}
+
 	if src.CreatedAt != nil {
 		out.CreatedAt = converters.TimestampToTime(src.CreatedAt)
 	}
+
 	if src.UpdatedAt != nil {
 		out.UpdatedAt = converters.TimestampToTime(src.UpdatedAt)
 	}
@@ -120,12 +123,15 @@ func UserToUserWithPermissions(
 	if src.CreatedAt != nil {
 		out.CreatedAt = converters.TimestampToTime(src.CreatedAt)
 	}
+
 	if src.UpdatedAt != nil {
 		out.UpdatedAt = converters.TimestampToTime(src.UpdatedAt)
 	}
+
 	if src.Birthday != nil {
 		out.Birthday = converters.TimestampToTime(src.Birthday)
 	}
+
 	if src.ActivatedAt != nil {
 		out.ActivatedAt = converters.TimestampToTime(src.ActivatedAt)
 	}
@@ -205,12 +211,15 @@ func UserToUserWithCustomTimestamps(
 	if src.CreatedAt != nil {
 		out.CreatedAt = converters.TimestampToInt64(src.CreatedAt)
 	}
+
 	if src.Birthday != nil {
 		out.Birthday = converters.TimestampToTime(src.Birthday)
 	}
+
 	if src.ActivatedAt != nil {
 		out.ActivatedAt = converters.TimestampToTime(src.ActivatedAt)
 	}
+
 	if src.UpdatedAt != nil {
 		out.UpdatedAt = converters.TimestampToTime(src.UpdatedAt)
 	}
@@ -243,8 +252,8 @@ func UserFromUserWithCustomTimestamps(
 	*dest = api.User{
 		Id:           src.Id,
 		Name:         src.Name,
-		CreatedAt:    converters.Int64ToTimestamp(src.CreatedAt),
 		Email:        src.Email,
+		CreatedAt:    converters.Int64ToTimestamp(src.CreatedAt),
 		Age:          src.Age,
 		Birthday:     converters.TimeToTimestamp(src.Birthday),
 		MemberNumber: src.MemberNumber,
@@ -290,12 +299,15 @@ func UserToUserWithIndexes(
 	if src.Birthday != nil {
 		out.Birthday = converters.TimestampToTime(src.Birthday)
 	}
+
 	if src.ActivatedAt != nil {
 		out.ActivatedAt = converters.TimestampToTime(src.ActivatedAt)
 	}
+
 	if src.CreatedAt != nil {
 		out.CreatedAt = converters.TimestampToTime(src.CreatedAt)
 	}
+
 	if src.UpdatedAt != nil {
 		out.UpdatedAt = converters.TimestampToTime(src.UpdatedAt)
 	}
@@ -375,12 +387,15 @@ func UserToUserWithDefaults(
 	if src.CreatedAt != nil {
 		out.CreatedAt = converters.TimestampToInt64(src.CreatedAt)
 	}
+
 	if src.Birthday != nil {
 		out.Birthday = converters.TimestampToTime(src.Birthday)
 	}
+
 	if src.ActivatedAt != nil {
 		out.ActivatedAt = converters.TimestampToTime(src.ActivatedAt)
 	}
+
 	if src.UpdatedAt != nil {
 		out.UpdatedAt = converters.TimestampToTime(src.UpdatedAt)
 	}
@@ -414,8 +429,8 @@ func UserFromUserWithDefaults(
 		Id:           src.Id,
 		Name:         src.Name,
 		Email:        src.Email,
-		CreatedAt:    converters.Int64ToTimestamp(src.CreatedAt),
 		Age:          src.Age,
+		CreatedAt:    converters.Int64ToTimestamp(src.CreatedAt),
 		Birthday:     converters.TimeToTimestamp(src.Birthday),
 		MemberNumber: src.MemberNumber,
 		ActivatedAt:  converters.TimeToTimestamp(src.ActivatedAt),
@@ -517,6 +532,13 @@ func BlogToBlogAsIsGORM(
 	}
 	out = dest
 
+	if src.Author != nil {
+		_, err = AuthorToAuthorGORM(src.Author, &out.Author, nil)
+		if err != nil {
+			return nil, fmt.Errorf("converting Author: %w", err)
+		}
+	}
+
 	// Apply decorator if provided
 	if decorator != nil {
 		if err := decorator(src, dest); err != nil {
@@ -548,6 +570,11 @@ func BlogFromBlogAsIsGORM(
 		Title:   src.Title,
 	}
 	out = dest
+
+	_, err = AuthorFromAuthorGORM(out.Author, &src.Author, nil)
+	if err != nil {
+		return nil, fmt.Errorf("converting Author: %w", err)
+	}
 
 	// Apply decorator if provided
 	if decorator != nil {

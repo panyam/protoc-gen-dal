@@ -153,6 +153,10 @@ func GenerateConverters(messages []*collector.MessageInfo) (*GenerateResult, err
 		return &GenerateResult{Files: []*GeneratedFile{}}, nil
 	}
 
+	// Build message registry for source → target lookups
+	// This is needed for nested message type resolution during converter generation
+	msgRegistry := common.NewMessageRegistry(messages, buildStructName)
+
 	// Group messages by their source proto file
 	fileGroups := common.GroupMessagesByFile(messages)
 
@@ -160,7 +164,7 @@ func GenerateConverters(messages []*collector.MessageInfo) (*GenerateResult, err
 
 	// Generate one converter file per proto file
 	for protoFile, msgs := range fileGroups {
-		content, err := generateConverterFileCode(msgs)
+		content, err := generateConverterFileCode(msgs, msgRegistry)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate converters for %s: %w", protoFile, err)
 		}
@@ -276,7 +280,7 @@ func generateEmbeddedTypesFile(embeddedTypes map[string]*protogen.Message, sampl
 }
 
 // generateConverterFileCode generates converter functions for all messages in a proto file.
-func generateConverterFileCode(messages []*collector.MessageInfo) (string, error) {
+func generateConverterFileCode(messages []*collector.MessageInfo, msgRegistry *common.MessageRegistry) (string, error) {
 	if len(messages) == 0 {
 		return "", fmt.Errorf("no messages to generate converters for")
 	}
@@ -297,7 +301,7 @@ func generateConverterFileCode(messages []*collector.MessageInfo) (string, error
 			continue
 		}
 
-		converterData, err := buildConverterData(msg, registry)
+		converterData, err := buildConverterData(msg, registry, msgRegistry)
 		if err != nil {
 			return "", fmt.Errorf("failed to build converter data for %s: %w", msg.TargetMessage.Desc.Name(), err)
 		}
@@ -442,7 +446,7 @@ func buildStructData(msg *collector.MessageInfo, registry *common.MessageRegistr
 }
 
 // buildConverterData builds converter function data from a MessageInfo.
-func buildConverterData(msg *collector.MessageInfo, reg *registry.ConverterRegistry) (ConverterData, error) {
+func buildConverterData(msg *collector.MessageInfo, reg *registry.ConverterRegistry, msgRegistry *common.MessageRegistry) (ConverterData, error) {
 	// Extract source type name and package
 	sourceTypeName := string(msg.SourceMessage.Desc.Name())
 	sourcePkgName := common.ExtractPackageName(msg.SourceMessage)
@@ -477,7 +481,7 @@ func buildConverterData(msg *collector.MessageInfo, reg *registry.ConverterRegis
 		}
 
 		// Generate conversion code based on type compatibility
-		mapping := buildFieldConversion(sourceField, mergedField, reg)
+		mapping := buildFieldConversion(sourceField, mergedField, reg, msgRegistry)
 		if mapping == nil {
 			// No conversion possible - skip, decorator must handle
 			continue
@@ -569,7 +573,7 @@ func addRenderStrategies(mapping *FieldMappingData) {
 
 // buildFieldConversion generates conversion code for a field pair.
 // Returns FieldMappingData with conversion type and pointer information.
-func buildFieldConversion(sourceField, targetField *protogen.Field, reg *registry.ConverterRegistry) *FieldMappingData {
+func buildFieldConversion(sourceField, targetField *protogen.Field, reg *registry.ConverterRegistry, msgRegistry *common.MessageRegistry) *FieldMappingData {
 	sourceKind := sourceField.Desc.Kind().String()
 	targetKind := targetField.Desc.Kind().String()
 	fieldName := sourceField.GoName
@@ -691,22 +695,25 @@ func buildFieldConversion(sourceField, targetField *protogen.Field, reg *registr
 		if mapping.IsRepeated {
 			// For repeated fields, get the element type
 			sourceMsg = sourceField.Message
-			targetMsg = targetField.Message
+			// Use MessageRegistry to resolve source → target mapping
+			targetMsg = msgRegistry.LookupTargetMessage(sourceMsg)
 		} else if mapping.IsMap {
 			// For map fields, get the value type
 			sourceMapEntry := sourceField.Message
-			targetMapEntry := targetField.Message
 			sourceMsg = sourceMapEntry.Fields[1].Message // value field
-			targetMsg = targetMapEntry.Fields[1].Message
+			// Use MessageRegistry to resolve source → target mapping
+			targetMsg = msgRegistry.LookupTargetMessage(sourceMsg)
 		} else {
 			// Regular message field
 			sourceMsg = sourceField.Message
-			targetMsg = targetField.Message
+			// Use MessageRegistry to resolve source → target mapping
+			targetMsg = msgRegistry.LookupTargetMessage(sourceMsg)
 		}
 
 		if sourceMsg != nil && targetMsg != nil {
 			sourceTypeName = string(sourceMsg.Desc.Name())
-			targetTypeName = buildStructName(targetMsg)
+			// Use MessageRegistry to get the correct GORM struct name
+			targetTypeName = msgRegistry.GetStructName(targetMsg)
 
 			// Check if converter exists for this nested type
 			if reg.HasConverter(sourceTypeName, targetTypeName) {

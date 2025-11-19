@@ -35,6 +35,7 @@ func DocumentToDocumentGormEmpty(
 	if src.CreatedAt != nil {
 		out.CreatedAt = converters.TimestampToTime(src.CreatedAt)
 	}
+
 	if src.UpdatedAt != nil {
 		out.UpdatedAt = converters.TimestampToTime(src.UpdatedAt)
 	}
@@ -116,6 +117,7 @@ func DocumentToDocumentGormPartial(
 	if src.CreatedAt != nil {
 		out.CreatedAt = converters.TimestampToTime(src.CreatedAt)
 	}
+
 	if src.UpdatedAt != nil {
 		out.UpdatedAt = converters.TimestampToTime(src.UpdatedAt)
 	}
@@ -196,6 +198,7 @@ func DocumentToDocumentGormSkip(
 	if src.CreatedAt != nil {
 		out.CreatedAt = converters.TimestampToTime(src.CreatedAt)
 	}
+
 	if src.UpdatedAt != nil {
 		out.UpdatedAt = converters.TimestampToTime(src.UpdatedAt)
 	}
@@ -276,6 +279,7 @@ func DocumentToDocumentGormExtra(
 	if src.CreatedAt != nil {
 		out.CreatedAt = converters.TimestampToTime(src.CreatedAt)
 	}
+
 	if src.UpdatedAt != nil {
 		out.UpdatedAt = converters.TimestampToTime(src.UpdatedAt)
 	}
