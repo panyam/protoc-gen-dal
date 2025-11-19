@@ -184,8 +184,8 @@ type GameMoveGroupGORM struct {
 
 // MoveUnitActionGORM is the GORM model for api.MoveUnitAction
 type MoveUnitActionGORM struct {
-	FromQ             int32
 	ReconstructedPath []byte
+	FromQ             int32
 	FromR             int32
 	ToQ               int32
 	ToR               int32
@@ -194,10 +194,10 @@ type MoveUnitActionGORM struct {
 
 // GameMoveGORM is the GORM model for api.GameMove
 type GameMoveGORM struct {
-	Player      int32
 	MoveType    []byte
-	Timestamp   time.Time
+	Player      int32
 	Changes     []byte
+	Timestamp   time.Time
 	SequenceNum int64
 	IsPermanent bool
 }
