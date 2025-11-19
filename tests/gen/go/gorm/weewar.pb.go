@@ -620,8 +620,8 @@ type GameMoveGORM struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Field named "move_type" matches the oneof name in source
 	// This automatically skips all oneof members (move_unit, attack_unit, end_turn, build_unit)
-	MoveType      *anypb.Any `protobuf:"bytes,1,opt,name=move_type,json=moveType,proto3" json:"move_type,omitempty"`
-	Changes       *anypb.Any `protobuf:"bytes,2,opt,name=changes,proto3" json:"changes,omitempty"`
+	MoveType      *anypb.Any   `protobuf:"bytes,1,opt,name=move_type,json=moveType,proto3" json:"move_type,omitempty"`
+	Changes       []*anypb.Any `protobuf:"bytes,2,rep,name=changes,proto3" json:"changes,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -663,7 +663,7 @@ func (x *GameMoveGORM) GetMoveType() *anypb.Any {
 	return nil
 }
 
-func (x *GameMoveGORM) GetChanges() *anypb.Any {
+func (x *GameMoveGORM) GetChanges() []*anypb.Any {
 	if x != nil {
 		return x.Changes
 	}
@@ -713,7 +713,7 @@ const file_gorm_weewar_proto_rawDesc = "" +
 	"\x12api.MoveUnitAction\"\x85\x01\n" +
 	"\fGameMoveGORM\x121\n" +
 	"\tmove_type\x18\x01 \x01(\v2\x14.google.protobuf.AnyR\bmoveType\x12.\n" +
-	"\achanges\x18\x02 \x01(\v2\x14.google.protobuf.AnyR\achanges:\x12ʦ\x1d\x0e\n" +
+	"\achanges\x18\x02 \x03(\v2\x14.google.protobuf.AnyR\achanges:\x12ʦ\x1d\x0e\n" +
 	"\fapi.GameMoveB{\n" +
 	"\bcom.gormB\vWeewarProtoP\x01Z2github.com/panyam/protoc-gen-dal/tests/gen/go/gorm\xa2\x02\x03GXX\xaa\x02\x04Gorm\xca\x02\x04Gorm\xe2\x02\x10Gorm\\GPBMetadata\xea\x02\x04Gormb\x06proto3"
 

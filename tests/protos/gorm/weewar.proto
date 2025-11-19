@@ -92,5 +92,5 @@ message GameMoveGORM {
   // This automatically skips all oneof members (move_unit, attack_unit, end_turn, build_unit)
   google.protobuf.Any move_type = 1;
 
-  google.protobuf.Any changes = 2;
+  repeated google.protobuf.Any changes = 2;
 }
