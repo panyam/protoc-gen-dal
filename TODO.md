@@ -490,6 +490,33 @@ From `tests/protos/datastore/user.proto`:
 - Future generators (postgres-raw, firestore, mongodb) can immediately use these utilities
 - Centralized proto descriptor building logic reduces maintenance when proto structures change
 
+- ✅ Phase 3.1j - Shared Converter Utilities (COMPLETE)
+  - ✅ Created pkg/generator/converter/classification.go for field classification
+    - ✅ FieldWithStrategy interface for generic field classification
+    - ✅ ClassifyFields() generic function using type parameters
+    - ✅ ClassifiedFields structure with ToTarget/FromTarget groups (inline/setter/loop)
+    - ✅ AddRenderStrategies() function for calculating render strategies
+  - ✅ Created pkg/generator/common/package_info.go for package extraction
+    - ✅ PackageInfo structure (not SourcePackageInfo - generic naming)
+    - ✅ ExtractPackageInfo() extracts clean import path and alias
+    - ✅ Handles ;packagename suffix stripping automatically
+  - ✅ Created pkg/generator/common/custom_converters.go for converter imports
+    - ✅ CollectCustomConverterImports() scans to_func/from_func annotations
+    - ✅ ExtractCustomConverters() generates converter code from ColumnOptions
+    - ✅ Works with both GORM and Datastore (target-agnostic)
+  - ✅ Added FieldWithStrategy interface implementation to GORM FieldMappingData
+  - ✅ Comprehensive test coverage for all utilities
+  - ✅ All tests passing
+
+**Design Decision:** Shared converter utilities
+- Identified ~300 lines of Go-specific but target-agnostic code duplicated between GORM and Datastore
+- Field classification logic was identical - both needed inline/setter/loop grouping
+- Package extraction pattern repeated 3-4 times per generator
+- Custom converter import collection only in GORM but should work for Datastore too
+- Generic approach using interfaces and type parameters enables reuse across all Go-based targets
+- Benefits: Consistent behavior, easier maintenance, foundation for future targets
+- Custom converters now supported by both GORM and Datastore (previously GORM-only)
+
 **Next:**
 1. **Phase 3.2**: postgres-raw (Go + database/sql)
 2. **Phase 3.3**: firestore (Go)

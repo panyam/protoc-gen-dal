@@ -362,9 +362,9 @@ func (*GameMoveGroupDatastore) Kind() string {
 type MoveUnitActionDatastore struct {
 	Key *datastore.Key `datastore:"-"`
 
-	ReconstructedPath []byte `datastore:"reconstructed_path"`
-
 	FromQ int32 `datastore:"from_q"`
+
+	ReconstructedPath []byte `datastore:"reconstructed_path"`
 
 	FromR int32 `datastore:"from_r"`
 
@@ -384,13 +384,13 @@ func (*MoveUnitActionDatastore) Kind() string {
 type GameMoveDatastore struct {
 	Key *datastore.Key `datastore:"-"`
 
-	Player int32 `datastore:"player"`
-
 	MoveType []byte `datastore:"move_type"`
 
-	Timestamp time.Time `datastore:"timestamp"`
+	Player int32 `datastore:"player"`
 
 	Changes [][]byte `datastore:"changes"`
+
+	Timestamp time.Time `datastore:"timestamp"`
 
 	SequenceNum int64 `datastore:"sequence_num"`
 

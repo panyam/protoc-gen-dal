@@ -96,6 +96,15 @@ type FieldMappingData struct {
 	SourcePkgName            string                      // Source package name (e.g., "api" or "testapi") - needed for type references
 }
 
+// Implement FieldWithStrategy interface for FieldMappingData
+func (f *FieldMappingData) GetToTargetRenderStrategy() converter.FieldRenderStrategy {
+	return f.ToTargetRenderStrategy
+}
+
+func (f *FieldMappingData) GetFromTargetRenderStrategy() converter.FieldRenderStrategy {
+	return f.FromTargetRenderStrategy
+}
+
 var tmpl *template.Template
 
 // loadTemplates loads and parses all templates.
