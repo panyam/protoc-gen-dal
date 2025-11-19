@@ -47,12 +47,15 @@ func UserToUserDatastore(
 	if src.Birthday != nil {
 		out.Birthday = converters.TimestampToTime(src.Birthday)
 	}
+
 	if src.CreatedAt != nil {
 		out.CreatedAt = converters.TimestampToTime(src.CreatedAt)
 	}
+
 	if src.ActivatedAt != nil {
 		out.ActivatedAt = converters.TimestampToTime(src.ActivatedAt)
 	}
+
 	if src.UpdatedAt != nil {
 		out.UpdatedAt = converters.TimestampToTime(src.UpdatedAt)
 	}
@@ -98,8 +101,8 @@ func UserFromUserDatastore(
 		Email:        src.Email,
 		Age:          src.Age,
 		Birthday:     converters.TimeToTimestamp(src.Birthday),
-		CreatedAt:    converters.TimeToTimestamp(src.CreatedAt),
 		MemberNumber: src.MemberNumber,
+		CreatedAt:    converters.TimeToTimestamp(src.CreatedAt),
 		ActivatedAt:  converters.TimeToTimestamp(src.ActivatedAt),
 		UpdatedAt:    converters.TimeToTimestamp(src.UpdatedAt),
 	}
@@ -152,12 +155,15 @@ func UserToUserWithNamespace(
 	if src.Birthday != nil {
 		out.Birthday = converters.TimestampToTime(src.Birthday)
 	}
+
 	if src.ActivatedAt != nil {
 		out.ActivatedAt = converters.TimestampToTime(src.ActivatedAt)
 	}
+
 	if src.CreatedAt != nil {
 		out.CreatedAt = converters.TimestampToTime(src.CreatedAt)
 	}
+
 	if src.UpdatedAt != nil {
 		out.UpdatedAt = converters.TimestampToTime(src.UpdatedAt)
 	}
@@ -257,12 +263,15 @@ func UserToUserWithLargeText(
 	if src.Birthday != nil {
 		out.Birthday = converters.TimestampToTime(src.Birthday)
 	}
+
 	if src.ActivatedAt != nil {
 		out.ActivatedAt = converters.TimestampToTime(src.ActivatedAt)
 	}
+
 	if src.CreatedAt != nil {
 		out.CreatedAt = converters.TimestampToTime(src.CreatedAt)
 	}
+
 	if src.UpdatedAt != nil {
 		out.UpdatedAt = converters.TimestampToTime(src.UpdatedAt)
 	}
@@ -362,12 +371,15 @@ func UserToUserSimple(
 	if src.Birthday != nil {
 		out.Birthday = converters.TimestampToTime(src.Birthday)
 	}
+
 	if src.ActivatedAt != nil {
 		out.ActivatedAt = converters.TimestampToTime(src.ActivatedAt)
 	}
+
 	if src.CreatedAt != nil {
 		out.CreatedAt = converters.TimestampToTime(src.CreatedAt)
 	}
+
 	if src.UpdatedAt != nil {
 		out.UpdatedAt = converters.TimestampToTime(src.UpdatedAt)
 	}

@@ -2,8 +2,10 @@
 package gorm
 
 import (
-	api "github.com/panyam/protoc-gen-dal/tests/gen/go/api"
+	"fmt"
+
 	"github.com/panyam/protoc-gen-dal/pkg/converters"
+	api "github.com/panyam/protoc-gen-dal/tests/gen/go/api"
 )
 
 // TestRecord1ToTestRecord1GORM converts a api.TestRecord1 to TestRecord1GORM.

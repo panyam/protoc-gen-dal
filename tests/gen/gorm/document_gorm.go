@@ -3,7 +3,6 @@ package gorm
 
 import (
 	"time"
-	api "github.com/panyam/protoc-gen-dal/tests/gen/go/api"
 )
 
 // DocumentGormEmpty is the GORM model for api.Document

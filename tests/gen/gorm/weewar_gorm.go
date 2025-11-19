@@ -3,6 +3,7 @@ package gorm
 
 import (
 	"time"
+
 	api "github.com/panyam/protoc-gen-dal/tests/gen/go/api"
 )
 
@@ -195,8 +196,8 @@ type MoveUnitActionGORM struct {
 type GameMoveGORM struct {
 	MoveType    []byte
 	Player      int32
-	Timestamp   time.Time
 	Changes     [][]byte
+	Timestamp   time.Time
 	SequenceNum int64
 	IsPermanent bool
 }

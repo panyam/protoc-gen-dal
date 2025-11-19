@@ -3,6 +3,7 @@ package datastore
 
 import (
 	"time"
+
 	"cloud.google.com/go/datastore"
 	api "github.com/panyam/protoc-gen-dal/tests/gen/go/api"
 )

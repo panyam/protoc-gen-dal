@@ -48,7 +48,7 @@ func {{ .SourceType }}To{{ .TargetType }}(
 
 	{{/* Post-construction setters */}}
 	{{- range .ToTargetSetterFields }}
-		{{- if isSetterSimple .ToTargetRenderStrategy }}
+		{{ if isSetterSimple .ToTargetRenderStrategy }}
 			{{- if .SourceIsPointer }}
 	if src.{{ .SourceField }} != nil {
 		out.{{ .TargetField }} = {{ .ToTargetCode }}
@@ -56,7 +56,7 @@ func {{ .SourceType }}To{{ .TargetType }}(
 			{{ else }}
 	out.{{ .TargetField }} = {{ .ToTargetCode }}
 			{{ end }}
-		{{- else if isSetterTransform .ToTargetRenderStrategy }}
+		{{ else if isSetterTransform .ToTargetRenderStrategy }}
 			{{- if .SourceIsPointer }}
 	if src.{{ .SourceField }} != nil {
 		out.{{ .TargetField }} = {{ .ToTargetCode }}
@@ -64,7 +64,7 @@ func {{ .SourceType }}To{{ .TargetType }}(
 			{{- else }}
 	out.{{ .TargetField }} = {{ .ToTargetCode }}
 			{{- end }}
-		{{- else if or (isSetterWithError .ToTargetRenderStrategy) (isSetterIgnoreError .ToTargetRenderStrategy) }}
+		{{ else if or (isSetterWithError .ToTargetRenderStrategy) (isSetterIgnoreError .ToTargetRenderStrategy) }}
 			{{- if .ToTargetConverterFunc }}
 				{{- /* Use converter function (message type conversions) */ -}}
 				{{- if .SourceIsPointer }}if src.{{ .SourceField }} != nil { {{ end }}
@@ -169,33 +169,33 @@ func {{ .SourceType }}From{{ .TargetType }}(
 	{{/* Post-construction setters */}}
 	{{- range .FromTargetSetterFields }}
 		{{- if isSetterSimple .FromTargetRenderStrategy }}
-			{{- if .TargetIsPointer }}
-	if src.{{ .TargetField }} != nil {
-		out.{{ .SourceField }} = {{ .FromTargetCode }}
-	}
-			{{- else }}
-	out.{{ .SourceField }} = {{ .FromTargetCode }}
-			{{- end }}
+			{{ if .TargetIsPointer }}
+        if src.{{ .TargetField }} != nil {
+          out.{{ .SourceField }} = {{ .FromTargetCode }}
+        }
+			{{ else }}
+	      out.{{ .SourceField }} = {{ .FromTargetCode }}
+			{{ end }}
 		{{- else if isSetterTransform .FromTargetRenderStrategy }}
-			{{- if .TargetIsPointer }}
-	if src.{{ .TargetField }} != nil {
-		out.{{ .SourceField }} = {{ .FromTargetCode }}
-	}
-			{{- else }}
-	out.{{ .SourceField }} = {{ .FromTargetCode }}
-			{{- end }}
+			{{ if .TargetIsPointer }}
+        if src.{{ .TargetField }} != nil {
+          out.{{ .SourceField }} = {{ .FromTargetCode }}
+        }
+			{{ else }}
+	      out.{{ .SourceField }} = {{ .FromTargetCode }}
+			{{ end }}
 		{{- else if or (isSetterWithError .FromTargetRenderStrategy) (isSetterIgnoreError .FromTargetRenderStrategy) }}
-			{{- if .FromTargetConverterFunc }}
+			{{ if .FromTargetConverterFunc }}
 				{{- /* Use converter function (message type conversions) */ -}}
 				{{- if .TargetIsPointer }}if src.{{ .TargetField }} != nil { {{ end }}
-	_, err = {{ .FromTargetConverterFunc }}(out.{{ .SourceField }}, {{ fieldRef "src" .TargetField .TargetIsPointer }}, nil)
+	      _, err = {{ .FromTargetConverterFunc }}(out.{{ .SourceField }}, {{ fieldRef "src" .TargetField .TargetIsPointer }}, nil)
 				{{- if needsErrorCheck .FromTargetConversionType }}
-	if err != nil {
-		return nil, fmt.Errorf("converting {{ .SourceField }}: %w", err)
-	}
+        if err != nil {
+          return nil, fmt.Errorf("converting {{ .SourceField }}: %w", err)
+        }
 				{{- end }}
 				{{- if .TargetIsPointer }}}{{ end }}
-			{{- else if .FromTargetCode }}
+			{{ else if .FromTargetCode }}
 				{{- /* Use inline converter code (type mapping registry) */ -}}
 				{{- if .TargetIsPointer }}
 	if src.{{ .TargetField }} != nil {
@@ -209,7 +209,7 @@ func {{ .SourceType }}From{{ .TargetType }}(
 				{{- if .TargetIsPointer }}
 	}
 				{{- end }}
-			{{- end }}
+			{{ end }}
 		{{- end }}
 	{{- end }}
 
@@ -251,5 +251,4 @@ func {{ .SourceType }}From{{ .TargetType }}(
 
 	return dest, nil
 }
-
 {{ end }}

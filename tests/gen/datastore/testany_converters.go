@@ -2,9 +2,10 @@
 package datastore
 
 import (
-	api "github.com/panyam/protoc-gen-dal/tests/gen/go/api"
+	"fmt"
 
-	"strconv"
+	api "github.com/panyam/protoc-gen-dal/tests/gen/go/api"
+	"google.golang.org/protobuf/types/known/anypb"
 
 	"github.com/panyam/protoc-gen-dal/pkg/converters"
 )
@@ -42,8 +43,9 @@ func TestRecord1ToTestRecord1Datastore(
 	if src.TimeField != nil {
 		out.TimeField = converters.TimestampToTime(src.TimeField)
 	}
+
 	if src.ExtraData != nil {
-		out.ExtraData, err = converters.AnyToBytes(src.ExtraData)
+		out.ExtraData, err = converters.MessageToAnyBytes(src.ExtraData)
 		if err != nil {
 			return nil, fmt.Errorf("converting ExtraData: %w", err)
 		}
@@ -91,7 +93,7 @@ func TestRecord1FromTestRecord1Datastore(
 	out = dest
 
 	if src.ExtraData != nil {
-		out.ExtraData, err = converters.BytesToAny(src.ExtraData)
+		out.ExtraData, err = converters.AnyBytesToMessage[*anypb.Any](src.ExtraData)
 		if err != nil {
 			return nil, fmt.Errorf("converting ExtraData: %w", err)
 		}

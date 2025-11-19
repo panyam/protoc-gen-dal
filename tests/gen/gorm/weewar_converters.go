@@ -2,9 +2,10 @@
 package gorm
 
 import (
-	api "github.com/panyam/protoc-gen-dal/tests/gen/go/api"
 	"fmt"
+
 	"github.com/panyam/protoc-gen-dal/pkg/converters"
+	api "github.com/panyam/protoc-gen-dal/tests/gen/go/api"
 )
 
 // IndexInfoToIndexInfoGORM converts a api.IndexInfo to IndexInfoGORM.

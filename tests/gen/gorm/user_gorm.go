@@ -3,7 +3,6 @@ package gorm
 
 import (
 	"time"
-	api "github.com/panyam/protoc-gen-dal/tests/gen/go/api"
 )
 
 // UserGORM is the GORM model for api.User
@@ -32,8 +31,8 @@ type UserWithPermissions struct {
 	Email        string `gorm:"<-:update"`
 	Age          uint32
 	CreatedAt    time.Time `gorm:"->;autoCreateTime"`
-	UpdatedAt    time.Time `gorm:"<-;autoUpdateTime"`
 	Birthday     time.Time
+	UpdatedAt    time.Time `gorm:"<-;autoUpdateTime"`
 	MemberNumber string
 	ActivatedAt  time.Time
 }
@@ -88,10 +87,10 @@ func (*UserWithIndexes) TableName() string {
 type UserWithDefaults struct {
 	Id           uint32 `gorm:"primaryKey"`
 	Name         string `gorm:"default:guest"`
+	Active       bool   `gorm:"default:true"`
 	Email        string
-	Active       bool `gorm:"default:true"`
-	Age          uint32
 	CreatedAt    int64 `gorm:"default:CURRENT_TIMESTAMP"`
+	Age          uint32
 	Birthday     time.Time
 	MemberNumber string
 	ActivatedAt  time.Time

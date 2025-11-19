@@ -269,6 +269,9 @@ func GenerateConverters(messages []*collector.MessageInfo) (*GenerateResult, err
 		return &GenerateResult{Files: []*GeneratedFile{}}, nil
 	}
 
+	// Build message registry for source → target type lookups
+	msgRegistry := common.NewMessageRegistry(messages, buildStructName)
+
 	// Group messages by their source proto file
 	fileGroups := common.GroupMessagesByFile(messages)
 
@@ -276,7 +279,7 @@ func GenerateConverters(messages []*collector.MessageInfo) (*GenerateResult, err
 
 	// Generate one converter file per proto file
 	for protoFile, msgs := range fileGroups {
-		content, err := generateConverterFileCode(msgs)
+		content, err := generateConverterFileCode(msgs, msgRegistry)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate converters for %s: %w", protoFile, err)
 		}
@@ -295,7 +298,7 @@ func GenerateConverters(messages []*collector.MessageInfo) (*GenerateResult, err
 }
 
 // generateConverterFileCode generates the complete converter code for all messages in a proto file.
-func generateConverterFileCode(messages []*collector.MessageInfo) (string, error) {
+func generateConverterFileCode(messages []*collector.MessageInfo, msgRegistry *common.MessageRegistry) (string, error) {
 	if len(messages) == 0 {
 		return "", fmt.Errorf("no messages to generate converters for")
 	}
@@ -320,7 +323,7 @@ func generateConverterFileCode(messages []*collector.MessageInfo) (string, error
 			continue
 		}
 
-		converterData, err := buildConverterData(msg, reg)
+		converterData, err := buildConverterData(msg, reg, msgRegistry)
 		if err != nil {
 			return "", fmt.Errorf("failed to build converter data for %s: %w", msg.TargetMessage.Desc.Name(), err)
 		}
@@ -375,7 +378,7 @@ func generateConverterFileCode(messages []*collector.MessageInfo) (string, error
 }
 
 // buildConverterData builds converter metadata for a single message.
-func buildConverterData(msgInfo *collector.MessageInfo, reg *registry.ConverterRegistry) (*ConverterData, error) {
+func buildConverterData(msgInfo *collector.MessageInfo, reg *registry.ConverterRegistry, msgRegistry *common.MessageRegistry) (*ConverterData, error) {
 	sourceMsg := msgInfo.SourceMessage
 	targetMsg := msgInfo.TargetMessage
 
@@ -414,7 +417,7 @@ func buildConverterData(msgInfo *collector.MessageInfo, reg *registry.ConverterR
 			continue
 		}
 
-		mapping := buildFieldMapping(sourceField, mergedField, reg, sourcePkgName)
+		mapping := buildFieldMapping(sourceField, mergedField, reg, sourcePkgName, msgRegistry)
 
 		// Skip fields marked as ConvertIgnore (no conversion available, decorator handles)
 		if mapping.ToTargetConversionType == converter.ConvertIgnore {
@@ -500,7 +503,7 @@ func addRenderStrategies(mapping *FieldMapping) {
 }
 
 // buildFieldMapping creates a field mapping with type conversion if needed.
-func buildFieldMapping(sourceField, targetField *protogen.Field, reg *registry.ConverterRegistry, sourcePkgName string) *FieldMapping {
+func buildFieldMapping(sourceField, targetField *protogen.Field, reg *registry.ConverterRegistry, sourcePkgName string, msgRegistry *common.MessageRegistry) *FieldMapping {
 	sourceFieldName := fieldName(sourceField)
 	targetFieldName := fieldName(targetField)
 
@@ -528,11 +531,23 @@ func buildFieldMapping(sourceField, targetField *protogen.Field, reg *registry.C
 			sourceMsg := valueField.Message
 			targetMapEntry := targetField.Message
 			targetValueField := targetMapEntry.Fields[1]
-			targetMsg := targetValueField.Message
+			var targetMsg *protogen.Message
+			var targetFieldMsg *protogen.Message = targetValueField.Message
+
+			// Check if target is a well-known type first
+			if _, isWellKnown := common.GetWellKnownTypeMapping(targetFieldMsg); !isWellKnown {
+				// Use MessageRegistry to resolve source → target mapping
+				// If registry doesn't have a mapping, fall back to target field's message
+				targetMsg = msgRegistry.LookupTargetMessage(sourceMsg)
+				if targetMsg == nil {
+					targetMsg = targetFieldMsg
+				}
+			}
 
 			if sourceMsg != nil && targetMsg != nil {
 				sourceTypeName := string(sourceMsg.Desc.Name())
-				targetTypeName := string(targetMsg.Desc.Name())
+				// Use MessageRegistry to get the correct Datastore struct name
+				targetTypeName := msgRegistry.GetStructName(targetMsg)
 
 				// Check if converter exists for this nested type
 				if reg.HasConverter(sourceTypeName, targetTypeName) {
@@ -563,11 +578,23 @@ func buildFieldMapping(sourceField, targetField *protogen.Field, reg *registry.C
 		if elementKind == "message" {
 			// []MessageType - needs loop-based converter for elements
 			sourceMsg := sourceField.Message
-			targetMsg := targetField.Message
+			var targetMsg *protogen.Message
+			var targetFieldMsg *protogen.Message = targetField.Message
+
+			// Check if target is a well-known type first
+			if _, isWellKnown := common.GetWellKnownTypeMapping(targetFieldMsg); !isWellKnown {
+				// Use MessageRegistry to resolve source → target mapping
+				// If registry doesn't have a mapping, fall back to target field's message
+				targetMsg = msgRegistry.LookupTargetMessage(sourceMsg)
+				if targetMsg == nil {
+					targetMsg = targetFieldMsg
+				}
+			}
 
 			if sourceMsg != nil && targetMsg != nil {
 				sourceTypeName := string(sourceMsg.Desc.Name())
-				targetTypeName := string(targetMsg.Desc.Name())
+				// Use MessageRegistry to get the correct Datastore struct name
+				targetTypeName := msgRegistry.GetStructName(targetMsg)
 
 				// Check if converter exists for this nested type
 				if reg.HasConverter(sourceTypeName, targetTypeName) {
@@ -589,6 +616,79 @@ func buildFieldMapping(sourceField, targetField *protogen.Field, reg *registry.C
 			mapping.FromTargetConversionType = converter.ConvertByAssignment
 			addRenderStrategies(mapping)
 			return mapping
+		}
+	}
+
+	// Handle message→message conversions including google.protobuf.Any serialization
+	if sourceKind == "message" && targetKind == "message" {
+		sourceMsg := sourceField.Message
+		targetFieldMsg := targetField.Message
+		var targetMsg *protogen.Message
+
+		// For regular (non-repeated, non-map) message fields, resolve target via MessageRegistry
+		if !mapping.IsRepeated && !mapping.IsMap {
+			// Check if target is a well-known type first
+			if _, isWellKnown := common.GetWellKnownTypeMapping(targetFieldMsg); !isWellKnown {
+				// Use MessageRegistry to resolve source → target mapping
+				// If registry doesn't have a mapping, fall back to target field's message
+				targetMsg = msgRegistry.LookupTargetMessage(sourceMsg)
+				if targetMsg == nil {
+					targetMsg = targetFieldMsg
+				}
+			}
+		}
+
+		// Check if target is google.protobuf.Any (well-known type)
+		if wkt, isWellKnown := common.GetWellKnownTypeMapping(targetFieldMsg); isWellKnown {
+			if wkt.ProtoFullName == "google.protobuf.Any" {
+				// Message → google.protobuf.Any serialization
+				// Extract source package and type name for type parameter
+				sourcePkgName := common.ExtractPackageName(sourceMsg)
+				sourceTypeName := fmt.Sprintf("*%s.%s", sourcePkgName, sourceMsg.Desc.Name())
+
+				if mapping.IsRepeated {
+					// For repeated Any fields: []Message → [][]byte
+					// Use loop-based conversion with wrapper converters matching (dest, src, decorator) signature
+					mapping.SourceElementType = string(sourceMsg.Desc.Name())
+					mapping.TargetElementType = "[]byte"
+					mapping.ToTargetConverterFunc = "converters.MessageToAnyBytesConverter"
+					mapping.FromTargetConverterFunc = fmt.Sprintf("converters.AnyBytesToMessageConverter[%s]", sourceTypeName)
+					mapping.ToTargetConversionType = converter.ConvertByTransformerWithError
+					mapping.FromTargetConversionType = converter.ConvertByTransformerWithError
+				} else {
+					// For single Any fields: Message → []byte
+					// Generate direct conversion code
+					mapping.ToTargetCode = fmt.Sprintf("converters.MessageToAnyBytes(src.%s)", sourceFieldName)
+					mapping.FromTargetCode = fmt.Sprintf("converters.AnyBytesToMessage[%s](src.%s)",
+						sourceTypeName, targetFieldName)
+					mapping.ToTargetConversionType = converter.ConvertByTransformerWithError
+					mapping.FromTargetConversionType = converter.ConvertByTransformerWithError
+				}
+				addRenderStrategies(mapping)
+				return mapping
+			}
+			// Other well-known types handled by BuildConversionCode below
+		}
+
+		// Handle regular message→message conversions using converter registry
+		if sourceMsg != nil && targetMsg != nil {
+			sourceTypeName := string(sourceMsg.Desc.Name())
+			// Use MessageRegistry to get the correct Datastore struct name
+			targetTypeName := msgRegistry.GetStructName(targetMsg)
+
+			// Check if converter exists for this nested type
+			if reg.HasConverter(sourceTypeName, targetTypeName) {
+				mapping.ToTargetConverterFunc = fmt.Sprintf("%sTo%s", sourceTypeName, targetTypeName)
+				mapping.FromTargetConverterFunc = fmt.Sprintf("%sFrom%s", sourceTypeName, targetTypeName)
+				mapping.ToTargetConversionType = converter.ConvertByTransformerWithError
+				mapping.FromTargetConversionType = converter.ConvertByTransformerWithError
+				// Datastore embeds message fields as struct values, not pointers
+				// Override TargetIsPointer for message fields
+				mapping.TargetIsPointer = false
+				// No need to set element types for regular (non-repeated, non-map) message fields
+				addRenderStrategies(mapping)
+				return mapping
+			}
 		}
 	}
 

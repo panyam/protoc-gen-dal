@@ -1,0 +1,97 @@
+syntax = "proto3";
+
+package datastore;
+
+import "dal/v1/annotations.proto";
+import "api/weewar.proto";
+import "google/protobuf/any.proto";
+
+option go_package = "github.com/panyam/protoc-gen-dal/tests/gen/dal;testdal";
+
+
+message IndexInfoDatastore {
+  option (dal.v1.datastore_options) = { source: "api.IndexInfo" };
+}
+
+message TileDatastore {
+  option (dal.v1.datastore_options) = { source: "api.Tile" };
+}
+
+message UnitDatastore {
+  option (dal.v1.datastore_options) = { source: "api.Unit" };
+}
+
+message AttackRecordDatastore {
+  option (dal.v1.datastore_options) = { source: "api.AttackRecord" };
+}
+
+message WorldDatastore {
+  option (dal.v1.datastore_options) = { source: "api.World", kind: "worlds" };
+}
+
+message WorldDataDatastore {
+  option (dal.v1.datastore_options) = { source: "api.WorldData", kind: "world_data" };
+}
+
+///////// Game related models
+
+
+// Describes a game and its metadata
+message GameDatastore {
+  option (dal.v1.datastore_options) = { source: "api.Game", kind: "games" };
+}
+
+message GameConfigurationDatastore {
+  option (dal.v1.datastore_options) = { source: "api.GameConfiguration" };
+}
+
+message IncomeConfigDatastore {
+  option (dal.v1.datastore_options) = { source: "api.IncomeConfig" };
+}
+
+message GamePlayerDatastore {
+  option (dal.v1.datastore_options) = { source: "api.GamePlayer" };
+}
+
+message GameTeamDatastore {
+  option (dal.v1.datastore_options) = { source: "api.GameTeam" };
+}
+
+message GameSettingsDatastore {
+  option (dal.v1.datastore_options) = { source: "api.GameSettings" };
+}
+
+// Holds the game's Active/Current state (eg world state)
+message GameStateDatastore {
+  option (dal.v1.datastore_options) = { source: "api.GameState" };
+}
+
+// Holds the game's move history (can be used as a replay log)
+message GameMoveHistoryDatastore {
+  option (dal.v1.datastore_options) = { source: "api.GameMoveHistory" };
+}
+
+// A move group - we can allow X moves in one "tick"
+message GameMoveGroupDatastore {
+  option (dal.v1.datastore_options) = { source: "api.GameMoveGroup" };
+}
+// A move group - we can allow X moves in one "tick"
+message MoveUnitActionDatastore {
+  option (dal.v1.datastore_options) = { source: "api.MoveUnitAction" };
+
+  google.protobuf.Any reconstructed_path = 1;
+}
+
+/**
+ * Represents a single move which can be one of many actions in the game
+ */
+message GameMoveDatastore {
+  option (dal.v1.datastore_options) = { source: "api.GameMove" };
+
+  // Field named "move_type" matches the oneof name in source
+  // This automatically skips all oneof members (move_unit, attack_unit, end_turn, build_unit)
+  google.protobuf.Any move_type = 1;
+
+  repeated google.protobuf.Any changes = 2;
+}
+
