@@ -208,16 +208,10 @@ func generateFileCodeWithoutEmbedded(messages []*collector.MessageInfo, registry
 
 		// Add source package import if needed (for enum types)
 		if msg.SourceMessage != nil {
-			sourceImportPath := string(msg.SourceMessage.GoIdent.GoImportPath)
-			// Extract base path without ;packagename suffix for import
-			if idx := strings.LastIndex(sourceImportPath, ";"); idx != -1 {
-				sourceImportPath = sourceImportPath[:idx]
-			}
-			// Use last path component as alias (e.g., "api" from ".../go/api")
-			sourcePkgAlias := common.GetPackageAlias(sourceImportPath)
+			pkgInfo := common.ExtractPackageInfo(msg.SourceMessage)
 			importsMap.Add(common.ImportSpec{
-				Alias: sourcePkgAlias,
-				Path:  sourceImportPath,
+				Alias: pkgInfo.Alias,
+				Path:  pkgInfo.ImportPath,
 			})
 		}
 	}
@@ -252,12 +246,8 @@ func generateEmbeddedTypesFile(embeddedTypes map[string]*protogen.Message, sampl
 		// Build a simple struct for this embedded type (no table name)
 		// No field merging for embedded types - just use fields as-is
 		// Extract source package alias for enum types
-		embImportPath := string(embMsg.GoIdent.GoImportPath)
-		if idx := strings.LastIndex(embImportPath, ";"); idx != -1 {
-			embImportPath = embImportPath[:idx]
-		}
-		embSourcePkgAlias := common.GetPackageAlias(embImportPath)
-		fields, err := buildFields(embMsg.Fields, embSourcePkgAlias, registry)
+		pkgInfo := common.ExtractPackageInfo(embMsg)
+		fields, err := buildFields(embMsg.Fields, pkgInfo.Alias, registry)
 		if err != nil {
 			return "", err
 		}
@@ -308,15 +298,14 @@ func generateConverterFileCode(messages []*collector.MessageInfo, msgRegistry *c
 		converters = append(converters, converterData)
 
 		// Add import for source message package with alias
-		sourceImportPath := string(msg.SourceMessage.GoIdent.GoImportPath)
-		sourcePkgName := common.ExtractPackageName(msg.SourceMessage)
+		pkgInfo := common.ExtractPackageInfo(msg.SourceMessage)
 		importsMap.Add(common.ImportSpec{
-			Alias: sourcePkgName,
-			Path:  sourceImportPath,
+			Alias: pkgInfo.Alias,
+			Path:  pkgInfo.ImportPath,
 		})
 
 		// Collect custom converter package imports
-		collectCustomImportsWithAlias(msg.TargetMessage, importsMap)
+		common.CollectCustomConverterImports(msg.TargetMessage, importsMap)
 	}
 
 	// Build import list using ImportMap's ToSlice method
@@ -348,45 +337,6 @@ func generateConverterFileCode(messages []*collector.MessageInfo, msgRegistry *c
 	return renderTemplate("converters.go.tmpl", data)
 }
 
-// collectCustomImportsWithAlias collects import specs from custom converter functions.
-func collectCustomImportsWithAlias(msg *protogen.Message, imports common.ImportMap) {
-	for _, field := range msg.Fields {
-		opts := field.Desc.Options()
-		if opts == nil {
-			continue
-		}
-
-		v := proto.GetExtension(opts, dalv1.E_Column)
-		if v == nil {
-			continue
-		}
-
-		colOpts, ok := v.(*dalv1.ColumnOptions)
-		if !ok || colOpts == nil {
-			continue
-		}
-
-		// Add to_func package
-		if colOpts.ToFunc != nil && colOpts.ToFunc.Package != "" {
-			pkgPath := colOpts.ToFunc.Package
-			pkgAlias := colOpts.ToFunc.Alias
-			if pkgAlias == "" {
-				pkgAlias = common.GetPackageAlias(pkgPath)
-			}
-			imports.Add(common.ImportSpec{Alias: pkgAlias, Path: pkgPath})
-		}
-
-		// Add from_func package
-		if colOpts.FromFunc != nil && colOpts.FromFunc.Package != "" {
-			pkgPath := colOpts.FromFunc.Package
-			pkgAlias := colOpts.FromFunc.Alias
-			if pkgAlias == "" {
-				pkgAlias = common.GetPackageAlias(pkgPath)
-			}
-			imports.Add(common.ImportSpec{Alias: pkgAlias, Path: pkgPath})
-		}
-	}
-}
 
 // collectEmbeddedTypes collects all message-type fields from a message.
 func collectEmbeddedTypes(msg *protogen.Message, types map[string]*protogen.Message) {
@@ -421,14 +371,10 @@ func buildStructData(msg *collector.MessageInfo, registry *common.MessageRegistr
 	}
 
 	// Extract source package alias for enum type references
-	// Use import path's last component as alias (e.g., "api" from ".../go/api")
 	var sourcePkgAlias string
 	if sourceMsg != nil {
-		sourceImportPath := string(sourceMsg.GoIdent.GoImportPath)
-		if idx := strings.LastIndex(sourceImportPath, ";"); idx != -1 {
-			sourceImportPath = sourceImportPath[:idx]
-		}
-		sourcePkgAlias = common.GetPackageAlias(sourceImportPath)
+		pkgInfo := common.ExtractPackageInfo(sourceMsg)
+		sourcePkgAlias = pkgInfo.Alias
 	}
 
 	// Build fields from merged list
@@ -493,32 +439,38 @@ func buildConverterData(msg *collector.MessageInfo, reg *registry.ConverterRegis
 		fieldMappings = append(fieldMappings, *mapping)
 	}
 
-	// Classify fields by render strategy for template
-	var toTargetInline, toTargetSetter, toTargetLoop []FieldMappingData
-	var fromTargetInline, fromTargetSetter, fromTargetLoop []FieldMappingData
+	// Classify fields by render strategy using shared utility
+	// Convert []FieldMappingData to []*FieldMappingData for generic function
+	fieldMappingPtrs := make([]*FieldMappingData, len(fieldMappings))
+	for i := range fieldMappings {
+		fieldMappingPtrs[i] = &fieldMappings[i]
+	}
+	classified := converter.ClassifyFields(fieldMappingPtrs)
 
-	for _, mapping := range fieldMappings {
-		// Classify for ToTarget direction (API → GORM)
-		switch mapping.ToTargetRenderStrategy {
-		case converter.StrategyInlineValue:
-			toTargetInline = append(toTargetInline, mapping)
-		case converter.StrategySetterSimple, converter.StrategySetterTransform,
-			converter.StrategySetterWithError, converter.StrategySetterIgnoreError:
-			toTargetSetter = append(toTargetSetter, mapping)
-		case converter.StrategyLoopRepeated, converter.StrategyLoopMap:
-			toTargetLoop = append(toTargetLoop, mapping)
-		}
-
-		// Classify for FromTarget direction (GORM → API)
-		switch mapping.FromTargetRenderStrategy {
-		case converter.StrategyInlineValue:
-			fromTargetInline = append(fromTargetInline, mapping)
-		case converter.StrategySetterSimple, converter.StrategySetterTransform,
-			converter.StrategySetterWithError, converter.StrategySetterIgnoreError:
-			fromTargetSetter = append(fromTargetSetter, mapping)
-		case converter.StrategyLoopRepeated, converter.StrategyLoopMap:
-			fromTargetLoop = append(fromTargetLoop, mapping)
-		}
+	// Convert back to []FieldMappingData (dereference pointers)
+	toTargetInline := make([]FieldMappingData, len(classified.ToTargetInline))
+	for i, ptr := range classified.ToTargetInline {
+		toTargetInline[i] = *ptr
+	}
+	toTargetSetter := make([]FieldMappingData, len(classified.ToTargetSetter))
+	for i, ptr := range classified.ToTargetSetter {
+		toTargetSetter[i] = *ptr
+	}
+	toTargetLoop := make([]FieldMappingData, len(classified.ToTargetLoop))
+	for i, ptr := range classified.ToTargetLoop {
+		toTargetLoop[i] = *ptr
+	}
+	fromTargetInline := make([]FieldMappingData, len(classified.FromTargetInline))
+	for i, ptr := range classified.FromTargetInline {
+		fromTargetInline[i] = *ptr
+	}
+	fromTargetSetter := make([]FieldMappingData, len(classified.FromTargetSetter))
+	for i, ptr := range classified.FromTargetSetter {
+		fromTargetSetter[i] = *ptr
+	}
+	fromTargetLoop := make([]FieldMappingData, len(classified.FromTargetLoop))
+	for i, ptr := range classified.FromTargetLoop {
+		fromTargetLoop[i] = *ptr
 	}
 
 	return ConverterData{
@@ -539,36 +491,26 @@ func buildConverterData(msg *collector.MessageInfo, reg *registry.ConverterRegis
 }
 
 // addRenderStrategies calculates and adds render strategies to a FieldMappingData.
-// This determines HOW to render the conversion (inline, setter, loop) based on
-// WHAT conversion to apply (ConversionType) and field characteristics.
+// This is a thin wrapper around the shared AddRenderStrategies utility.
 func addRenderStrategies(mapping *FieldMappingData) {
 	if mapping == nil {
 		return
 	}
 
-	// Build field characteristics for strategy determination
-	chars := converter.FieldCharacteristics{
-		IsPointer:          mapping.SourceIsPointer, // Use source pointer for ToTarget
-		IsRepeated:         mapping.IsRepeated,
-		IsMap:              mapping.IsMap,
-		HasMessageElements: mapping.IsRepeated && mapping.ToTargetConverterFunc != "",
-		HasMessageValues:   mapping.IsMap && mapping.ToTargetConverterFunc != "",
-	}
-
-	// Determine ToTarget render strategy (API → GORM)
-	mapping.ToTargetRenderStrategy = converter.DetermineRenderStrategy(
+	// Use shared utility to calculate render strategies
+	toTargetStrategy, fromTargetStrategy := converter.AddRenderStrategies(
 		mapping.ToTargetConversionType,
-		chars,
+		mapping.FromTargetConversionType,
+		mapping.SourceIsPointer,
+		mapping.TargetIsPointer,
+		mapping.IsRepeated,
+		mapping.IsMap,
+		mapping.ToTargetConverterFunc != "",
+		mapping.FromTargetConverterFunc != "",
 	)
 
-	// Determine FromTarget render strategy (GORM → API)
-	// For FromTarget, use target pointer status
-	charsFrom := chars
-	charsFrom.IsPointer = mapping.TargetIsPointer
-	mapping.FromTargetRenderStrategy = converter.DetermineRenderStrategy(
-		mapping.FromTargetConversionType,
-		charsFrom,
-	)
+	mapping.ToTargetRenderStrategy = toTargetStrategy
+	mapping.FromTargetRenderStrategy = fromTargetStrategy
 }
 
 // buildFieldConversion generates conversion code for a field pair.
@@ -650,7 +592,7 @@ func buildFieldConversion(sourceField, targetField *protogen.Field, reg *registr
 	}
 
 	// Step 2: Check for custom converter functions (highest priority - overrides defaults)
-	toTargetCode, fromTargetCode := extractCustomConverters(targetField, fieldName)
+	toTargetCode, fromTargetCode := common.ExtractCustomConverters(targetField, fieldName)
 	if toTargetCode != "" {
 		mapping.ToTargetCode = toTargetCode
 		mapping.FromTargetCode = fromTargetCode
@@ -818,46 +760,6 @@ func buildFieldConversion(sourceField, targetField *protogen.Field, reg *registr
 	return nil
 }
 
-// extractCustomConverters extracts custom converter functions from column options.
-// Returns conversion code for to_func and from_func if specified.
-func extractCustomConverters(field *protogen.Field, fieldName string) (toTargetCode, fromTargetCode string) {
-	opts := field.Desc.Options()
-	if opts == nil {
-		return "", ""
-	}
-
-	// Get column options
-	v := proto.GetExtension(opts, dalv1.E_Column)
-	if v == nil {
-		return "", ""
-	}
-
-	colOpts, ok := v.(*dalv1.ColumnOptions)
-	if !ok || colOpts == nil {
-		return "", ""
-	}
-
-	// Extract to_func
-	if colOpts.ToFunc != nil && colOpts.ToFunc.Function != "" {
-		pkgAlias := colOpts.ToFunc.Alias
-		if pkgAlias == "" {
-			// Use last segment of package path as alias
-			pkgAlias = common.GetPackageAlias(colOpts.ToFunc.Package)
-		}
-		toTargetCode = fmt.Sprintf("%s.%s(src.%s)", pkgAlias, colOpts.ToFunc.Function, fieldName)
-	}
-
-	// Extract from_func
-	if colOpts.FromFunc != nil && colOpts.FromFunc.Function != "" {
-		pkgAlias := colOpts.FromFunc.Alias
-		if pkgAlias == "" {
-			pkgAlias = common.GetPackageAlias(colOpts.FromFunc.Package)
-		}
-		fromTargetCode = fmt.Sprintf("%s.%s(src.%s)", pkgAlias, colOpts.FromFunc.Function, fieldName)
-	}
-
-	return toTargetCode, fromTargetCode
-}
 
 // buildStructName generates the GORM struct name from the target message name.
 // E.g., "BookGorm" -> "BookGORM"

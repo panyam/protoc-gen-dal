@@ -25,9 +25,9 @@ type UserDatastore struct {
 
 	CreatedAt time.Time `datastore:"created_at"`
 
-	ActivatedAt time.Time `datastore:"activated_at"`
-
 	UpdatedAt time.Time `datastore:"updated_at"`
+
+	ActivatedAt time.Time `datastore:"activated_at"`
 }
 
 // Kind returns the Datastore kind name for UserDatastore.
