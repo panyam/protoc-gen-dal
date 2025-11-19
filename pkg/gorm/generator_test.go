@@ -82,7 +82,10 @@ func TestGenerateGORM_SimpleMessage(t *testing.T) {
 	})
 
 	// Collect GORM messages
-	messages := collector.CollectMessages(plugin, collector.TargetGorm)
+	messages, err := collector.CollectMessages(plugin, collector.TargetGorm)
+	if err != nil {
+		t.Fatalf("CollectMessages failed: %v", err)
+	}
 	if len(messages) != 1 {
 		t.Fatalf("Expected 1 GORM message, got %d", len(messages))
 	}
@@ -176,7 +179,10 @@ func TestGenerateConverters(t *testing.T) {
 		},
 	})
 
-	messages := collector.CollectMessages(plugin, collector.TargetGorm)
+	messages, err := collector.CollectMessages(plugin, collector.TargetGorm)
+	if err != nil {
+		t.Fatalf("CollectMessages failed: %v", err)
+	}
 
 	// When: Generate converters
 	result, err := GenerateConverters(messages)

@@ -15,8 +15,6 @@ import (
 	_ "github.com/panyam/protoc-gen-dal/tests/gen/go/dal/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	_ "google.golang.org/protobuf/types/known/anypb"
-	_ "google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const (
@@ -67,7 +65,7 @@ var File_gorm_testany_proto protoreflect.FileDescriptor
 
 const file_gorm_testany_proto_rawDesc = "" +
 	"\n" +
-	"\x12gorm/testany.proto\x12\x04gorm\x1a\x18dal/v1/annotations.proto\x1a\x11api/testany.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19google/protobuf/any.proto\"6\n" +
+	"\x12gorm/testany.proto\x12\x04gorm\x1a\x18dal/v1/annotations.proto\x1a\x11api/testany.proto\"6\n" +
 	"\x0fTestRecord1Gorm:#ʦ\x1d\x1f\n" +
 	"\x0fapi.TestRecord1\x12\ftest_recordsB|\n" +
 	"\bcom.gormB\fTestanyProtoP\x01Z2github.com/panyam/protoc-gen-dal/tests/gen/go/gorm\xa2\x02\x03GXX\xaa\x02\x04Gorm\xca\x02\x04Gorm\xe2\x02\x10Gorm\\GPBMetadata\xea\x02\x04Gormb\x06proto3"

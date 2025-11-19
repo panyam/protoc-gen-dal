@@ -78,7 +78,10 @@ func TestGenerateDatastore_SimpleMessage(t *testing.T) {
 	})
 
 	// Collect Datastore messages
-	messages := collector.CollectMessages(plugin, collector.TargetDatastore)
+	messages, err := collector.CollectMessages(plugin, collector.TargetDatastore)
+	if err != nil {
+		t.Fatalf("CollectMessages failed: %v", err)
+	}
 	if len(messages) != 1 {
 		t.Fatalf("Expected 1 Datastore message, got %d", len(messages))
 	}
@@ -181,7 +184,10 @@ func TestGenerateConverters(t *testing.T) {
 		},
 	})
 
-	messages := collector.CollectMessages(plugin, collector.TargetDatastore)
+	messages, err := collector.CollectMessages(plugin, collector.TargetDatastore)
+	if err != nil {
+		t.Fatalf("CollectMessages failed: %v", err)
+	}
 
 	// When: Generate converters
 	result, err := GenerateConverters(messages)

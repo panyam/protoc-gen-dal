@@ -1,9 +1,7 @@
 syntax = "proto3";
 
 package api;
-
 import "google/protobuf/timestamp.proto";
-
 option go_package = "github.com/panyam/protoc-gen-dal/tests/gen/go/api;testapi";
 
 // User is the clean API message

@@ -33,7 +33,10 @@ func main() {
 		ParamFunc: flags.Set,
 	}.Run(func(plugin *protogen.Plugin) error {
 		// Phase 1: Collect all GORM messages
-		messages := collector.CollectMessages(plugin, collector.TargetGorm)
+		messages, err := collector.CollectMessages(plugin, collector.TargetGorm)
+		if err != nil {
+			return fmt.Errorf("failed to collect GORM messages: %w", err)
+		}
 
 		if len(messages) == 0 {
 			// No GORM messages found - this is not an error, just skip

@@ -33,7 +33,10 @@ func main() {
 		ParamFunc: flags.Set,
 	}.Run(func(plugin *protogen.Plugin) error {
 		// Phase 1: Collect all Datastore messages
-		messages := collector.CollectMessages(plugin, collector.TargetDatastore)
+		messages, err := collector.CollectMessages(plugin, collector.TargetDatastore)
+		if err != nil {
+			return fmt.Errorf("failed to collect Datastore messages: %w", err)
+		}
 
 		if len(messages) == 0 {
 			// No Datastore messages found - this is not an error, just skip

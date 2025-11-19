@@ -120,11 +120,11 @@ func UserToUserWithPermissions(
 	if src.CreatedAt != nil {
 		out.CreatedAt = converters.TimestampToTime(src.CreatedAt)
 	}
-	if src.UpdatedAt != nil {
-		out.UpdatedAt = converters.TimestampToTime(src.UpdatedAt)
-	}
 	if src.Birthday != nil {
 		out.Birthday = converters.TimestampToTime(src.Birthday)
+	}
+	if src.UpdatedAt != nil {
+		out.UpdatedAt = converters.TimestampToTime(src.UpdatedAt)
 	}
 	if src.ActivatedAt != nil {
 		out.ActivatedAt = converters.TimestampToTime(src.ActivatedAt)
@@ -159,10 +159,10 @@ func UserFromUserWithPermissions(
 		Id:           src.Id,
 		Name:         src.Name,
 		Email:        src.Email,
-		Age:          src.Age,
 		CreatedAt:    converters.TimeToTimestamp(src.CreatedAt),
-		UpdatedAt:    converters.TimeToTimestamp(src.UpdatedAt),
+		Age:          src.Age,
 		Birthday:     converters.TimeToTimestamp(src.Birthday),
+		UpdatedAt:    converters.TimeToTimestamp(src.UpdatedAt),
 		MemberNumber: src.MemberNumber,
 		ActivatedAt:  converters.TimeToTimestamp(src.ActivatedAt),
 	}
@@ -243,8 +243,8 @@ func UserFromUserWithCustomTimestamps(
 	*dest = api.User{
 		Id:           src.Id,
 		Name:         src.Name,
-		CreatedAt:    converters.Int64ToTimestamp(src.CreatedAt),
 		Email:        src.Email,
+		CreatedAt:    converters.Int64ToTimestamp(src.CreatedAt),
 		Age:          src.Age,
 		Birthday:     converters.TimeToTimestamp(src.Birthday),
 		MemberNumber: src.MemberNumber,

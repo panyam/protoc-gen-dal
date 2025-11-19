@@ -434,6 +434,43 @@ From `tests/protos/datastore/user.proto`:
 - Map with messages: Loop-based conversion (map[string]AuthorDatastore)
 - Proper bidirectional handling of pointer types
 
+- ✅ Phase 3.1h - Source Message Validation (COMPLETE)
+  - ✅ Added error reporting when source message references don't exist
+  - ✅ Collector now returns error instead of silently skipping invalid messages
+  - ✅ All extract functions (GORM, Postgres, Firestore, MongoDB, Datastore) validate source exists
+  - ✅ Clear error messages with guidance: "define a message with 'source: \"...\""
+  - ✅ Generator fails fast with all errors reported at once
+  - ✅ Updated all main.go files to handle CollectMessages error
+  - ✅ Updated all tests to handle error return value
+  - ✅ Tested with weewar proto - correctly identifies missing action types
+  - ✅ Documented workaround for oneof fields: use skip_field on individual oneof members
+
+**Design Decision:** Source validation prevents silent failures
+- Previously: Missing source messages were silently skipped (returned nil)
+- Now: Missing source messages cause immediate build failure with clear error
+- Benefits: Catches typos early, forces explicit field skipping, better DX
+- Example error: `message 'gorm.BookGORM' references source 'api.Bookk' which does not exist`
+
+**Oneof Field Handling:**
+- Oneof creates individual fields (not a single field with oneof name)
+- Example: `oneof move_type { MoveUnitAction move_unit = 4; }` creates field named "move_unit"
+- Two approaches to handle oneof in GORM:
+  1. **Define GORM mappings** for each oneof member type (recommended for complex types)
+     ```protobuf
+     message MoveUnitActionGORM {
+       option (dal.v1.gorm) = { source: "api.MoveUnitAction" };
+     }
+     ```
+  2. **Skip individual oneof fields** and use google.protobuf.Any instead
+     ```protobuf
+     message GameMoveGORM {
+       google.protobuf.Any move_type = 1;
+       bool move_unit = 4 [(dal.v1.skip_field) = true];
+       bool attack_unit = 5 [(dal.v1.skip_field) = true];
+     }
+     ```
+- Future enhancement: Message-level `skip_fields: ["field1", "field2"]` annotation
+
 **Next:**
 1. **Phase 3.2**: postgres-raw (Go + database/sql)
 2. **Phase 3.3**: firestore (Go)

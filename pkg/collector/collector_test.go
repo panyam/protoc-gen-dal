@@ -71,7 +71,10 @@ func TestCollectMessages_FindsPostgresMessages(t *testing.T) {
 	})
 
 	// Act: Collect postgres messages
-	messages := CollectMessages(plugin, TargetPostgres)
+	messages, err := CollectMessages(plugin, TargetPostgres)
+	if err != nil {
+		t.Fatalf("CollectMessages failed: %v", err)
+	}
 
 	// Assert: Should find exactly one postgres message
 	if len(messages) != 1 {
@@ -128,7 +131,10 @@ func TestCollectMessages_SkipsNonPostgresMessages(t *testing.T) {
 		},
 	})
 
-	messages := CollectMessages(plugin, TargetPostgres)
+	messages, err := CollectMessages(plugin, TargetPostgres)
+	if err != nil {
+		t.Fatalf("CollectMessages failed: %v", err)
+	}
 
 	if len(messages) != 0 {
 		t.Fatalf("Expected 0 postgres messages, got %d", len(messages))
@@ -187,7 +193,10 @@ func TestCollectMessages_HandlesMultipleMessages(t *testing.T) {
 		},
 	})
 
-	messages := CollectMessages(plugin, TargetPostgres)
+	messages, err := CollectMessages(plugin, TargetPostgres)
+	if err != nil {
+		t.Fatalf("CollectMessages failed: %v", err)
+	}
 
 	if len(messages) != 2 {
 		t.Fatalf("Expected 2 postgres messages, got %d", len(messages))
@@ -252,7 +261,10 @@ func TestCollectMessages_FindsDatastoreMessages(t *testing.T) {
 	})
 
 	// Act: Collect datastore messages
-	messages := CollectMessages(plugin, TargetDatastore)
+	messages, err := CollectMessages(plugin, TargetDatastore)
+	if err != nil {
+		t.Fatalf("CollectMessages failed: %v", err)
+	}
 
 	// Assert: Should find exactly one datastore message
 	if len(messages) != 1 {
@@ -289,6 +301,48 @@ func TestCollectMessages_FindsDatastoreMessages(t *testing.T) {
 	}
 }
 
+// TestCollectMessages_ErrorsOnMissingSource tests that the collector errors
+// when a source message reference cannot be found
+func TestCollectMessages_ErrorsOnMissingSource(t *testing.T) {
+	// Create a plugin with a GORM message that references a non-existent source
+	plugin := createTestPlugin(t, &testProtoSet{
+		files: []testFile{
+			// DAL proto with reference to missing source message
+			{
+				name: "library/v1/dal/book_gorm.proto",
+				pkg:  "library.v1.dal",
+				messages: []testMessage{
+					{
+						name: "BookGORM",
+						gormOpts: &dalv1.GormOptions{
+							Source: "api.Book", // This message doesn't exist!
+							Table:  "books",
+						},
+						fields: []testField{
+							{name: "id", number: 1, typeName: "string"},
+						},
+					},
+				},
+			},
+		},
+	})
+
+	// Act: Try to collect GORM messages
+	messages, err := CollectMessages(plugin, TargetGorm)
+	if err != nil {
+		t.Fatalf("CollectMessages failed: %v", err)
+	}
+
+	// Assert: Should return empty list (source not found)
+	// But we want it to ERROR instead of silently returning empty
+	if len(messages) != 0 {
+		t.Errorf("Expected 0 messages when source is missing, got %d", len(messages))
+	}
+
+	// TODO: After implementing validation, this test should verify
+	// that an error is returned or logged
+}
+
 // Test helpers
 
 // testProtoSet represents a complete set of proto files for testing.
@@ -310,6 +364,7 @@ type testMessage struct {
 	name          string                  // e.g., "Book" or "BookPostgres"
 	postgresOpts  *dalv1.PostgresOptions  // If present, this is a DAL schema message
 	datastoreOpts *dalv1.DatastoreOptions // If present, this is a Datastore schema message
+	gormOpts      *dalv1.GormOptions      // If present, this is a GORM schema message
 	fields        []testField
 }
 

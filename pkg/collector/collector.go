@@ -15,6 +15,9 @@
 package collector
 
 import (
+	"fmt"
+	"strings"
+
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
 
@@ -73,8 +76,10 @@ type MessageInfo struct {
 //
 // Returns:
 //   - Slice of MessageInfo, one per DAL schema message found
-func CollectMessages(gen *protogen.Plugin, target Target) []*MessageInfo {
+//   - Error if any messages reference missing source messages
+func CollectMessages(gen *protogen.Plugin, target Target) ([]*MessageInfo, error) {
 	var collected []*MessageInfo
+	var errors []string
 
 	// Build index of all messages for source lookup
 	// This allows us to resolve "source: library.v1.Book" references quickly
@@ -88,14 +93,22 @@ func CollectMessages(gen *protogen.Plugin, target Target) []*MessageInfo {
 		}
 
 		for _, msg := range file.Messages {
-			info := extractMessageInfo(msg, target, messageIndex)
+			info, err := extractMessageInfo(msg, target, messageIndex)
+			if err != nil {
+				errors = append(errors, err.Error())
+			}
 			if info != nil {
 				collected = append(collected, info)
 			}
 		}
 	}
 
-	return collected
+	// If we encountered any errors, fail
+	if len(errors) > 0 {
+		return nil, fmt.Errorf("failed to collect messages:\n  - %s", strings.Join(errors, "\n  - "))
+	}
+
+	return collected, nil
 }
 
 // buildMessageIndex creates a map of fully qualified message names to messages.
@@ -134,14 +147,14 @@ func buildMessageIndex(gen *protogen.Plugin) map[string]*protogen.Message {
 // Each target has different annotation types (PostgresOptions, FirestoreOptions, etc.).
 // By dispatching here, we keep target-specific logic isolated in separate functions.
 //
-// Returns nil if:
-// - Message has no options
-// - Message doesn't have an annotation for this target
-// - Source message cannot be found (broken reference)
-func extractMessageInfo(msg *protogen.Message, target Target, index map[string]*protogen.Message) *MessageInfo {
+// Returns:
+//   - MessageInfo if message has annotation for this target and source is found
+//   - nil, nil if message doesn't have annotation for this target
+//   - nil, error if source message cannot be found (broken reference)
+func extractMessageInfo(msg *protogen.Message, target Target, index map[string]*protogen.Message) (*MessageInfo, error) {
 	opts := msg.Desc.Options()
 	if opts == nil {
-		return nil
+		return nil, nil
 	}
 
 	// Dispatch to target-specific extraction
@@ -158,7 +171,7 @@ func extractMessageInfo(msg *protogen.Message, target Target, index map[string]*
 		return extractDatastoreInfo(msg, opts, index)
 	}
 
-	return nil
+	return nil, nil
 }
 
 // extractGormInfo extracts GORM message info.
@@ -174,27 +187,25 @@ func extractMessageInfo(msg *protogen.Message, target Target, index map[string]*
 //	  };
 //	}
 //
-// Why check if source exists?
-// If the source message isn't found, this is a broken reference.
-// We return nil to skip this message rather than crash.
-func extractGormInfo(msg *protogen.Message, opts proto.Message, index map[string]*protogen.Message) *MessageInfo {
+// Returns error if source message is not found.
+func extractGormInfo(msg *protogen.Message, opts proto.Message, index map[string]*protogen.Message) (*MessageInfo, error) {
 	// Check if message has gorm annotation
 	v := proto.GetExtension(opts, dalv1.E_Gorm)
 	if v == nil {
-		return nil
+		return nil, nil
 	}
 
 	gormOpts, ok := v.(*dalv1.GormOptions)
 	if !ok || gormOpts == nil {
-		return nil
+		return nil, nil
 	}
 
 	// Look up source message by fully qualified name
 	sourceMsg := index[gormOpts.Source]
 	if sourceMsg == nil {
-		// Source message not found - skip this DAL schema
-		// TODO: Consider logging warning for broken reference
-		return nil
+		// Source message not found - return error
+		return nil, fmt.Errorf("message '%s' references source '%s' which does not exist. Please ensure the source proto file is imported and the message name is correct",
+			msg.Desc.FullName(), gormOpts.Source)
 	}
 
 	return &MessageInfo{
@@ -203,7 +214,7 @@ func extractGormInfo(msg *protogen.Message, opts proto.Message, index map[string
 		SourceName:    gormOpts.Source,
 		TableName:     gormOpts.Table,
 		SchemaName:    "", // GORM doesn't use schema
-	}
+	}, nil
 }
 
 // extractPostgresInfo extracts PostgreSQL message info.
@@ -220,20 +231,17 @@ func extractGormInfo(msg *protogen.Message, opts proto.Message, index map[string
 //	  };
 //	}
 //
-// Why check if source exists?
-// If the source message isn't found, this is a broken reference.
-// We return nil to skip this message rather than crash.
-// In production, we might want to log a warning.
-func extractPostgresInfo(msg *protogen.Message, opts proto.Message, index map[string]*protogen.Message) *MessageInfo {
+// Returns error if source message is not found.
+func extractPostgresInfo(msg *protogen.Message, opts proto.Message, index map[string]*protogen.Message) (*MessageInfo, error) {
 	// Check if message has postgres annotation
 	if v := proto.GetExtension(opts, dalv1.E_Postgres); v != nil {
 		if pgOpts, ok := v.(*dalv1.PostgresOptions); ok && pgOpts != nil {
 			// Look up source message by fully qualified name
 			sourceMsg := index[pgOpts.Source]
 			if sourceMsg == nil {
-				// Source message not found - skip this DAL schema
-				// TODO: Consider logging warning for broken reference
-				return nil
+				// Source message not found - return error
+				return nil, fmt.Errorf("message '%s' references source '%s' which does not exist. Please ensure the source proto file is imported and the message name is correct",
+					msg.Desc.FullName(), pgOpts.Source)
 			}
 
 			return &MessageInfo{
@@ -242,10 +250,10 @@ func extractPostgresInfo(msg *protogen.Message, opts proto.Message, index map[st
 				SourceName:    pgOpts.Source,
 				TableName:     pgOpts.Table,
 				SchemaName:    pgOpts.Schema,
-			}
+			}, nil
 		}
 	}
-	return nil
+	return nil, nil
 }
 
 // extractFirestoreInfo extracts Firestore message info.
@@ -262,12 +270,14 @@ func extractPostgresInfo(msg *protogen.Message, opts proto.Message, index map[st
 //	}
 //
 // Note: TableName is used for "collection" name to keep MessageInfo generic.
-func extractFirestoreInfo(msg *protogen.Message, opts proto.Message, index map[string]*protogen.Message) *MessageInfo {
+// Returns error if source message is not found.
+func extractFirestoreInfo(msg *protogen.Message, opts proto.Message, index map[string]*protogen.Message) (*MessageInfo, error) {
 	if v := proto.GetExtension(opts, dalv1.E_Firestore); v != nil {
 		if fsOpts, ok := v.(*dalv1.FirestoreOptions); ok && fsOpts != nil {
 			sourceMsg := index[fsOpts.Source]
 			if sourceMsg == nil {
-				return nil
+				return nil, fmt.Errorf("message '%s' references source '%s' which does not exist. Please ensure the source proto file is imported and the message name is correct",
+					msg.Desc.FullName(), fsOpts.Source)
 			}
 
 			return &MessageInfo{
@@ -275,10 +285,10 @@ func extractFirestoreInfo(msg *protogen.Message, opts proto.Message, index map[s
 				TargetMessage: msg,
 				SourceName:    fsOpts.Source,
 				TableName:     fsOpts.Collection, // Firestore uses "collection" instead of "table"
-			}
+			}, nil
 		}
 	}
-	return nil
+	return nil, nil
 }
 
 // extractMongoDBInfo extracts MongoDB message info.
@@ -296,12 +306,14 @@ func extractFirestoreInfo(msg *protogen.Message, opts proto.Message, index map[s
 //	}
 //
 // Note: SchemaName is used for "database" name to keep MessageInfo generic.
-func extractMongoDBInfo(msg *protogen.Message, opts proto.Message, index map[string]*protogen.Message) *MessageInfo {
+// Returns error if source message is not found.
+func extractMongoDBInfo(msg *protogen.Message, opts proto.Message, index map[string]*protogen.Message) (*MessageInfo, error) {
 	if v := proto.GetExtension(opts, dalv1.E_Mongodb); v != nil {
 		if mongoOpts, ok := v.(*dalv1.MongoDBOptions); ok && mongoOpts != nil {
 			sourceMsg := index[mongoOpts.Source]
 			if sourceMsg == nil {
-				return nil
+				return nil, fmt.Errorf("message '%s' references source '%s' which does not exist. Please ensure the source proto file is imported and the message name is correct",
+					msg.Desc.FullName(), mongoOpts.Source)
 			}
 
 			return &MessageInfo{
@@ -310,10 +322,10 @@ func extractMongoDBInfo(msg *protogen.Message, opts proto.Message, index map[str
 				SourceName:    mongoOpts.Source,
 				TableName:     mongoOpts.Collection, // MongoDB uses "collection"
 				SchemaName:    mongoOpts.Database,   // SchemaName repurposed for "database"
-			}
+			}, nil
 		}
 	}
-	return nil
+	return nil, nil
 }
 
 // extractDatastoreInfo extracts Google Cloud Datastore message info.
@@ -332,15 +344,17 @@ func extractMongoDBInfo(msg *protogen.Message, opts proto.Message, index map[str
 //
 // Note: TableName is used for "kind" name and SchemaName for "namespace"
 // to keep MessageInfo generic across all targets.
-func extractDatastoreInfo(msg *protogen.Message, opts proto.Message, index map[string]*protogen.Message) *MessageInfo {
+// Returns error if source message is not found.
+func extractDatastoreInfo(msg *protogen.Message, opts proto.Message, index map[string]*protogen.Message) (*MessageInfo, error) {
 	// Check if message has datastore_options annotation
 	if v := proto.GetExtension(opts, dalv1.E_DatastoreOptions); v != nil {
 		if dsOpts, ok := v.(*dalv1.DatastoreOptions); ok && dsOpts != nil {
 			// Look up source message by fully qualified name
 			sourceMsg := index[dsOpts.Source]
 			if sourceMsg == nil {
-				// Source message not found - skip this DAL schema
-				return nil
+				// Source message not found - return error
+				return nil, fmt.Errorf("message '%s' references source '%s' which does not exist. Please ensure the source proto file is imported and the message name is correct",
+					msg.Desc.FullName(), dsOpts.Source)
 			}
 
 			return &MessageInfo{
@@ -349,8 +363,8 @@ func extractDatastoreInfo(msg *protogen.Message, opts proto.Message, index map[s
 				SourceName:    dsOpts.Source,
 				TableName:     dsOpts.Kind,      // Datastore uses "kind" instead of "table"
 				SchemaName:    dsOpts.Namespace, // SchemaName repurposed for "namespace"
-			}
+			}, nil
 		}
 	}
-	return nil
+	return nil, nil
 }
