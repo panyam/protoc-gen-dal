@@ -19,10 +19,7 @@ import (
 	"testing"
 
 	"github.com/panyam/protoc-gen-dal/pkg/collector"
-	"google.golang.org/protobuf/compiler/protogen"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/descriptorpb"
-	"google.golang.org/protobuf/types/pluginpb"
+	"github.com/panyam/protoc-gen-dal/pkg/generator/testutil"
 
 	dalv1 "github.com/panyam/protoc-gen-dal/protos/gen/dal/v1"
 )
@@ -37,43 +34,43 @@ import (
 // - A TableName() method
 func TestGenerateGORM_SimpleMessage(t *testing.T) {
 	// Given: A simple Book message with basic fields
-	plugin := createTestPlugin(t, &testProtoSet{
-		files: []testFile{
+	plugin := testutil.CreateTestPlugin(t, &testutil.TestProtoSet{
+		Files: []testutil.TestFile{
 			// API proto
 			{
-				name: "library/v1/book.proto",
-				pkg:  "library.v1",
-				messages: []testMessage{
+				Name: "library/v1/book.proto",
+				Pkg:  "library.v1",
+				Messages: []testutil.TestMessage{
 					{
-						name: "Book",
-						fields: []testField{
-							{name: "id", number: 1, typeName: "string"},
-							{name: "title", number: 2, typeName: "string"},
+						Name: "Book",
+						Fields: []testutil.TestField{
+							{Name: "id", Number: 1, TypeName: "string"},
+							{Name: "title", Number: 2, TypeName: "string"},
 						},
 					},
 				},
 			},
 			// GORM DAL proto
 			{
-				name: "library/v1/dal/book_gorm.proto",
-				pkg:  "library.v1.dal",
-				messages: []testMessage{
+				Name: "library/v1/dal/book_gorm.proto",
+				Pkg:  "library.v1.dal",
+				Messages: []testutil.TestMessage{
 					{
-						name: "BookGorm",
-						gormOpts: &dalv1.GormOptions{
+						Name: "BookGorm",
+						GormOpts: &dalv1.GormOptions{
 							Source: "library.v1.Book",
 							Table:  "books",
 						},
-						fields: []testField{
+						Fields: []testutil.TestField{
 							{
-								name:     "id",
-								number:   1,
-								typeName: "string",
-								columnOpts: &dalv1.ColumnOptions{
+								Name:     "id",
+								Number:   1,
+								TypeName: "string",
+								ColumnOpts: &dalv1.ColumnOptions{
 									GormTags: []string{"primaryKey"},
 								},
 							},
-							{name: "title", number: 2, typeName: "string"},
+							{Name: "title", Number: 2, TypeName: "string"},
 						},
 					},
 				},
@@ -142,36 +139,36 @@ func TestGenerateGORM_SimpleMessage(t *testing.T) {
 // - Pointer receivers to avoid struct copying
 func TestGenerateConverters(t *testing.T) {
 	// Given: A Book message with GORM mapping
-	plugin := createTestPlugin(t, &testProtoSet{
-		files: []testFile{
+	plugin := testutil.CreateTestPlugin(t, &testutil.TestProtoSet{
+		Files: []testutil.TestFile{
 			// API proto
 			{
-				name: "library/v1/book.proto",
-				pkg:  "library.v1",
-				messages: []testMessage{
+				Name: "library/v1/book.proto",
+				Pkg:  "library.v1",
+				Messages: []testutil.TestMessage{
 					{
-						name: "Book",
-						fields: []testField{
-							{name: "id", number: 1, typeName: "string"},
-							{name: "title", number: 2, typeName: "string"},
+						Name: "Book",
+						Fields: []testutil.TestField{
+							{Name: "id", Number: 1, TypeName: "string"},
+							{Name: "title", Number: 2, TypeName: "string"},
 						},
 					},
 				},
 			},
 			// GORM DAL proto
 			{
-				name: "library/v1/dal/book_gorm.proto",
-				pkg:  "library.v1.dal",
-				messages: []testMessage{
+				Name: "library/v1/dal/book_gorm.proto",
+				Pkg:  "library.v1.dal",
+				Messages: []testutil.TestMessage{
 					{
-						name: "BookGorm",
-						gormOpts: &dalv1.GormOptions{
+						Name: "BookGorm",
+						GormOpts: &dalv1.GormOptions{
 							Source: "library.v1.Book",
 							Table:  "books",
 						},
-						fields: []testField{
-							{name: "id", number: 1, typeName: "string"},
-							{name: "title", number: 2, typeName: "string"},
+						Fields: []testutil.TestField{
+							{Name: "id", Number: 1, TypeName: "string"},
+							{Name: "title", Number: 2, TypeName: "string"},
 						},
 					},
 				},
@@ -244,208 +241,4 @@ func TestGenerateConverters(t *testing.T) {
 	}
 }
 
-// Test helpers - similar to collector tests but extended for GORM
-
-type testProtoSet struct {
-	files []testFile
-}
-
-type testFile struct {
-	name     string
-	pkg      string
-	messages []testMessage
-}
-
-type testMessage struct {
-	name     string
-	gormOpts *dalv1.GormOptions
-	fields   []testField
-}
-
-type testField struct {
-	name       string
-	number     int32
-	typeName   string
-	columnOpts *dalv1.ColumnOptions
-	repeated   bool
-	isMap      bool
-	mapKeyType string // For map fields: "int32", "string", etc.
-}
-
-func createTestPlugin(t *testing.T, protoSet *testProtoSet) *protogen.Plugin {
-	t.Helper()
-
-	req := buildCodeGeneratorRequest(t, protoSet)
-	opts := protogen.Options{}
-	plugin, err := opts.New(req)
-	if err != nil {
-		t.Fatalf("Failed to create plugin: %v", err)
-	}
-
-	return plugin
-}
-
-func buildCodeGeneratorRequest(t *testing.T, protoSet *testProtoSet) *pluginpb.CodeGeneratorRequest {
-	t.Helper()
-
-	req := &pluginpb.CodeGeneratorRequest{
-		FileToGenerate: []string{},
-		ProtoFile:      []*descriptorpb.FileDescriptorProto{},
-	}
-
-	for _, file := range protoSet.files {
-		fileDesc := buildFileDescriptor(t, file)
-		req.ProtoFile = append(req.ProtoFile, fileDesc)
-		req.FileToGenerate = append(req.FileToGenerate, file.name)
-	}
-
-	return req
-}
-
-func buildFileDescriptor(t *testing.T, file testFile) *descriptorpb.FileDescriptorProto {
-	t.Helper()
-
-	goPackage := "github.com/test/gen/go/" + strings.ReplaceAll(file.pkg, ".", "/")
-
-	fileDesc := &descriptorpb.FileDescriptorProto{
-		Name:    proto.String(file.name),
-		Package: proto.String(file.pkg),
-		Syntax:  proto.String("proto3"),
-		Options: &descriptorpb.FileOptions{
-			GoPackage: proto.String(goPackage),
-		},
-	}
-
-	for _, msg := range file.messages {
-		msgDesc := buildMessageDescriptorWithPackage(t, msg, file.pkg)
-		fileDesc.MessageType = append(fileDesc.MessageType, msgDesc)
-	}
-
-	return fileDesc
-}
-
-func buildMessageDescriptor(t *testing.T, msg testMessage) *descriptorpb.DescriptorProto {
-	return buildMessageDescriptorWithPackage(t, msg, "")
-}
-
-func buildMessageDescriptorWithPackage(t *testing.T, msg testMessage, pkg string) *descriptorpb.DescriptorProto {
-	t.Helper()
-
-	msgDesc := &descriptorpb.DescriptorProto{
-		Name: proto.String(msg.name),
-	}
-
-	// Add fields
-	for _, field := range msg.fields {
-		if field.isMap {
-			// Map fields require a nested entry message
-			// Capitalize first letter of field name
-			fieldName := field.name
-			if len(fieldName) > 0 {
-				fieldName = strings.ToUpper(fieldName[:1]) + fieldName[1:]
-			}
-			entryMsgName := fieldName + "Entry"
-			entryMsg := &descriptorpb.DescriptorProto{
-				Name: proto.String(entryMsgName),
-				Options: &descriptorpb.MessageOptions{
-					MapEntry: proto.Bool(true),
-				},
-				Field: []*descriptorpb.FieldDescriptorProto{
-					{
-						Name:   proto.String("key"),
-						Number: proto.Int32(1),
-						Type:   getFieldType(field.mapKeyType),
-						Label:  descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL.Enum(),
-					},
-					{
-						Name:     proto.String("value"),
-						Number:   proto.Int32(2),
-						Type:     getFieldType(field.typeName),
-						TypeName: getTypeName(field.typeName),
-						Label:    descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL.Enum(),
-					},
-				},
-			}
-			msgDesc.NestedType = append(msgDesc.NestedType, entryMsg)
-
-			// Add the map field itself
-			fullEntryName := "." + pkg + "." + msg.name + "." + entryMsgName
-			if pkg == "" {
-				fullEntryName = "." + msg.name + "." + entryMsgName
-			}
-			fieldDesc := &descriptorpb.FieldDescriptorProto{
-				Name:     proto.String(field.name),
-				Number:   proto.Int32(field.number),
-				Type:     descriptorpb.FieldDescriptorProto_TYPE_MESSAGE.Enum(),
-				TypeName: proto.String(fullEntryName),
-				Label:    descriptorpb.FieldDescriptorProto_LABEL_REPEATED.Enum(),
-			}
-			msgDesc.Field = append(msgDesc.Field, fieldDesc)
-		} else {
-			fieldDesc := &descriptorpb.FieldDescriptorProto{
-				Name:   proto.String(field.name),
-				Number: proto.Int32(field.number),
-			}
-
-			switch field.typeName {
-			case "string":
-				fieldDesc.Type = descriptorpb.FieldDescriptorProto_TYPE_STRING.Enum()
-			case "int32":
-				fieldDesc.Type = descriptorpb.FieldDescriptorProto_TYPE_INT32.Enum()
-			case "int64":
-				fieldDesc.Type = descriptorpb.FieldDescriptorProto_TYPE_INT64.Enum()
-			default:
-				// If not a scalar type, assume it's a message type
-				fieldDesc.Type = descriptorpb.FieldDescriptorProto_TYPE_MESSAGE.Enum()
-				fieldDesc.TypeName = proto.String("." + field.typeName)
-			}
-
-			// Set label for repeated fields
-			if field.repeated {
-				fieldDesc.Label = descriptorpb.FieldDescriptorProto_LABEL_REPEATED.Enum()
-			}
-
-			// Add column options if present
-			if field.columnOpts != nil {
-				opts := &descriptorpb.FieldOptions{}
-				proto.SetExtension(opts, dalv1.E_Column, field.columnOpts)
-				fieldDesc.Options = opts
-			}
-
-			msgDesc.Field = append(msgDesc.Field, fieldDesc)
-		}
-	}
-
-	// Add GORM options if present
-	if msg.gormOpts != nil {
-		opts := &descriptorpb.MessageOptions{}
-		proto.SetExtension(opts, dalv1.E_Gorm, msg.gormOpts)
-		msgDesc.Options = opts
-	}
-
-	return msgDesc
-}
-
-// getFieldType returns the proto field type enum for a type name
-func getFieldType(typeName string) *descriptorpb.FieldDescriptorProto_Type {
-	switch typeName {
-	case "string":
-		return descriptorpb.FieldDescriptorProto_TYPE_STRING.Enum()
-	case "int32":
-		return descriptorpb.FieldDescriptorProto_TYPE_INT32.Enum()
-	case "int64":
-		return descriptorpb.FieldDescriptorProto_TYPE_INT64.Enum()
-	default:
-		return descriptorpb.FieldDescriptorProto_TYPE_MESSAGE.Enum()
-	}
-}
-
-// getTypeName returns the full type name for message types, nil for scalars
-func getTypeName(typeName string) *string {
-	switch typeName {
-	case "string", "int32", "int64":
-		return nil
-	default:
-		return proto.String("." + typeName)
-	}
-}
+// Test helpers have been moved to pkg/generator/testutil

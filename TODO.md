@@ -471,6 +471,25 @@ From `tests/protos/datastore/user.proto`:
      ```
 - Future enhancement: Message-level `skip_fields: ["field1", "field2"]` annotation
 
+- ✅ Phase 3.1i - Shared Test Utilities (COMPLETE)
+  - ✅ Created pkg/generator/testutil package for test helper functions
+  - ✅ Extracted duplicate test utilities from GORM and Datastore test files
+  - ✅ Defined TestProtoSet, TestFile, TestMessage, TestField structures
+  - ✅ Implemented CreateTestPlugin() for building protogen.Plugin from test data
+  - ✅ Implemented BuildCodeGeneratorRequest() and BuildFileDescriptor()
+  - ✅ Support for both GormOpts and DatastoreOpts in TestMessage
+  - ✅ Updated pkg/gorm/generator_test.go to use testutil package
+  - ✅ Updated pkg/datastore/generator_test.go to use testutil package
+  - ✅ Removed ~400 lines of duplicate code
+  - ✅ All tests passing
+
+**Design Decision:** Test utilities in shared package
+- Test helper functions were duplicated across gorm/generator_test.go and datastore/generator_test.go
+- Extracting to pkg/generator/testutil enables consistent test patterns across all generators
+- TestMessage structure supports both GormOpts and DatastoreOpts for target-agnostic test data
+- Future generators (postgres-raw, firestore, mongodb) can immediately use these utilities
+- Centralized proto descriptor building logic reduces maintenance when proto structures change
+
 **Next:**
 1. **Phase 3.2**: postgres-raw (Go + database/sql)
 2. **Phase 3.3**: firestore (Go)

@@ -31,8 +31,8 @@ type UserWithPermissions struct {
 	Email        string `gorm:"<-:update"`
 	Age          uint32
 	CreatedAt    time.Time `gorm:"->;autoCreateTime"`
-	Birthday     time.Time
 	UpdatedAt    time.Time `gorm:"<-;autoUpdateTime"`
+	Birthday     time.Time
 	MemberNumber string
 	ActivatedAt  time.Time
 }
@@ -46,8 +46,8 @@ func (*UserWithPermissions) TableName() string {
 type UserWithCustomTimestamps struct {
 	Id           uint32 `gorm:"primaryKey"`
 	Name         string
-	Email        string
 	CreatedAt    int64 `gorm:"autoCreateTime"`
+	Email        string
 	Age          uint32
 	UpdatedMilli int64 `gorm:"autoUpdateTime:milli"`
 	Birthday     time.Time
@@ -87,10 +87,10 @@ func (*UserWithIndexes) TableName() string {
 type UserWithDefaults struct {
 	Id           uint32 `gorm:"primaryKey"`
 	Name         string `gorm:"default:guest"`
-	Active       bool   `gorm:"default:true"`
 	Email        string
-	CreatedAt    int64 `gorm:"default:CURRENT_TIMESTAMP"`
+	Active       bool `gorm:"default:true"`
 	Age          uint32
+	CreatedAt    int64 `gorm:"default:CURRENT_TIMESTAMP"`
 	Birthday     time.Time
 	MemberNumber string
 	ActivatedAt  time.Time

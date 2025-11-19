@@ -19,10 +19,7 @@ import (
 	"testing"
 
 	"github.com/panyam/protoc-gen-dal/pkg/collector"
-	"google.golang.org/protobuf/compiler/protogen"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/descriptorpb"
-	"google.golang.org/protobuf/types/pluginpb"
+	"github.com/panyam/protoc-gen-dal/pkg/generator/testutil"
 
 	dalv1 "github.com/panyam/protoc-gen-dal/protos/gen/dal/v1"
 )
@@ -37,39 +34,39 @@ import (
 // - A Kind() method
 func TestGenerateDatastore_SimpleMessage(t *testing.T) {
 	// Given: A simple User message with basic fields
-	plugin := createTestPlugin(t, &testProtoSet{
-		files: []testFile{
+	plugin := testutil.CreateTestPlugin(t, &testutil.TestProtoSet{
+		Files: []testutil.TestFile{
 			// API proto
 			{
-				name: "api/v1/user.proto",
-				pkg:  "api.v1",
-				messages: []testMessage{
+				Name: "api/v1/user.proto",
+				Pkg:  "api.v1",
+				Messages: []testutil.TestMessage{
 					{
-						name: "User",
-						fields: []testField{
-							{name: "id", number: 1, typeName: "string"},
-							{name: "name", number: 2, typeName: "string"},
-							{name: "email", number: 3, typeName: "string"},
+						Name: "User",
+						Fields: []testutil.TestField{
+							{Name: "id", Number: 1, TypeName: "string"},
+							{Name: "name", Number: 2, TypeName: "string"},
+							{Name: "email", Number: 3, TypeName: "string"},
 						},
 					},
 				},
 			},
 			// Datastore DAL proto
 			{
-				name: "dal/v1/user_datastore.proto",
-				pkg:  "dal.v1",
-				messages: []testMessage{
+				Name: "dal/v1/user_datastore.proto",
+				Pkg:  "dal.v1",
+				Messages: []testutil.TestMessage{
 					{
-						name: "UserDatastore",
-						datastoreOpts: &dalv1.DatastoreOptions{
+						Name: "UserDatastore",
+						DatastoreOpts: &dalv1.DatastoreOptions{
 							Source:    "api.v1.User",
 							Kind:      "User",
 							Namespace: "prod",
 						},
-						fields: []testField{
-							{name: "id", number: 1, typeName: "string"},
-							{name: "name", number: 2, typeName: "string"},
-							{name: "email", number: 3, typeName: "string"},
+						Fields: []testutil.TestField{
+							{Name: "id", Number: 1, TypeName: "string"},
+							{Name: "name", Number: 2, TypeName: "string"},
+							{Name: "email", Number: 3, TypeName: "string"},
 						},
 					},
 				},
@@ -144,39 +141,39 @@ func TestGenerateDatastore_SimpleMessage(t *testing.T) {
 // - Reuses GORM converter infrastructure (built-in types, decorators)
 func TestGenerateConverters(t *testing.T) {
 	// Given: A User message with Datastore mapping
-	plugin := createTestPlugin(t, &testProtoSet{
-		files: []testFile{
+	plugin := testutil.CreateTestPlugin(t, &testutil.TestProtoSet{
+		Files: []testutil.TestFile{
 			// API proto
 			{
-				name: "api/v1/user.proto",
-				pkg:  "api.v1",
-				messages: []testMessage{
+				Name: "api/v1/user.proto",
+				Pkg:  "api.v1",
+				Messages: []testutil.TestMessage{
 					{
-						name: "User",
-						fields: []testField{
-							{name: "id", number: 1, typeName: "string"},
-							{name: "name", number: 2, typeName: "string"},
-							{name: "email", number: 3, typeName: "string"},
+						Name: "User",
+						Fields: []testutil.TestField{
+							{Name: "id", Number: 1, TypeName: "string"},
+							{Name: "Name", Number: 2, TypeName: "string"},
+							{Name: "email", Number: 3, TypeName: "string"},
 						},
 					},
 				},
 			},
 			// Datastore DAL proto
 			{
-				name: "dal/v1/user_datastore.proto",
-				pkg:  "dal.v1",
-				messages: []testMessage{
+				Name: "dal/v1/user_datastore.proto",
+				Pkg:  "dal.v1",
+				Messages: []testutil.TestMessage{
 					{
-						name: "UserDatastore",
-						datastoreOpts: &dalv1.DatastoreOptions{
+						Name: "UserDatastore",
+						DatastoreOpts: &dalv1.DatastoreOptions{
 							Source:    "api.v1.User",
 							Kind:      "User",
 							Namespace: "prod",
 						},
-						fields: []testField{
-							{name: "id", number: 1, typeName: "string"},
-							{name: "name", number: 2, typeName: "string"},
-							{name: "email", number: 3, typeName: "string"},
+						Fields: []testutil.TestField{
+							{Name: "id", Number: 1, TypeName: "string"},
+							{Name: "name", Number: 2, TypeName: "string"},
+							{Name: "email", Number: 3, TypeName: "string"},
 						},
 					},
 				},
@@ -236,120 +233,4 @@ func TestGenerateConverters(t *testing.T) {
 
 // Test helpers (copied from collector_test.go pattern)
 
-type testProtoSet struct {
-	files []testFile
-}
-
-type testFile struct {
-	name     string
-	pkg      string
-	messages []testMessage
-}
-
-type testMessage struct {
-	name          string
-	datastoreOpts *dalv1.DatastoreOptions
-	fields        []testField
-}
-
-type testField struct {
-	name       string
-	number     int32
-	typeName   string
-	columnOpts *dalv1.ColumnOptions
-}
-
-func createTestPlugin(t *testing.T, protoSet *testProtoSet) *protogen.Plugin {
-	t.Helper()
-
-	req := buildCodeGeneratorRequest(t, protoSet)
-
-	opts := protogen.Options{}
-	plugin, err := opts.New(req)
-	if err != nil {
-		t.Fatalf("Failed to create plugin: %v", err)
-	}
-
-	return plugin
-}
-
-func buildCodeGeneratorRequest(t *testing.T, protoSet *testProtoSet) *pluginpb.CodeGeneratorRequest {
-	t.Helper()
-
-	req := &pluginpb.CodeGeneratorRequest{
-		FileToGenerate: []string{},
-		ProtoFile:      []*descriptorpb.FileDescriptorProto{},
-	}
-
-	for _, file := range protoSet.files {
-		fileDesc := buildFileDescriptor(t, file)
-		req.ProtoFile = append(req.ProtoFile, fileDesc)
-		req.FileToGenerate = append(req.FileToGenerate, file.name)
-	}
-
-	return req
-}
-
-func buildFileDescriptor(t *testing.T, file testFile) *descriptorpb.FileDescriptorProto {
-	t.Helper()
-
-	goPackage := "github.com/test/gen/go/" + strings.ReplaceAll(file.pkg, ".", "/")
-
-	fileDesc := &descriptorpb.FileDescriptorProto{
-		Name:    proto.String(file.name),
-		Package: proto.String(file.pkg),
-		Syntax:  proto.String("proto3"),
-		Options: &descriptorpb.FileOptions{
-			GoPackage: proto.String(goPackage),
-		},
-	}
-
-	for _, msg := range file.messages {
-		msgDesc := buildMessageDescriptor(t, msg)
-		fileDesc.MessageType = append(fileDesc.MessageType, msgDesc)
-	}
-
-	return fileDesc
-}
-
-func buildMessageDescriptor(t *testing.T, msg testMessage) *descriptorpb.DescriptorProto {
-	t.Helper()
-
-	msgDesc := &descriptorpb.DescriptorProto{
-		Name: proto.String(msg.name),
-	}
-
-	for _, field := range msg.fields {
-		fieldDesc := &descriptorpb.FieldDescriptorProto{
-			Name:   proto.String(field.name),
-			Number: proto.Int32(field.number),
-		}
-
-		switch field.typeName {
-		case "string":
-			fieldDesc.Type = descriptorpb.FieldDescriptorProto_TYPE_STRING.Enum()
-		case "int32":
-			fieldDesc.Type = descriptorpb.FieldDescriptorProto_TYPE_INT32.Enum()
-		case "int64":
-			fieldDesc.Type = descriptorpb.FieldDescriptorProto_TYPE_INT64.Enum()
-		}
-
-		// Add column options if present
-		if field.columnOpts != nil {
-			fieldOpts := &descriptorpb.FieldOptions{}
-			proto.SetExtension(fieldOpts, dalv1.E_Column, field.columnOpts)
-			fieldDesc.Options = fieldOpts
-		}
-
-		msgDesc.Field = append(msgDesc.Field, fieldDesc)
-	}
-
-	// Add datastore options if present
-	if msg.datastoreOpts != nil {
-		opts := &descriptorpb.MessageOptions{}
-		proto.SetExtension(opts, dalv1.E_DatastoreOptions, msg.datastoreOpts)
-		msgDesc.Options = opts
-	}
-
-	return msgDesc
-}
+// Test helpers have been moved to pkg/generator/testutil

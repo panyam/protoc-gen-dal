@@ -20,6 +20,7 @@ import (
 	"github.com/panyam/protoc-gen-dal/pkg/collector"
 	"github.com/panyam/protoc-gen-dal/pkg/generator/common"
 	"github.com/panyam/protoc-gen-dal/pkg/generator/registry"
+	"github.com/panyam/protoc-gen-dal/pkg/generator/testutil"
 	dalv1 "github.com/panyam/protoc-gen-dal/protos/gen/dal/v1"
 )
 
@@ -27,48 +28,51 @@ import (
 // resolve to their GORM target types using MessageRegistry.
 //
 // Before fix: Lookup for "IndexInfo:IndexInfo" fails because both source and target
-//             point to the same proto message (api.IndexInfo).
+//
+//	point to the same proto message (api.IndexInfo).
+//
 // After fix:  Lookup resolves api.IndexInfo → IndexInfoGORM via MessageRegistry,
-//             then checks "IndexInfo:IndexInfoGORM" which succeeds.
+//
+//	then checks "IndexInfo:IndexInfoGORM" which succeeds.
 //
 // This test will FAIL until we pass MessageRegistry to buildFieldConversion.
 func TestConverterLookup_NestedMessage(t *testing.T) {
-	plugin := createTestPlugin(t, &testProtoSet{
-		files: []testFile{
+	plugin := testutil.CreateTestPlugin(t, &testutil.TestProtoSet{
+		Files: []testutil.TestFile{
 			// API proto with nested message
 			{
-				name: "api/world.proto",
-				pkg:  "api",
-				messages: []testMessage{
+				Name: "api/world.proto",
+				Pkg:  "api",
+				Messages: []testutil.TestMessage{
 					{
-						name: "IndexInfo",
-						fields: []testField{
-							{name: "last_indexed", number: 1, typeName: "int64"},
+						Name: "IndexInfo",
+						Fields: []testutil.TestField{
+							{Name: "last_indexed", Number: 1, TypeName: "int64"},
 						},
 					},
 					{
-						name: "World",
-						fields: []testField{
-							{name: "id", number: 1, typeName: "string"},
-							{name: "screenshot_info", number: 2, typeName: "api.IndexInfo"},
+						Name: "World",
+						Fields: []testutil.TestField{
+							{Name: "id", Number: 1, TypeName: "string"},
+							{Name: "screenshot_info", Number: 2, TypeName: "api.IndexInfo"},
 						},
 					},
 				},
 			},
 			// GORM DAL proto
 			{
-				name: "gorm/world.proto",
-				pkg:  "gorm",
-				messages: []testMessage{
+				Name: "gorm/world.proto",
+				Pkg:  "gorm",
+				Messages: []testutil.TestMessage{
 					{
-						name: "IndexInfoGorm",
-						gormOpts: &dalv1.GormOptions{
+						Name: "IndexInfoGorm",
+						GormOpts: &dalv1.GormOptions{
 							Source: "api.IndexInfo",
 						},
 					},
 					{
-						name: "WorldGorm",
-						gormOpts: &dalv1.GormOptions{
+						Name: "WorldGorm",
+						GormOpts: &dalv1.GormOptions{
 							Source: "api.World",
 							Table:  "worlds",
 						},
@@ -143,47 +147,49 @@ func TestConverterLookup_NestedMessage(t *testing.T) {
 // correctly resolve their element types via MessageRegistry.
 //
 // Before fix: []Tile lookup fails because elementType points to api.Tile
-//             but we look up "Tile:Tile" instead of "Tile:TileGORM".
+//
+//	but we look up "Tile:Tile" instead of "Tile:TileGORM".
+//
 // After fix:  MessageRegistry resolves api.Tile → TileGORM, lookup succeeds.
 //
 // This test will FAIL until we pass MessageRegistry to buildFieldConversion.
 func TestConverterLookup_RepeatedMessage(t *testing.T) {
-	plugin := createTestPlugin(t, &testProtoSet{
-		files: []testFile{
+	plugin := testutil.CreateTestPlugin(t, &testutil.TestProtoSet{
+		Files: []testutil.TestFile{
 			// API proto
 			{
-				name: "api/world.proto",
-				pkg:  "api",
-				messages: []testMessage{
+				Name: "api/world.proto",
+				Pkg:  "api",
+				Messages: []testutil.TestMessage{
 					{
-						name: "Tile",
-						fields: []testField{
-							{name: "q", number: 1, typeName: "int32"},
-							{name: "r", number: 2, typeName: "int32"},
+						Name: "Tile",
+						Fields: []testutil.TestField{
+							{Name: "q", Number: 1, TypeName: "int32"},
+							{Name: "r", Number: 2, TypeName: "int32"},
 						},
 					},
 					{
-						name: "WorldData",
-						fields: []testField{
-							{name: "tiles", number: 1, typeName: "api.Tile", repeated: true},
+						Name: "WorldData",
+						Fields: []testutil.TestField{
+							{Name: "tiles", Number: 1, TypeName: "api.Tile", Repeated: true},
 						},
 					},
 				},
 			},
 			// GORM DAL proto
 			{
-				name: "gorm/world.proto",
-				pkg:  "gorm",
-				messages: []testMessage{
+				Name: "gorm/world.proto",
+				Pkg:  "gorm",
+				Messages: []testutil.TestMessage{
 					{
-						name: "TileGorm",
-						gormOpts: &dalv1.GormOptions{
+						Name: "TileGorm",
+						GormOpts: &dalv1.GormOptions{
 							Source: "api.Tile",
 						},
 					},
 					{
-						name: "WorldDataGorm",
-						gormOpts: &dalv1.GormOptions{
+						Name: "WorldDataGorm",
+						GormOpts: &dalv1.GormOptions{
 							Source: "api.WorldData",
 						},
 					},
@@ -252,43 +258,43 @@ func TestConverterLookup_RepeatedMessage(t *testing.T) {
 //
 // This test will FAIL until we pass MessageRegistry to buildFieldConversion.
 func TestConverterLookup_MapWithMessageValue(t *testing.T) {
-	plugin := createTestPlugin(t, &testProtoSet{
-		files: []testFile{
+	plugin := testutil.CreateTestPlugin(t, &testutil.TestProtoSet{
+		Files: []testutil.TestFile{
 			// API proto
 			{
-				name: "api/game.proto",
-				pkg:  "api",
-				messages: []testMessage{
+				Name: "api/game.proto",
+				Pkg:  "api",
+				Messages: []testutil.TestMessage{
 					{
-						name: "Player",
-						fields: []testField{
-							{name: "player_id", number: 1, typeName: "int32"},
-							{name: "name", number: 2, typeName: "string"},
+						Name: "Player",
+						Fields: []testutil.TestField{
+							{Name: "player_id", Number: 1, TypeName: "int32"},
+							{Name: "Name", Number: 2, TypeName: "string"},
 						},
 					},
 					{
-						name: "Game",
-						fields: []testField{
-							{name: "id", number: 1, typeName: "string"},
-							{name: "players", number: 2, typeName: "api.Player", isMap: true, mapKeyType: "int32"},
+						Name: "Game",
+						Fields: []testutil.TestField{
+							{Name: "id", Number: 1, TypeName: "string"},
+							{Name: "players", Number: 2, TypeName: "api.Player", IsMap: true, MapKeyType: "int32"},
 						},
 					},
 				},
 			},
 			// GORM DAL proto
 			{
-				name: "gorm/game.proto",
-				pkg:  "gorm",
-				messages: []testMessage{
+				Name: "gorm/game.proto",
+				Pkg:  "gorm",
+				Messages: []testutil.TestMessage{
 					{
-						name: "PlayerGorm",
-						gormOpts: &dalv1.GormOptions{
+						Name: "PlayerGorm",
+						GormOpts: &dalv1.GormOptions{
 							Source: "api.Player",
 						},
 					},
 					{
-						name: "GameGorm",
-						gormOpts: &dalv1.GormOptions{
+						Name: "GameGorm",
+						GormOpts: &dalv1.GormOptions{
 							Source: "api.Game",
 							Table:  "games",
 						},
