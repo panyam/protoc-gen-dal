@@ -88,14 +88,9 @@ message MoveUnitActionGORM {
 message GameMoveGORM {
   option (dal.v1.gorm) = { source: "api.GameMove" };
 
-  // Store the oneof move_type as serialized Any
+  // Field named "move_type" matches the oneof name in source
+  // This automatically skips all oneof members (move_unit, attack_unit, end_turn, build_unit)
   google.protobuf.Any move_type = 1;
-
-  // Skip the individual oneof fields from the source (field names, not oneof name!)
-  bool move_unit = 4 [(dal.v1.skip_field) = true];
-  bool attack_unit = 5 [(dal.v1.skip_field) = true];
-  bool end_turn = 6 [(dal.v1.skip_field) = true];
-  bool build_unit = 7 [(dal.v1.skip_field) = true];
 
   google.protobuf.Any changes = 2;
 }

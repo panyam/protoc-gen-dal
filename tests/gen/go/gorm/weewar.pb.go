@@ -618,13 +618,9 @@ func (x *MoveUnitActionGORM) GetReconstructedPath() *anypb.Any {
 // Represents a single move which can be one of many actions in the game
 type GameMoveGORM struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Store the oneof move_type as serialized Any
-	MoveType *anypb.Any `protobuf:"bytes,1,opt,name=move_type,json=moveType,proto3" json:"move_type,omitempty"`
-	// Skip the individual oneof fields from the source (field names, not oneof name!)
-	MoveUnit      bool       `protobuf:"varint,4,opt,name=move_unit,json=moveUnit,proto3" json:"move_unit,omitempty"`
-	AttackUnit    bool       `protobuf:"varint,5,opt,name=attack_unit,json=attackUnit,proto3" json:"attack_unit,omitempty"`
-	EndTurn       bool       `protobuf:"varint,6,opt,name=end_turn,json=endTurn,proto3" json:"end_turn,omitempty"`
-	BuildUnit     bool       `protobuf:"varint,7,opt,name=build_unit,json=buildUnit,proto3" json:"build_unit,omitempty"`
+	// Field named "move_type" matches the oneof name in source
+	// This automatically skips all oneof members (move_unit, attack_unit, end_turn, build_unit)
+	MoveType      *anypb.Any `protobuf:"bytes,1,opt,name=move_type,json=moveType,proto3" json:"move_type,omitempty"`
 	Changes       *anypb.Any `protobuf:"bytes,2,opt,name=changes,proto3" json:"changes,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -665,34 +661,6 @@ func (x *GameMoveGORM) GetMoveType() *anypb.Any {
 		return x.MoveType
 	}
 	return nil
-}
-
-func (x *GameMoveGORM) GetMoveUnit() bool {
-	if x != nil {
-		return x.MoveUnit
-	}
-	return false
-}
-
-func (x *GameMoveGORM) GetAttackUnit() bool {
-	if x != nil {
-		return x.AttackUnit
-	}
-	return false
-}
-
-func (x *GameMoveGORM) GetEndTurn() bool {
-	if x != nil {
-		return x.EndTurn
-	}
-	return false
-}
-
-func (x *GameMoveGORM) GetBuildUnit() bool {
-	if x != nil {
-		return x.BuildUnit
-	}
-	return false
 }
 
 func (x *GameMoveGORM) GetChanges() *anypb.Any {
@@ -742,15 +710,9 @@ const file_gorm_weewar_proto_rawDesc = "" +
 	"\x11api.GameMoveGroup\"s\n" +
 	"\x12MoveUnitActionGORM\x12C\n" +
 	"\x12reconstructed_path\x18\x01 \x01(\v2\x14.google.protobuf.AnyR\x11reconstructedPath:\x18ʦ\x1d\x14\n" +
-	"\x12api.MoveUnitAction\"\x95\x02\n" +
+	"\x12api.MoveUnitAction\"\x85\x01\n" +
 	"\fGameMoveGORM\x121\n" +
-	"\tmove_type\x18\x01 \x01(\v2\x14.google.protobuf.AnyR\bmoveType\x12!\n" +
-	"\tmove_unit\x18\x04 \x01(\bB\x04\xb8\xa6\x1d\x01R\bmoveUnit\x12%\n" +
-	"\vattack_unit\x18\x05 \x01(\bB\x04\xb8\xa6\x1d\x01R\n" +
-	"attackUnit\x12\x1f\n" +
-	"\bend_turn\x18\x06 \x01(\bB\x04\xb8\xa6\x1d\x01R\aendTurn\x12#\n" +
-	"\n" +
-	"build_unit\x18\a \x01(\bB\x04\xb8\xa6\x1d\x01R\tbuildUnit\x12.\n" +
+	"\tmove_type\x18\x01 \x01(\v2\x14.google.protobuf.AnyR\bmoveType\x12.\n" +
 	"\achanges\x18\x02 \x01(\v2\x14.google.protobuf.AnyR\achanges:\x12ʦ\x1d\x0e\n" +
 	"\fapi.GameMoveB{\n" +
 	"\bcom.gormB\vWeewarProtoP\x01Z2github.com/panyam/protoc-gen-dal/tests/gen/go/gorm\xa2\x02\x03GXX\xaa\x02\x04Gorm\xca\x02\x04Gorm\xe2\x02\x10Gorm\\GPBMetadata\xea\x02\x04Gormb\x06proto3"

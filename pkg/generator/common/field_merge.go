@@ -26,18 +26,18 @@ import (
 
 // MergeSourceFields merges source message fields into target message fields.
 //
-// This implements the opt-out field model:
+// This implements the opt-out field model with oneof-aware handling:
 // 1. Start with all fields from source message (if source exists)
-// 2. For each target field:
-//    - If field number matches source → override (allows customization)
-//    - If field number is new → add (allows extra fields)
-// 3. Filter out fields marked with skip_field = true
+// 2. Detect oneof replacement: if target has field matching source oneof name,
+//    automatically skip all oneof members
+// 3. For each target field:
+//    - If field name matches source field → override (allows customization)
+//    - If field name is new → add (allows extra fields)
+// 4. Filter out fields marked with skip_field = true
 //
-// Algorithm:
-// - Create a map of all source fields by field number
-// - For each target field, replace the source field if it exists
-// - Add target fields that don't exist in source (extra fields)
-// - Filter out fields with skip_field annotation
+// Oneof Handling:
+// - If target field name matches source oneof name: auto-skip ALL oneof members
+// - Otherwise: oneof members are merged normally (can be overridden or skipped individually)
 //
 // Parameters:
 //   - sourceMsg: The source API message (can be nil if no source annotation)
@@ -45,16 +45,42 @@ import (
 //
 // Returns:
 //   - Merged list of fields to generate
-func MergeSourceFields(sourceMsg, targetMsg *protogen.Message) []*protogen.Field {
+//   - Error if oneof handling is invalid (future enhancement)
+func MergeSourceFields(sourceMsg, targetMsg *protogen.Message) ([]*protogen.Field, error) {
 	// If no source message, just use target fields as-is
 	if sourceMsg == nil {
-		return targetMsg.Fields
+		return targetMsg.Fields, nil
+	}
+
+	// Build a map of target field names that replace oneofs
+	targetReplacesOneof := make(map[string]bool)
+	for _, targetField := range targetMsg.Fields {
+		targetFieldName := string(targetField.Desc.Name())
+
+		// Check if this target field name matches any source oneof name
+		for _, oneof := range sourceMsg.Oneofs {
+			if string(oneof.Desc.Name()) == targetFieldName {
+				targetReplacesOneof[targetFieldName] = true
+				break
+			}
+		}
 	}
 
 	// Build a map of source fields by field name
 	sourceFieldsByName := make(map[string]*protogen.Field)
 	for _, field := range sourceMsg.Fields {
-		sourceFieldsByName[string(field.Desc.Name())] = field
+		fieldName := string(field.Desc.Name())
+
+		// Skip oneof members if target has a replacement field
+		if field.Oneof != nil {
+			oneofName := string(field.Oneof.Desc.Name())
+			if targetReplacesOneof[oneofName] {
+				// Auto-skip this oneof member
+				continue
+			}
+		}
+
+		sourceFieldsByName[fieldName] = field
 	}
 
 	// Build result: start with source fields, then apply overrides/additions
@@ -92,7 +118,7 @@ func MergeSourceFields(sourceMsg, targetMsg *protogen.Message) []*protogen.Field
 		return result[i].Desc.Number() < result[j].Desc.Number()
 	})
 
-	return result
+	return result, nil
 }
 
 // HasSkipField checks if a field has the skip_field annotation set to true.

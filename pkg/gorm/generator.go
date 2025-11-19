@@ -297,7 +297,10 @@ func generateConverterFileCode(messages []*collector.MessageInfo) (string, error
 			continue
 		}
 
-		converterData := buildConverterData(msg, registry)
+		converterData, err := buildConverterData(msg, registry)
+		if err != nil {
+			return "", fmt.Errorf("failed to build converter data for %s: %w", msg.TargetMessage.Desc.Name(), err)
+		}
 		converters = append(converters, converterData)
 
 		// Add import for source message package with alias
@@ -408,7 +411,10 @@ func buildStructData(msg *collector.MessageInfo, registry *common.MessageRegistr
 	}
 
 	// Merge source and target fields (implements opt-out field model)
-	mergedFields := common.MergeSourceFields(sourceMsg, targetMsg)
+	mergedFields, err := common.MergeSourceFields(sourceMsg, targetMsg)
+	if err != nil {
+		return StructData{}, fmt.Errorf("failed to merge fields: %w", err)
+	}
 
 	// Extract source package alias for enum type references
 	// Use import path's last component as alias (e.g., "api" from ".../go/api")
@@ -436,7 +442,7 @@ func buildStructData(msg *collector.MessageInfo, registry *common.MessageRegistr
 }
 
 // buildConverterData builds converter function data from a MessageInfo.
-func buildConverterData(msg *collector.MessageInfo, reg *registry.ConverterRegistry) ConverterData {
+func buildConverterData(msg *collector.MessageInfo, reg *registry.ConverterRegistry) (ConverterData, error) {
 	// Extract source type name and package
 	sourceTypeName := string(msg.SourceMessage.Desc.Name())
 	sourcePkgName := common.ExtractPackageName(msg.SourceMessage)
@@ -446,7 +452,10 @@ func buildConverterData(msg *collector.MessageInfo, reg *registry.ConverterRegis
 
 	// Merge source and target fields (same as buildStructData)
 	// This ensures converters use the same fields as the generated struct
-	mergedFields := common.MergeSourceFields(msg.SourceMessage, msg.TargetMessage)
+	mergedFields, err := common.MergeSourceFields(msg.SourceMessage, msg.TargetMessage)
+	if err != nil {
+		return ConverterData{}, fmt.Errorf("failed to merge fields for %s: %w", msg.TargetMessage.Desc.Name(), err)
+	}
 
 	// Build field mappings between source and GORM with built-in conversions
 	var fieldMappings []FieldMappingData
@@ -522,7 +531,7 @@ func buildConverterData(msg *collector.MessageInfo, reg *registry.ConverterRegis
 		FromTargetInlineFields: fromTargetInline,
 		FromTargetSetterFields: fromTargetSetter,
 		FromTargetLoopFields:   fromTargetLoop,
-	}
+	}, nil
 }
 
 // addRenderStrategies calculates and adds render strategies to a FieldMappingData.
@@ -603,7 +612,7 @@ func buildFieldConversion(sourceField, targetField *protogen.Field, reg *registr
 			mapping.ToTargetConversionType = converter.ConvertByAssignment
 			mapping.FromTargetConversionType = converter.ConvertByAssignment
 			// Return early - no further processing needed for primitive maps
-	addRenderStrategies(mapping)
+			addRenderStrategies(mapping)
 			return mapping
 		}
 	} else if sourceField.Desc.IsList() {
@@ -623,7 +632,7 @@ func buildFieldConversion(sourceField, targetField *protogen.Field, reg *registr
 			mapping.ToTargetConversionType = converter.ConvertByAssignment
 			mapping.FromTargetConversionType = converter.ConvertByAssignment
 			// Return early - no further processing needed for primitive slices
-	addRenderStrategies(mapping)
+			addRenderStrategies(mapping)
 			return mapping
 		}
 	} else if sourceKind == "message" || targetKind == "message" {
@@ -643,7 +652,7 @@ func buildFieldConversion(sourceField, targetField *protogen.Field, reg *registr
 		mapping.FromTargetCode = fromTargetCode
 		mapping.ToTargetConversionType = converter.ConvertByTransformer
 		mapping.FromTargetConversionType = converter.ConvertByTransformer
-	addRenderStrategies(mapping)
+		addRenderStrategies(mapping)
 		return mapping
 	}
 
@@ -669,7 +678,7 @@ func buildFieldConversion(sourceField, targetField *protogen.Field, reg *registr
 		mapping.FromTargetCode = fmt.Sprintf("src.%s", fieldName)
 		mapping.ToTargetConversionType = converter.ConvertByAssignment
 		mapping.FromTargetConversionType = converter.ConvertByAssignment
-	addRenderStrategies(mapping)
+		addRenderStrategies(mapping)
 		return mapping
 	}
 
@@ -709,7 +718,7 @@ func buildFieldConversion(sourceField, targetField *protogen.Field, reg *registr
 					mapping.SourceElementType = sourceTypeName
 				}
 				// Keep default converter.ConvertByTransformerWithError (already set in Step 1)
-	addRenderStrategies(mapping)
+				addRenderStrategies(mapping)
 				return mapping
 			}
 			// No converter available - warn user and skip (decorator must handle)
@@ -736,7 +745,7 @@ func buildFieldConversion(sourceField, targetField *protogen.Field, reg *registr
 		mapping.FromTargetCode = fmt.Sprintf("%s(src.%s)", common.ProtoKindToGoType(sourceKind), fieldName)
 		mapping.ToTargetConversionType = converter.ConvertByAssignment
 		mapping.FromTargetConversionType = converter.ConvertByAssignment
-	addRenderStrategies(mapping)
+		addRenderStrategies(mapping)
 		return mapping
 	}
 

@@ -194,8 +194,8 @@ type MoveUnitActionGORM struct {
 
 // GameMoveGORM is the GORM model for api.GameMove
 type GameMoveGORM struct {
-	MoveType    []byte
 	Player      int32
+	MoveType    []byte
 	Changes     []byte
 	Timestamp   time.Time
 	SequenceNum int64

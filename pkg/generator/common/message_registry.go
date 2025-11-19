@@ -129,7 +129,10 @@ func (r *MessageRegistry) ValidateMissingTypes(messages []*collector.MessageInfo
 	// Single pass: scan all messages to find referenced types
 	for _, msg := range messages {
 		// Merge source and target fields
-		mergedFields := MergeSourceFields(msg.SourceMessage, msg.TargetMessage)
+		mergedFields, err := MergeSourceFields(msg.SourceMessage, msg.TargetMessage)
+		if err != nil {
+			return fmt.Errorf("failed to merge fields for %s: %w", msg.TargetMessage.Desc.Name(), err)
+		}
 
 		// Scan for message-type fields
 		for _, field := range mergedFields {

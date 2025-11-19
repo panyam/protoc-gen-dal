@@ -69,8 +69,8 @@ type UserWithIndexes struct {
 	Email        string `gorm:"uniqueIndex"`
 	City         string `gorm:"index:idx_city,sort:desc"`
 	Age          uint32
-	FirstName    string `gorm:"index:idx_name"`
 	Birthday     time.Time
+	FirstName    string `gorm:"index:idx_name"`
 	MemberNumber string
 	LastName     string `gorm:"index:idx_name"`
 	ActivatedAt  time.Time
@@ -87,10 +87,10 @@ func (*UserWithIndexes) TableName() string {
 type UserWithDefaults struct {
 	Id           uint32 `gorm:"primaryKey"`
 	Name         string `gorm:"default:guest"`
+	Active       bool   `gorm:"default:true"`
 	Email        string
-	Active       bool `gorm:"default:true"`
-	Age          uint32
 	CreatedAt    int64 `gorm:"default:CURRENT_TIMESTAMP"`
+	Age          uint32
 	Birthday     time.Time
 	MemberNumber string
 	ActivatedAt  time.Time

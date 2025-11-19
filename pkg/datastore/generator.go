@@ -55,6 +55,7 @@ type GenerateResult struct {
 // Returns:
 //   - GenerateResult containing all generated files
 //   - error if generation fails
+//
 // buildStructName generates the Datastore struct name from the target message name.
 // For Datastore, we keep the name as-is (e.g., "UserDatastore" stays "UserDatastore")
 func buildStructName(msg *protogen.Message) string {
@@ -187,7 +188,10 @@ func buildStructData(msgInfo *collector.MessageInfo, registry *common.MessageReg
 	}
 
 	// Merge source and target fields (implements opt-out field model)
-	mergedFields := common.MergeSourceFields(sourceMsg, targetMsg)
+	mergedFields, err := common.MergeSourceFields(sourceMsg, targetMsg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to merge fields: %w", err)
+	}
 
 	// Extract source package alias for enum type references
 	// Use import path's last component as alias (e.g., "api" from ".../go/api")
@@ -316,7 +320,10 @@ func generateConverterFileCode(messages []*collector.MessageInfo) (string, error
 			continue
 		}
 
-		converterData := buildConverterData(msg, reg)
+		converterData, err := buildConverterData(msg, reg)
+		if err != nil {
+			return "", fmt.Errorf("failed to build converter data for %s: %w", msg.TargetMessage.Desc.Name(), err)
+		}
 		converters = append(converters, converterData)
 
 		// Add import for source message package with alias
@@ -368,7 +375,7 @@ func generateConverterFileCode(messages []*collector.MessageInfo) (string, error
 }
 
 // buildConverterData builds converter metadata for a single message.
-func buildConverterData(msgInfo *collector.MessageInfo, reg *registry.ConverterRegistry) *ConverterData {
+func buildConverterData(msgInfo *collector.MessageInfo, reg *registry.ConverterRegistry) (*ConverterData, error) {
 	sourceMsg := msgInfo.SourceMessage
 	targetMsg := msgInfo.TargetMessage
 
@@ -385,7 +392,10 @@ func buildConverterData(msgInfo *collector.MessageInfo, reg *registry.ConverterR
 
 	// Merge source and target fields (same as buildStructData)
 	// This ensures converters use the same fields as the generated struct
-	mergedFields := common.MergeSourceFields(sourceMsg, targetMsg)
+	mergedFields, err := common.MergeSourceFields(sourceMsg, targetMsg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to merge fields: %w", err)
+	}
 
 	// Build field mappings
 	var fieldMappings []*FieldMapping
@@ -455,7 +465,7 @@ func buildConverterData(msgInfo *collector.MessageInfo, reg *registry.ConverterR
 		FromTargetInlineFields: fromTargetInline,
 		FromTargetSetterFields: fromTargetSetter,
 		FromTargetLoopFields:   fromTargetLoop,
-	}
+	}, nil
 }
 
 // addRenderStrategies calculates and populates render strategies for a field mapping.
