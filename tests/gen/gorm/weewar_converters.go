@@ -2,10 +2,9 @@
 package gorm
 
 import (
-	"fmt"
-
-	"github.com/panyam/protoc-gen-dal/pkg/converters"
 	api "github.com/panyam/protoc-gen-dal/tests/gen/go/api"
+	"fmt"
+	"github.com/panyam/protoc-gen-dal/pkg/converters"
 )
 
 // IndexInfoToIndexInfoGORM converts a api.IndexInfo to IndexInfoGORM.
@@ -1334,6 +1333,13 @@ func MoveUnitActionToMoveUnitActionGORM(
 	}
 	out = dest
 
+	if src.ReconstructedPath != nil {
+		out.ReconstructedPath, err = converters.MessageToAnyBytes(src.ReconstructedPath)
+		if err != nil {
+			return nil, fmt.Errorf("converting ReconstructedPath: %w", err)
+		}
+	}
+
 	// Apply decorator if provided
 	if decorator != nil {
 		if err := decorator(src, dest); err != nil {
@@ -1367,6 +1373,11 @@ func MoveUnitActionFromMoveUnitActionGORM(
 		MovementCost: src.MovementCost,
 	}
 	out = dest
+
+	out.ReconstructedPath, err = converters.AnyBytesToMessage[*api.Path](src.ReconstructedPath)
+	if err != nil {
+		return nil, fmt.Errorf("converting ReconstructedPath: %w", err)
+	}
 
 	// Apply decorator if provided
 	if decorator != nil {
@@ -1404,6 +1415,16 @@ func GameMoveToGameMoveGORM(
 		out.Timestamp = converters.TimestampToTime(src.Timestamp)
 	}
 
+	if src.Changes != nil {
+		out.Changes = make([][]byte, len(src.Changes))
+		for i, item := range src.Changes {
+			_, err = converters.MessageToAnyBytesConverter(item, &out.Changes[i], nil)
+			if err != nil {
+				return nil, fmt.Errorf("converting Changes[%d]: %w", i, err)
+			}
+		}
+	}
+
 	// Apply decorator if provided
 	if decorator != nil {
 		if err := decorator(src, dest); err != nil {
@@ -1436,6 +1457,16 @@ func GameMoveFromGameMoveGORM(
 		IsPermanent: src.IsPermanent,
 	}
 	out = dest
+
+	if src.Changes != nil {
+		out.Changes = make([]*api.WorldChange, len(src.Changes))
+		for i, item := range src.Changes {
+			out.Changes[i], err = converters.AnyBytesToMessageConverter[*api.WorldChange](nil, &item, nil)
+			if err != nil {
+				return nil, fmt.Errorf("converting Changes[%d]: %w", i, err)
+			}
+		}
+	}
 
 	// Apply decorator if provided
 	if decorator != nil {

@@ -3,7 +3,6 @@ package gorm
 
 import (
 	"time"
-
 	api "github.com/panyam/protoc-gen-dal/tests/gen/go/api"
 )
 
@@ -184,8 +183,8 @@ type GameMoveGroupGORM struct {
 
 // MoveUnitActionGORM is the GORM model for api.MoveUnitAction
 type MoveUnitActionGORM struct {
-	FromQ             int32
 	ReconstructedPath []byte
+	FromQ             int32
 	FromR             int32
 	ToQ               int32
 	ToR               int32

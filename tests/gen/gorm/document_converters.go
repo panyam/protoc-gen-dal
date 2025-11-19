@@ -2,8 +2,8 @@
 package gorm
 
 import (
-	"github.com/panyam/protoc-gen-dal/pkg/converters"
 	api "github.com/panyam/protoc-gen-dal/tests/gen/go/api"
+	"github.com/panyam/protoc-gen-dal/pkg/converters"
 )
 
 // DocumentToDocumentGormEmpty converts a api.Document to DocumentGormEmpty.

@@ -2,9 +2,8 @@
 package gorm
 
 import (
-	"time"
-
 	api "github.com/panyam/protoc-gen-dal/tests/gen/go/api"
+	"time"
 )
 
 // TestRecord1GORM is the GORM model for api.TestRecord1

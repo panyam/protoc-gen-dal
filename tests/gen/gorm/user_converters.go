@@ -2,10 +2,9 @@
 package gorm
 
 import (
-	"fmt"
-
-	"github.com/panyam/protoc-gen-dal/pkg/converters"
 	api "github.com/panyam/protoc-gen-dal/tests/gen/go/api"
+	"fmt"
+	"github.com/panyam/protoc-gen-dal/pkg/converters"
 )
 
 // UserToUserGORM converts a api.User to UserGORM.
@@ -165,8 +164,8 @@ func UserFromUserWithPermissions(
 		Id:           src.Id,
 		Name:         src.Name,
 		Email:        src.Email,
-		Age:          src.Age,
 		CreatedAt:    converters.TimeToTimestamp(src.CreatedAt),
+		Age:          src.Age,
 		UpdatedAt:    converters.TimeToTimestamp(src.UpdatedAt),
 		Birthday:     converters.TimeToTimestamp(src.Birthday),
 		MemberNumber: src.MemberNumber,
@@ -429,8 +428,8 @@ func UserFromUserWithDefaults(
 		Id:           src.Id,
 		Name:         src.Name,
 		Email:        src.Email,
-		Age:          src.Age,
 		CreatedAt:    converters.Int64ToTimestamp(src.CreatedAt),
+		Age:          src.Age,
 		Birthday:     converters.TimeToTimestamp(src.Birthday),
 		MemberNumber: src.MemberNumber,
 		ActivatedAt:  converters.TimeToTimestamp(src.ActivatedAt),

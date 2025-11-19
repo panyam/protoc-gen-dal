@@ -691,23 +691,76 @@ func buildFieldConversion(sourceField, targetField *protogen.Field, reg *registr
 	if sourceKind == "message" && targetKind == "message" {
 		var sourceTypeName, targetTypeName string
 		var sourceMsg, targetMsg *protogen.Message
+		var targetFieldMsg *protogen.Message // The actual target field's message type
 
 		if mapping.IsRepeated {
 			// For repeated fields, get the element type
 			sourceMsg = sourceField.Message
-			// Use MessageRegistry to resolve source → target mapping
-			targetMsg = msgRegistry.LookupTargetMessage(sourceMsg)
+			targetFieldMsg = targetField.Message
+			// Check if target is a well-known type first
+			if _, isWellKnown := common.GetWellKnownTypeMapping(targetFieldMsg); !isWellKnown {
+				// Use MessageRegistry to resolve source → target mapping
+				targetMsg = msgRegistry.LookupTargetMessage(sourceMsg)
+			}
 		} else if mapping.IsMap {
 			// For map fields, get the value type
 			sourceMapEntry := sourceField.Message
 			sourceMsg = sourceMapEntry.Fields[1].Message // value field
-			// Use MessageRegistry to resolve source → target mapping
-			targetMsg = msgRegistry.LookupTargetMessage(sourceMsg)
+			targetMapEntry := targetField.Message
+			targetFieldMsg = targetMapEntry.Fields[1].Message
+			// Check if target is a well-known type first
+			if _, isWellKnown := common.GetWellKnownTypeMapping(targetFieldMsg); !isWellKnown {
+				// Use MessageRegistry to resolve source → target mapping
+				targetMsg = msgRegistry.LookupTargetMessage(sourceMsg)
+			}
 		} else {
 			// Regular message field
 			sourceMsg = sourceField.Message
-			// Use MessageRegistry to resolve source → target mapping
-			targetMsg = msgRegistry.LookupTargetMessage(sourceMsg)
+			targetFieldMsg = targetField.Message
+			// Check if target is a well-known type first
+			if _, isWellKnown := common.GetWellKnownTypeMapping(targetFieldMsg); !isWellKnown {
+				// Use MessageRegistry to resolve source → target mapping
+				targetMsg = msgRegistry.LookupTargetMessage(sourceMsg)
+			}
+		}
+
+		// Check if target is a well-known type (e.g., google.protobuf.Any)
+		if wkt, isWellKnown := common.GetWellKnownTypeMapping(targetFieldMsg); isWellKnown {
+			// Handle well-known type conversion (e.g., Message → Any serialization)
+			// For google.protobuf.Any, automatically serialize using protobuf marshaling
+			if wkt.ProtoFullName == "google.protobuf.Any" {
+				// Build the fully qualified type: *api.Path (not *.Path)
+				// Extract package name from source message
+				sourcePkgName := common.ExtractPackageName(sourceMsg)
+				sourceTypeName := fmt.Sprintf("*%s.%s", sourcePkgName, sourceMsg.Desc.Name())
+
+				if mapping.IsRepeated {
+					// For repeated Any fields: []Message → [][]byte
+					// Use loop-based conversion with element converter functions
+					// SourceElementType should be just the type name (e.g., "WorldChange")
+					// since template constructs []*api.WorldChange from SourcePkgName + SourceElementType
+					mapping.SourceElementType = string(sourceMsg.Desc.Name())
+					mapping.TargetElementType = "[]byte"
+					// Use wrapper converters that match standard converter signature (dest, src, decorator)
+					mapping.ToTargetConverterFunc = "converters.MessageToAnyBytesConverter"
+					// For FromTargetConverterFunc, we need the full type with pointer and package
+					mapping.FromTargetConverterFunc = fmt.Sprintf("converters.AnyBytesToMessageConverter[%s]", sourceTypeName)
+					mapping.ToTargetConversionType = converter.ConvertByTransformerWithError
+					mapping.FromTargetConversionType = converter.ConvertByTransformerWithError
+				} else {
+					// For single Any fields: Message → []byte
+					// Generate direct conversion code
+					mapping.ToTargetCode = fmt.Sprintf("converters.MessageToAnyBytes(src.%s)", fieldName)
+					mapping.FromTargetCode = fmt.Sprintf("converters.AnyBytesToMessage[%s](src.%s)",
+						sourceTypeName, fieldName)
+					mapping.ToTargetConversionType = converter.ConvertByTransformerWithError
+					mapping.FromTargetConversionType = converter.ConvertByTransformerWithError
+				}
+				addRenderStrategies(mapping)
+				return mapping
+			}
+			// Other well-known types can be added here
+			return nil
 		}
 
 		if sourceMsg != nil && targetMsg != nil {

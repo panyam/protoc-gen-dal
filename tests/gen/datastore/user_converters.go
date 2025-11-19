@@ -98,8 +98,8 @@ func UserFromUserDatastore(
 		Email:        src.Email,
 		Age:          src.Age,
 		Birthday:     converters.TimeToTimestamp(src.Birthday),
-		MemberNumber: src.MemberNumber,
 		CreatedAt:    converters.TimeToTimestamp(src.CreatedAt),
+		MemberNumber: src.MemberNumber,
 		ActivatedAt:  converters.TimeToTimestamp(src.ActivatedAt),
 		UpdatedAt:    converters.TimeToTimestamp(src.UpdatedAt),
 	}

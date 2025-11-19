@@ -3,8 +3,8 @@ package datastore
 
 import (
 	"time"
-
 	"cloud.google.com/go/datastore"
+	api "github.com/panyam/protoc-gen-dal/tests/gen/go/api"
 )
 
 // UserDatastore is the Datastore entity for the source message.
@@ -21,13 +21,13 @@ type UserDatastore struct {
 
 	Birthday time.Time `datastore:"birthday"`
 
-	CreatedAt time.Time `datastore:"created_at"`
-
 	MemberNumber string `datastore:"member_number"`
 
-	UpdatedAt time.Time `datastore:"updated_at"`
+	CreatedAt time.Time `datastore:"created_at"`
 
 	ActivatedAt time.Time `datastore:"activated_at"`
+
+	UpdatedAt time.Time `datastore:"updated_at"`
 }
 
 // Kind returns the Datastore kind name for UserDatastore.

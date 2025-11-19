@@ -3,6 +3,7 @@ package gorm
 
 import (
 	"time"
+	api "github.com/panyam/protoc-gen-dal/tests/gen/go/api"
 )
 
 // UserGORM is the GORM model for api.User
@@ -26,11 +27,11 @@ func (*UserGORM) TableName() string {
 
 // UserWithPermissions is the GORM model for api.User
 type UserWithPermissions struct {
-	Id           uint32    `gorm:"primaryKey"`
-	Name         string    `gorm:"<-:create"`
-	Email        string    `gorm:"<-:update"`
-	CreatedAt    time.Time `gorm:"->;autoCreateTime"`
+	Id           uint32 `gorm:"primaryKey"`
+	Name         string `gorm:"<-:create"`
+	Email        string `gorm:"<-:update"`
 	Age          uint32
+	CreatedAt    time.Time `gorm:"->;autoCreateTime"`
 	UpdatedAt    time.Time `gorm:"<-;autoUpdateTime"`
 	Birthday     time.Time
 	MemberNumber string
@@ -46,12 +47,12 @@ func (*UserWithPermissions) TableName() string {
 type UserWithCustomTimestamps struct {
 	Id           uint32 `gorm:"primaryKey"`
 	Name         string
-	CreatedAt    int64 `gorm:"autoCreateTime"`
 	Email        string
+	CreatedAt    int64 `gorm:"autoCreateTime"`
 	Age          uint32
 	UpdatedMilli int64 `gorm:"autoUpdateTime:milli"`
-	UpdatedNano  int64 `gorm:"autoUpdateTime:nano"`
 	Birthday     time.Time
+	UpdatedNano  int64 `gorm:"autoUpdateTime:nano"`
 	MemberNumber string
 	ActivatedAt  time.Time
 	UpdatedAt    time.Time
@@ -87,10 +88,10 @@ func (*UserWithIndexes) TableName() string {
 type UserWithDefaults struct {
 	Id           uint32 `gorm:"primaryKey"`
 	Name         string `gorm:"default:guest"`
-	Active       bool   `gorm:"default:true"`
 	Email        string
-	CreatedAt    int64 `gorm:"default:CURRENT_TIMESTAMP"`
+	Active       bool `gorm:"default:true"`
 	Age          uint32
+	CreatedAt    int64 `gorm:"default:CURRENT_TIMESTAMP"`
 	Birthday     time.Time
 	MemberNumber string
 	ActivatedAt  time.Time
