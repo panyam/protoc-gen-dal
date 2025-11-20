@@ -131,10 +131,12 @@ plugins:
 **Generated helpers** (`gen/gorm/dal/user_gorm_dal.go`):
 ```go
 type UserGORMDAL struct {
-    // Hook called when creating new records
+    // Hook called when Save creates new records
     WillCreate func(context.Context, *UserGORM) error
 }
 
+func (d *UserGORMDAL) Create(ctx context.Context, db *gorm.DB, obj *UserGORM) error
+func (d *UserGORMDAL) Update(ctx context.Context, db *gorm.DB, obj *UserGORM) error
 func (d *UserGORMDAL) Save(ctx context.Context, db *gorm.DB, obj *UserGORM) error
 func (d *UserGORMDAL) Get(ctx context.Context, db *gorm.DB, id uint32) (*UserGORM, error)
 func (d *UserGORMDAL) Delete(ctx context.Context, db *gorm.DB, id uint32) error
@@ -152,8 +154,23 @@ dal := &UserGORMDAL{
     },
 }
 
-// Save (create or update)
+// Create (fails if ID already exists)
+err := dal.Create(ctx, db, userGorm)
+
+// Update (fails if record doesn't exist)
+err := dal.Update(ctx, db, userGorm)
+
+// Update with optimistic locking (conditional update)
+err := dal.Update(ctx, db.Where("version = ?", oldVersion), userGorm)
+if errors.Is(err, gorm.ErrRecordNotFound) {
+    // Record not found or version mismatch
+}
+
+// Save (upsert - create or update)
 err := dal.Save(ctx, db, userGorm)
+
+// Save with conditional update (optimistic locking)
+err := dal.Save(ctx, db.Where("version = ?", oldVersion), userGorm)
 
 // Get by ID (returns nil, nil if not found)
 user, err := dal.Get(ctx, db, 123)

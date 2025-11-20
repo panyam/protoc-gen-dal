@@ -16,8 +16,36 @@ type UserGORMDAL struct {
 	WillCreate func(context.Context, *gorm.UserGORM) error
 }
 
-// Save creates or updates a gorm.UserGORM record.
+// Create creates a new gorm.UserGORM record.
+// Returns an error if the record already exists.
+func (d *UserGORMDAL) Create(ctx context.Context, db *gormlib.DB, obj *gorm.UserGORM) error {
+	return db.Create(obj).Error
+}
+
+// Update updates an existing gorm.UserGORM record.
+// Returns ErrRecordNotFound if the record doesn't exist.
+// For conditional updates (optimistic locking), pass a db with WHERE conditions:
+//
+//	dal.Update(ctx, db.Where("version = ?", oldVersion), obj)
+func (d *UserGORMDAL) Update(ctx context.Context, db *gormlib.DB, obj *gorm.UserGORM) error {
+	result := db.Updates(obj)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	// Check if record was found and updated
+	if result.RowsAffected == 0 {
+		return gormlib.ErrRecordNotFound
+	}
+
+	return nil
+}
+
+// Save creates or updates a gorm.UserGORM record (upsert).
 // If the record doesn't exist (RowsAffected == 0), it will call WillCreate hook and then create the record.
+// For conditional updates (optimistic locking), pass a db with WHERE conditions:
+//
+//	dal.Save(ctx, db.Where("version = ?", oldVersion), obj)
 func (d *UserGORMDAL) Save(ctx context.Context, db *gormlib.DB, obj *gorm.UserGORM) error {
 	// Validate primary key(s)
 	if obj.Id == 0 {
@@ -83,8 +111,36 @@ type UserWithPermissionsDAL struct {
 	WillCreate func(context.Context, *gorm.UserWithPermissions) error
 }
 
-// Save creates or updates a gorm.UserWithPermissions record.
+// Create creates a new gorm.UserWithPermissions record.
+// Returns an error if the record already exists.
+func (d *UserWithPermissionsDAL) Create(ctx context.Context, db *gormlib.DB, obj *gorm.UserWithPermissions) error {
+	return db.Create(obj).Error
+}
+
+// Update updates an existing gorm.UserWithPermissions record.
+// Returns ErrRecordNotFound if the record doesn't exist.
+// For conditional updates (optimistic locking), pass a db with WHERE conditions:
+//
+//	dal.Update(ctx, db.Where("version = ?", oldVersion), obj)
+func (d *UserWithPermissionsDAL) Update(ctx context.Context, db *gormlib.DB, obj *gorm.UserWithPermissions) error {
+	result := db.Updates(obj)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	// Check if record was found and updated
+	if result.RowsAffected == 0 {
+		return gormlib.ErrRecordNotFound
+	}
+
+	return nil
+}
+
+// Save creates or updates a gorm.UserWithPermissions record (upsert).
 // If the record doesn't exist (RowsAffected == 0), it will call WillCreate hook and then create the record.
+// For conditional updates (optimistic locking), pass a db with WHERE conditions:
+//
+//	dal.Save(ctx, db.Where("version = ?", oldVersion), obj)
 func (d *UserWithPermissionsDAL) Save(ctx context.Context, db *gormlib.DB, obj *gorm.UserWithPermissions) error {
 	// Validate primary key(s)
 	if obj.Id == 0 {
@@ -150,8 +206,36 @@ type UserWithCustomTimestampsDAL struct {
 	WillCreate func(context.Context, *gorm.UserWithCustomTimestamps) error
 }
 
-// Save creates or updates a gorm.UserWithCustomTimestamps record.
+// Create creates a new gorm.UserWithCustomTimestamps record.
+// Returns an error if the record already exists.
+func (d *UserWithCustomTimestampsDAL) Create(ctx context.Context, db *gormlib.DB, obj *gorm.UserWithCustomTimestamps) error {
+	return db.Create(obj).Error
+}
+
+// Update updates an existing gorm.UserWithCustomTimestamps record.
+// Returns ErrRecordNotFound if the record doesn't exist.
+// For conditional updates (optimistic locking), pass a db with WHERE conditions:
+//
+//	dal.Update(ctx, db.Where("version = ?", oldVersion), obj)
+func (d *UserWithCustomTimestampsDAL) Update(ctx context.Context, db *gormlib.DB, obj *gorm.UserWithCustomTimestamps) error {
+	result := db.Updates(obj)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	// Check if record was found and updated
+	if result.RowsAffected == 0 {
+		return gormlib.ErrRecordNotFound
+	}
+
+	return nil
+}
+
+// Save creates or updates a gorm.UserWithCustomTimestamps record (upsert).
 // If the record doesn't exist (RowsAffected == 0), it will call WillCreate hook and then create the record.
+// For conditional updates (optimistic locking), pass a db with WHERE conditions:
+//
+//	dal.Save(ctx, db.Where("version = ?", oldVersion), obj)
 func (d *UserWithCustomTimestampsDAL) Save(ctx context.Context, db *gormlib.DB, obj *gorm.UserWithCustomTimestamps) error {
 	// Validate primary key(s)
 	if obj.Id == 0 {
@@ -217,8 +301,36 @@ type UserWithIndexesDAL struct {
 	WillCreate func(context.Context, *gorm.UserWithIndexes) error
 }
 
-// Save creates or updates a gorm.UserWithIndexes record.
+// Create creates a new gorm.UserWithIndexes record.
+// Returns an error if the record already exists.
+func (d *UserWithIndexesDAL) Create(ctx context.Context, db *gormlib.DB, obj *gorm.UserWithIndexes) error {
+	return db.Create(obj).Error
+}
+
+// Update updates an existing gorm.UserWithIndexes record.
+// Returns ErrRecordNotFound if the record doesn't exist.
+// For conditional updates (optimistic locking), pass a db with WHERE conditions:
+//
+//	dal.Update(ctx, db.Where("version = ?", oldVersion), obj)
+func (d *UserWithIndexesDAL) Update(ctx context.Context, db *gormlib.DB, obj *gorm.UserWithIndexes) error {
+	result := db.Updates(obj)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	// Check if record was found and updated
+	if result.RowsAffected == 0 {
+		return gormlib.ErrRecordNotFound
+	}
+
+	return nil
+}
+
+// Save creates or updates a gorm.UserWithIndexes record (upsert).
 // If the record doesn't exist (RowsAffected == 0), it will call WillCreate hook and then create the record.
+// For conditional updates (optimistic locking), pass a db with WHERE conditions:
+//
+//	dal.Save(ctx, db.Where("version = ?", oldVersion), obj)
 func (d *UserWithIndexesDAL) Save(ctx context.Context, db *gormlib.DB, obj *gorm.UserWithIndexes) error {
 	// Validate primary key(s)
 	if obj.Id == 0 {
@@ -284,8 +396,36 @@ type UserWithDefaultsDAL struct {
 	WillCreate func(context.Context, *gorm.UserWithDefaults) error
 }
 
-// Save creates or updates a gorm.UserWithDefaults record.
+// Create creates a new gorm.UserWithDefaults record.
+// Returns an error if the record already exists.
+func (d *UserWithDefaultsDAL) Create(ctx context.Context, db *gormlib.DB, obj *gorm.UserWithDefaults) error {
+	return db.Create(obj).Error
+}
+
+// Update updates an existing gorm.UserWithDefaults record.
+// Returns ErrRecordNotFound if the record doesn't exist.
+// For conditional updates (optimistic locking), pass a db with WHERE conditions:
+//
+//	dal.Update(ctx, db.Where("version = ?", oldVersion), obj)
+func (d *UserWithDefaultsDAL) Update(ctx context.Context, db *gormlib.DB, obj *gorm.UserWithDefaults) error {
+	result := db.Updates(obj)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	// Check if record was found and updated
+	if result.RowsAffected == 0 {
+		return gormlib.ErrRecordNotFound
+	}
+
+	return nil
+}
+
+// Save creates or updates a gorm.UserWithDefaults record (upsert).
 // If the record doesn't exist (RowsAffected == 0), it will call WillCreate hook and then create the record.
+// For conditional updates (optimistic locking), pass a db with WHERE conditions:
+//
+//	dal.Save(ctx, db.Where("version = ?", oldVersion), obj)
 func (d *UserWithDefaultsDAL) Save(ctx context.Context, db *gormlib.DB, obj *gorm.UserWithDefaults) error {
 	// Validate primary key(s)
 	if obj.Id == 0 {
@@ -351,8 +491,36 @@ type BlogGORMDAL struct {
 	WillCreate func(context.Context, *gorm.BlogGORM) error
 }
 
-// Save creates or updates a gorm.BlogGORM record.
+// Create creates a new gorm.BlogGORM record.
+// Returns an error if the record already exists.
+func (d *BlogGORMDAL) Create(ctx context.Context, db *gormlib.DB, obj *gorm.BlogGORM) error {
+	return db.Create(obj).Error
+}
+
+// Update updates an existing gorm.BlogGORM record.
+// Returns ErrRecordNotFound if the record doesn't exist.
+// For conditional updates (optimistic locking), pass a db with WHERE conditions:
+//
+//	dal.Update(ctx, db.Where("version = ?", oldVersion), obj)
+func (d *BlogGORMDAL) Update(ctx context.Context, db *gormlib.DB, obj *gorm.BlogGORM) error {
+	result := db.Updates(obj)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	// Check if record was found and updated
+	if result.RowsAffected == 0 {
+		return gormlib.ErrRecordNotFound
+	}
+
+	return nil
+}
+
+// Save creates or updates a gorm.BlogGORM record (upsert).
 // If the record doesn't exist (RowsAffected == 0), it will call WillCreate hook and then create the record.
+// For conditional updates (optimistic locking), pass a db with WHERE conditions:
+//
+//	dal.Save(ctx, db.Where("version = ?", oldVersion), obj)
 func (d *BlogGORMDAL) Save(ctx context.Context, db *gormlib.DB, obj *gorm.BlogGORM) error {
 	// Validate primary key(s)
 	if obj.Id == 0 {
@@ -418,8 +586,36 @@ type ProductGORMDAL struct {
 	WillCreate func(context.Context, *gorm.ProductGORM) error
 }
 
-// Save creates or updates a gorm.ProductGORM record.
+// Create creates a new gorm.ProductGORM record.
+// Returns an error if the record already exists.
+func (d *ProductGORMDAL) Create(ctx context.Context, db *gormlib.DB, obj *gorm.ProductGORM) error {
+	return db.Create(obj).Error
+}
+
+// Update updates an existing gorm.ProductGORM record.
+// Returns ErrRecordNotFound if the record doesn't exist.
+// For conditional updates (optimistic locking), pass a db with WHERE conditions:
+//
+//	dal.Update(ctx, db.Where("version = ?", oldVersion), obj)
+func (d *ProductGORMDAL) Update(ctx context.Context, db *gormlib.DB, obj *gorm.ProductGORM) error {
+	result := db.Updates(obj)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	// Check if record was found and updated
+	if result.RowsAffected == 0 {
+		return gormlib.ErrRecordNotFound
+	}
+
+	return nil
+}
+
+// Save creates or updates a gorm.ProductGORM record (upsert).
 // If the record doesn't exist (RowsAffected == 0), it will call WillCreate hook and then create the record.
+// For conditional updates (optimistic locking), pass a db with WHERE conditions:
+//
+//	dal.Save(ctx, db.Where("version = ?", oldVersion), obj)
 func (d *ProductGORMDAL) Save(ctx context.Context, db *gormlib.DB, obj *gorm.ProductGORM) error {
 	// Validate primary key(s)
 	if obj.Id == 0 {
@@ -485,8 +681,36 @@ type LibraryGORMDAL struct {
 	WillCreate func(context.Context, *gorm.LibraryGORM) error
 }
 
-// Save creates or updates a gorm.LibraryGORM record.
+// Create creates a new gorm.LibraryGORM record.
+// Returns an error if the record already exists.
+func (d *LibraryGORMDAL) Create(ctx context.Context, db *gormlib.DB, obj *gorm.LibraryGORM) error {
+	return db.Create(obj).Error
+}
+
+// Update updates an existing gorm.LibraryGORM record.
+// Returns ErrRecordNotFound if the record doesn't exist.
+// For conditional updates (optimistic locking), pass a db with WHERE conditions:
+//
+//	dal.Update(ctx, db.Where("version = ?", oldVersion), obj)
+func (d *LibraryGORMDAL) Update(ctx context.Context, db *gormlib.DB, obj *gorm.LibraryGORM) error {
+	result := db.Updates(obj)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	// Check if record was found and updated
+	if result.RowsAffected == 0 {
+		return gormlib.ErrRecordNotFound
+	}
+
+	return nil
+}
+
+// Save creates or updates a gorm.LibraryGORM record (upsert).
 // If the record doesn't exist (RowsAffected == 0), it will call WillCreate hook and then create the record.
+// For conditional updates (optimistic locking), pass a db with WHERE conditions:
+//
+//	dal.Save(ctx, db.Where("version = ?", oldVersion), obj)
 func (d *LibraryGORMDAL) Save(ctx context.Context, db *gormlib.DB, obj *gorm.LibraryGORM) error {
 	// Validate primary key(s)
 	if obj.Id == 0 {
@@ -552,8 +776,36 @@ type OrganizationGORMDAL struct {
 	WillCreate func(context.Context, *gorm.OrganizationGORM) error
 }
 
-// Save creates or updates a gorm.OrganizationGORM record.
+// Create creates a new gorm.OrganizationGORM record.
+// Returns an error if the record already exists.
+func (d *OrganizationGORMDAL) Create(ctx context.Context, db *gormlib.DB, obj *gorm.OrganizationGORM) error {
+	return db.Create(obj).Error
+}
+
+// Update updates an existing gorm.OrganizationGORM record.
+// Returns ErrRecordNotFound if the record doesn't exist.
+// For conditional updates (optimistic locking), pass a db with WHERE conditions:
+//
+//	dal.Update(ctx, db.Where("version = ?", oldVersion), obj)
+func (d *OrganizationGORMDAL) Update(ctx context.Context, db *gormlib.DB, obj *gorm.OrganizationGORM) error {
+	result := db.Updates(obj)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	// Check if record was found and updated
+	if result.RowsAffected == 0 {
+		return gormlib.ErrRecordNotFound
+	}
+
+	return nil
+}
+
+// Save creates or updates a gorm.OrganizationGORM record (upsert).
 // If the record doesn't exist (RowsAffected == 0), it will call WillCreate hook and then create the record.
+// For conditional updates (optimistic locking), pass a db with WHERE conditions:
+//
+//	dal.Save(ctx, db.Where("version = ?", oldVersion), obj)
 func (d *OrganizationGORMDAL) Save(ctx context.Context, db *gormlib.DB, obj *gorm.OrganizationGORM) error {
 	// Validate primary key(s)
 	if obj.Id == 0 {

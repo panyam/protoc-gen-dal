@@ -16,8 +16,36 @@ type DocumentGormPartialDAL struct {
 	WillCreate func(context.Context, *gorm.DocumentGormPartial) error
 }
 
-// Save creates or updates a gorm.DocumentGormPartial record.
+// Create creates a new gorm.DocumentGormPartial record.
+// Returns an error if the record already exists.
+func (d *DocumentGormPartialDAL) Create(ctx context.Context, db *gormlib.DB, obj *gorm.DocumentGormPartial) error {
+	return db.Create(obj).Error
+}
+
+// Update updates an existing gorm.DocumentGormPartial record.
+// Returns ErrRecordNotFound if the record doesn't exist.
+// For conditional updates (optimistic locking), pass a db with WHERE conditions:
+//
+//	dal.Update(ctx, db.Where("version = ?", oldVersion), obj)
+func (d *DocumentGormPartialDAL) Update(ctx context.Context, db *gormlib.DB, obj *gorm.DocumentGormPartial) error {
+	result := db.Updates(obj)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	// Check if record was found and updated
+	if result.RowsAffected == 0 {
+		return gormlib.ErrRecordNotFound
+	}
+
+	return nil
+}
+
+// Save creates or updates a gorm.DocumentGormPartial record (upsert).
 // If the record doesn't exist (RowsAffected == 0), it will call WillCreate hook and then create the record.
+// For conditional updates (optimistic locking), pass a db with WHERE conditions:
+//
+//	dal.Save(ctx, db.Where("version = ?", oldVersion), obj)
 func (d *DocumentGormPartialDAL) Save(ctx context.Context, db *gormlib.DB, obj *gorm.DocumentGormPartial) error {
 	// Validate primary key(s)
 	if obj.Id == 0 {
@@ -83,8 +111,36 @@ type DocumentGormSkipDAL struct {
 	WillCreate func(context.Context, *gorm.DocumentGormSkip) error
 }
 
-// Save creates or updates a gorm.DocumentGormSkip record.
+// Create creates a new gorm.DocumentGormSkip record.
+// Returns an error if the record already exists.
+func (d *DocumentGormSkipDAL) Create(ctx context.Context, db *gormlib.DB, obj *gorm.DocumentGormSkip) error {
+	return db.Create(obj).Error
+}
+
+// Update updates an existing gorm.DocumentGormSkip record.
+// Returns ErrRecordNotFound if the record doesn't exist.
+// For conditional updates (optimistic locking), pass a db with WHERE conditions:
+//
+//	dal.Update(ctx, db.Where("version = ?", oldVersion), obj)
+func (d *DocumentGormSkipDAL) Update(ctx context.Context, db *gormlib.DB, obj *gorm.DocumentGormSkip) error {
+	result := db.Updates(obj)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	// Check if record was found and updated
+	if result.RowsAffected == 0 {
+		return gormlib.ErrRecordNotFound
+	}
+
+	return nil
+}
+
+// Save creates or updates a gorm.DocumentGormSkip record (upsert).
 // If the record doesn't exist (RowsAffected == 0), it will call WillCreate hook and then create the record.
+// For conditional updates (optimistic locking), pass a db with WHERE conditions:
+//
+//	dal.Save(ctx, db.Where("version = ?", oldVersion), obj)
 func (d *DocumentGormSkipDAL) Save(ctx context.Context, db *gormlib.DB, obj *gorm.DocumentGormSkip) error {
 	// Validate primary key(s)
 	if obj.Id == 0 {

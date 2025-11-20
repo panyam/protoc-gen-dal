@@ -556,6 +556,73 @@ func TestGenerateDALFileCode_BasicStructure(t *testing.T) {
 	}
 }
 
+func TestGenerateDALFileCode_CreateUpdateMethods(t *testing.T) {
+	// Create a message to test Create and Update methods
+	plugin := testutil.CreateTestPlugin(t, &testutil.TestProtoSet{
+		Files: []testutil.TestFile{
+			{
+				Name: "test/product.proto",
+				Pkg:  "test.v1",
+				Messages: []testutil.TestMessage{
+					{
+						Name: "ProductGORM",
+						GormOpts: &dalv1.GormOptions{
+							Source: "test.v1.Product",
+							Table:  "products",
+						},
+						Fields: []testutil.TestField{
+							{
+								Name:       "id",
+								Number:     1,
+								TypeName:   "uint32",
+								ColumnOpts: &dalv1.ColumnOptions{
+									GormTags: []string{"primaryKey"},
+								},
+							},
+							{Name: "name", Number: 2, TypeName: "string"},
+						},
+					},
+				},
+			},
+		},
+	})
+
+	messages := []*collector.MessageInfo{
+		{TargetMessage: plugin.Files[0].Messages[0]},
+	}
+
+	// Generate DAL code
+	content, err := generateDALFileCode(messages)
+	if err != nil {
+		t.Fatalf("generateDALFileCode failed: %v", err)
+	}
+
+	// Verify Create method exists
+	if !strings.Contains(content, "func (d *ProductGORMDAL) Create(") {
+		t.Error("Expected generated code to contain Create method")
+	}
+
+	// Verify Update method exists
+	if !strings.Contains(content, "func (d *ProductGORMDAL) Update(") {
+		t.Error("Expected generated code to contain Update method")
+	}
+
+	// Verify Create returns error on duplicate
+	if !strings.Contains(content, "db.Create(obj).Error") {
+		t.Error("Expected Create method to call db.Create")
+	}
+
+	// Verify Update checks RowsAffected
+	if !strings.Contains(content, "result.RowsAffected == 0") {
+		t.Error("Expected Update method to check RowsAffected")
+	}
+
+	// Verify Save still has WillCreate hook
+	if !strings.Contains(content, "d.WillCreate") {
+		t.Error("Expected Save method to call WillCreate hook")
+	}
+}
+
 func TestGenerateDALFileCode_WithSubdirectory(t *testing.T) {
 	// Create a simple message with primary key
 	plugin := testutil.CreateTestPlugin(t, &testutil.TestProtoSet{

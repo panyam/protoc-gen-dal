@@ -26,8 +26,34 @@ type {{ .DALTypeName }} struct {
 	WillCreate func(context.Context, *{{ $.EntityPrefix }}{{ .StructName }}) error
 }
 
-// Save creates or updates a {{ $.EntityPrefix }}{{ .StructName }} record.
+// Create creates a new {{ $.EntityPrefix }}{{ .StructName }} record.
+// Returns an error if the record already exists.
+func (d *{{ .DALTypeName }}) Create(ctx context.Context, db *{{ $.GormAlias }}.DB, obj *{{ $.EntityPrefix }}{{ .StructName }}) error {
+	return db.Create(obj).Error
+}
+
+// Update updates an existing {{ $.EntityPrefix }}{{ .StructName }} record.
+// Returns ErrRecordNotFound if the record doesn't exist.
+// For conditional updates (optimistic locking), pass a db with WHERE conditions:
+//   dal.Update(ctx, db.Where("version = ?", oldVersion), obj)
+func (d *{{ .DALTypeName }}) Update(ctx context.Context, db *{{ $.GormAlias }}.DB, obj *{{ $.EntityPrefix }}{{ .StructName }}) error {
+	result := db.Updates(obj)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	// Check if record was found and updated
+	if result.RowsAffected == 0 {
+		return {{ $.GormAlias }}.ErrRecordNotFound
+	}
+
+	return nil
+}
+
+// Save creates or updates a {{ $.EntityPrefix }}{{ .StructName }} record (upsert).
 // If the record doesn't exist (RowsAffected == 0), it will call WillCreate hook and then create the record.
+// For conditional updates (optimistic locking), pass a db with WHERE conditions:
+//   dal.Save(ctx, db.Where("version = ?", oldVersion), obj)
 func (d *{{ .DALTypeName }}) Save(ctx context.Context, db *{{ $.GormAlias }}.DB, obj *{{ $.EntityPrefix }}{{ .StructName }}) error {
 	// Validate primary key(s)
 {{- range .PrimaryKeys }}
