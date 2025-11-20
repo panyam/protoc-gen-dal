@@ -569,12 +569,26 @@ From `tests/protos/datastore/user.proto`:
   - ✅ Test coverage in pkg/generator/common/field_merge_ordering_test.go
   - ✅ All tests passing, generated code verified
 
+**Recently Completed:**
+- ✅ **DAL Helper Generation** (Phase 2.6) - COMPLETE
+  - ✅ Added `generate_dal`, `dal_filename_suffix`, `dal_filename_prefix`, `dal_output_dir` options
+  - ✅ Primary key detection (gorm_tags or fallback to "id")
+  - ✅ Composite key support (multiple PK parameters + key struct for BatchGet)
+  - ✅ Generated methods: Save (with WillCreate hook), Get, Delete, List, BatchGet
+  - ✅ Shared utilities: GetColumnOptions(), GetColumnName(), ToSnakeCase()
+  - ✅ Skips messages without primary keys gracefully
+  - ✅ Optional subdirectory output (`dal_output_dir`)
+  - ✅ Comprehensive unit tests (11 tests)
+  - ✅ Templates for single and composite keys
+  - ✅ Hook-based lifecycle customization
+
 **Next:**
 1. **Phase 3.2**: postgres-raw (Go + database/sql)
 2. **Phase 3.3**: firestore (Go)
 3. **Phase 3.4**: mongodb (Go)
 4. **Phase 4**: Multi-language support (Python, TypeScript)
 5. **Phase 5**: Advanced features (if needed after real-world usage)
+6. **Phase 6**: Service layer generation (optional - deferred based on DAL helper usage)
 
 ## Notes
 

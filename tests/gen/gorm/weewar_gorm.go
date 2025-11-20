@@ -54,7 +54,7 @@ type AttackRecordGORM struct {
 type WorldGORM struct {
 	CreatedAt           time.Time
 	UpdatedAt           time.Time
-	Id                  string
+	Id                  string `gorm:"primaryKey"`
 	CreatorId           string
 	Name                string
 	Description         string
@@ -75,8 +75,9 @@ func (*WorldGORM) TableName() string {
 
 // WorldDataGORM is the GORM model for weewar.v1.WorldData
 type WorldDataGORM struct {
-	Tiles []TileGORM
-	Units []UnitGORM
+	WorldId string `gorm:"primaryKey"`
+	Tiles   []TileGORM
+	Units   []UnitGORM
 }
 
 // TableName returns the table name for WorldDataGORM
@@ -88,7 +89,7 @@ func (*WorldDataGORM) TableName() string {
 type GameGORM struct {
 	CreatedAt           time.Time
 	UpdatedAt           time.Time
-	Id                  string
+	Id                  string `gorm:"primaryKey"`
 	CreatorId           string
 	WorldId             string
 	Name                string
@@ -157,7 +158,7 @@ type GameSettingsGORM struct {
 // GameStateGORM is the GORM model for weewar.v1.GameState
 type GameStateGORM struct {
 	UpdatedAt     time.Time
-	GameId        string
+	GameId        string `gorm:"primaryKey"`
 	TurnCounter   int32
 	CurrentPlayer int32
 	WorldData     WorldDataGORM
@@ -182,21 +183,14 @@ type GameMoveGroupGORM struct {
 	Moves     []GameMoveGORM
 }
 
-// MoveUnitActionGORM is the GORM model for weewar.v1.MoveUnitAction
-type MoveUnitActionGORM struct {
-	FromQ             int32
-	FromR             int32
-	ToQ               int32
-	ToR               int32
-	MovementCost      float64
-	ReconstructedPath []byte
-}
-
 // GameMoveGORM is the GORM model for weewar.v1.GameMove
 type GameMoveGORM struct {
-	MoveType    []byte
 	Player      int32
+	GameId      string `gorm:"primaryKey"`
 	Timestamp   time.Time
+	GroupNumber string `gorm:"primaryKey"`
+	MoveNumber  int32  `gorm:"primaryKey"`
+	MoveType    []byte
 	SequenceNum int64
 	IsPermanent bool
 	Changes     [][]byte

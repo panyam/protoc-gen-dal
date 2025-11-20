@@ -112,6 +112,83 @@ apiUser, err := UserFromUserGORM(nil, &dbUser, nil)
 
 ## Features
 
+### DAL Helper Methods (Optional)
+
+Generate basic CRUD helper methods to eliminate service-layer boilerplate. Enable with `generate_dal=true`:
+
+**buf.gen.yaml**:
+```yaml
+plugins:
+  - local: protoc-gen-dal-gorm
+    out: gen
+    opt:
+      - paths=source_relative
+      - generate_dal=true
+      - dal_output_dir=dal  # Optional: put helpers in subdirectory
+```
+
+**Generated helpers** (`gen/gorm/dal/user_gorm_dal.go`):
+```go
+type UserGORMDAL struct {
+    // Hook called when creating new records
+    WillCreate func(context.Context, *UserGORM) error
+}
+
+func (d *UserGORMDAL) Save(ctx context.Context, db *gorm.DB, obj *UserGORM) error
+func (d *UserGORMDAL) Get(ctx context.Context, db *gorm.DB, id uint32) (*UserGORM, error)
+func (d *UserGORMDAL) Delete(ctx context.Context, db *gorm.DB, id uint32) error
+func (d *UserGORMDAL) List(ctx context.Context, query *gorm.DB) ([]*UserGORM, error)
+func (d *UserGORMDAL) BatchGet(ctx context.Context, db *gorm.DB, ids []uint32) ([]*UserGORM, error)
+```
+
+**Usage**:
+```go
+dal := &UserGORMDAL{
+    WillCreate: func(ctx context.Context, user *UserGORM) error {
+        user.CreatedAt = time.Now()
+        user.UpdatedAt = time.Now()
+        return nil
+    },
+}
+
+// Save (create or update)
+err := dal.Save(ctx, db, userGorm)
+
+// Get by ID (returns nil, nil if not found)
+user, err := dal.Get(ctx, db, 123)
+
+// List with custom query
+users, err := dal.List(ctx, db.Where("active = ?", true).Order("name asc"))
+
+// Batch get
+users, err := dal.BatchGet(ctx, db, []uint32{1, 2, 3})
+
+// Delete
+err := dal.Delete(ctx, db, 123)
+```
+
+**Composite primary keys**:
+```go
+// Get by composite key
+edition, err := dal.Get(ctx, db, "book-123", 2)  // book_id, edition_number
+
+// BatchGet with key struct
+type BookEditionKey struct {
+    BookId        string
+    EditionNumber int32
+}
+keys := []BookEditionKey{{"book-123", 1}, {"book-456", 2}}
+editions, err := dal.BatchGet(ctx, db, keys)
+```
+
+**Configuration options**:
+- `generate_dal=true` - Enable DAL generation
+- `dal_filename_suffix="_dal"` - Filename suffix (default: `_dal`)
+- `dal_filename_prefix=""` - Optional filename prefix
+- `dal_output_dir=""` - Optional subdirectory (e.g., `dal`)
+
+Primary keys are auto-detected from `gorm_tags: ["primaryKey"]` or fallback to `id` field. Messages without primary keys are skipped.
+
 ### Type Conversions
 
 Built-in conversions handle common type mismatches:
@@ -368,6 +445,9 @@ make buf
 - ✅ Nested message converters
 - ✅ Repeated/map field support
 - ✅ Shared generator utilities
+- ✅ DAL helper methods (Save, Get, Delete, List, BatchGet)
+- ✅ Composite primary key support
+- ✅ Hook-based lifecycle customization
 
 **Planned:**
 - Firestore (Go)

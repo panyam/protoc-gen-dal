@@ -8,6 +8,7 @@ require (
 	cloud.google.com/go/datastore v1.21.0
 	github.com/panyam/protoc-gen-dal v0.0.2
 	google.golang.org/protobuf v1.36.7
+	gorm.io/gorm v1.31.1
 )
 
 require (
@@ -21,6 +22,8 @@ require (
 	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.6 // indirect
 	github.com/googleapis/gax-go/v2 v2.15.0 // indirect
+	github.com/jinzhu/inflection v1.0.0 // indirect
+	github.com/jinzhu/now v1.1.5 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.61.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.61.0 // indirect

@@ -91,6 +91,67 @@ func loadTemplates() (*template.Template, error) {
 		"needsErrorCheck": func(convType converter.ConversionType) bool {
 			return convType == converter.ConvertByTransformerWithError
 		},
+		// DAL helper template functions
+		"zeroValue": func(goType string) string {
+			switch goType {
+			case "string":
+				return `""`
+			case "int32", "int64", "uint32", "uint64", "int", "uint":
+				return "0"
+			case "bool":
+				return "false"
+			default:
+				return "nil"
+			}
+		},
+		"toLower": func(s string) string {
+			if len(s) == 0 {
+				return s
+			}
+			return string(s[0]|0x20) + s[1:] // Convert first char to lowercase
+		},
+		"buildWhereClause": func(keys []PrimaryKeyField) string {
+			// Build "field1 = ? AND field2 = ?" with corresponding params
+			var conditions []string
+			var params []string
+			for _, key := range keys {
+				conditions = append(conditions, key.ColumnName+" = ?")
+				params = append(params, string(key.Name[0]|0x20)+key.Name[1:]) // toLower(key.Name)
+			}
+			whereClause := ""
+			for i, cond := range conditions {
+				if i > 0 {
+					whereClause += " AND "
+				}
+				whereClause += cond
+			}
+			result := `"` + whereClause + `"`
+			for _, param := range params {
+				result += ", " + param
+			}
+			return result
+		},
+		"buildWhereClauseFromStruct": func(keys []PrimaryKeyField, structVar string) string {
+			// Build "field1 = ? AND field2 = ?" with struct.Field params
+			var conditions []string
+			var params []string
+			for _, key := range keys {
+				conditions = append(conditions, key.ColumnName+" = ?")
+				params = append(params, structVar+"."+key.Name)
+			}
+			whereClause := ""
+			for i, cond := range conditions {
+				if i > 0 {
+					whereClause += " AND "
+				}
+				whereClause += cond
+			}
+			result := `"` + whereClause + `"`
+			for _, param := range params {
+				result += ", " + param
+			}
+			return result
+		},
 	})
 
 	// Parse all template files

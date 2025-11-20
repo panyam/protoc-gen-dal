@@ -15,11 +15,73 @@
 package common
 
 import (
+	"strings"
+
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
 
 	dalv1 "github.com/panyam/protoc-gen-dal/protos/gen/dal/v1"
 )
+
+// GetColumnOptions extracts column options from a field's annotations.
+// Returns nil if no column options are present.
+//
+// This is a common utility used across all generators to access dal.v1.column annotations.
+func GetColumnOptions(field *protogen.Field) *dalv1.ColumnOptions {
+	if field == nil {
+		return nil
+	}
+	opts := field.Desc.Options()
+	if opts == nil {
+		return nil
+	}
+	v := proto.GetExtension(opts, dalv1.E_Column)
+	if v == nil {
+		return nil
+	}
+	colOpts, ok := v.(*dalv1.ColumnOptions)
+	if !ok {
+		return nil
+	}
+	return colOpts
+}
+
+// GetColumnName extracts the database column name for a field.
+// Checks (in order): column.name annotation, "column:" gorm tag, or snake_case of proto field name.
+//
+// This is a common utility used across all generators for consistent column name resolution.
+func GetColumnName(field *protogen.Field) string {
+	opts := GetColumnOptions(field)
+	if opts != nil {
+		// First check explicit name annotation
+		if opts.Name != "" {
+			return opts.Name
+		}
+
+		// Check for "column:" tag in gorm_tags
+		for _, tag := range opts.GormTags {
+			if strings.HasPrefix(tag, "column:") {
+				return strings.TrimPrefix(tag, "column:")
+			}
+		}
+	}
+
+	// Default: use snake_case of proto field name
+	return ToSnakeCase(string(field.Desc.Name()))
+}
+
+// ToSnakeCase converts a string to snake_case.
+// Example: "CreatedAt" -> "created_at"
+func ToSnakeCase(s string) string {
+	var result strings.Builder
+	for i, r := range s {
+		if i > 0 && r >= 'A' && r <= 'Z' {
+			result.WriteRune('_')
+		}
+		result.WriteRune(r)
+	}
+	return strings.ToLower(result.String())
+}
 
 // CollectCustomConverterImports scans a message's fields for custom converter functions
 // (to_func/from_func in ColumnOptions) and adds their import paths to the imports map.
