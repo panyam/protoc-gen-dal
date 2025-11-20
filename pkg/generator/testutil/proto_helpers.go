@@ -184,6 +184,12 @@ func BuildMessageDescriptorWithPackage(t *testing.T, msg TestMessage, pkg string
 				fieldDesc.Type = descriptorpb.FieldDescriptorProto_TYPE_INT32.Enum()
 			case "int64":
 				fieldDesc.Type = descriptorpb.FieldDescriptorProto_TYPE_INT64.Enum()
+			case "uint32":
+				fieldDesc.Type = descriptorpb.FieldDescriptorProto_TYPE_UINT32.Enum()
+			case "uint64":
+				fieldDesc.Type = descriptorpb.FieldDescriptorProto_TYPE_UINT64.Enum()
+			case "bool":
+				fieldDesc.Type = descriptorpb.FieldDescriptorProto_TYPE_BOOL.Enum()
 			default:
 				// If not a scalar type, assume it's a message type
 				fieldDesc.Type = descriptorpb.FieldDescriptorProto_TYPE_MESSAGE.Enum()
@@ -230,6 +236,12 @@ func GetFieldType(typeName string) *descriptorpb.FieldDescriptorProto_Type {
 		return descriptorpb.FieldDescriptorProto_TYPE_INT32.Enum()
 	case "int64":
 		return descriptorpb.FieldDescriptorProto_TYPE_INT64.Enum()
+	case "uint32":
+		return descriptorpb.FieldDescriptorProto_TYPE_UINT32.Enum()
+	case "uint64":
+		return descriptorpb.FieldDescriptorProto_TYPE_UINT64.Enum()
+	case "bool":
+		return descriptorpb.FieldDescriptorProto_TYPE_BOOL.Enum()
 	default:
 		return descriptorpb.FieldDescriptorProto_TYPE_MESSAGE.Enum()
 	}
@@ -238,7 +250,7 @@ func GetFieldType(typeName string) *descriptorpb.FieldDescriptorProto_Type {
 // GetTypeName returns the full type name for message types, nil for scalars.
 func GetTypeName(typeName string) *string {
 	switch typeName {
-	case "string", "int32", "int64":
+	case "string", "int32", "int64", "uint32", "uint64", "bool":
 		return nil
 	default:
 		return proto.String("." + typeName)

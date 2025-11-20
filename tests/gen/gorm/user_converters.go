@@ -120,20 +120,20 @@ func UserToUserWithPermissions(
 	}
 	out = dest
 
-	if src.CreatedAt != nil {
-		out.CreatedAt = converters.TimestampToTime(src.CreatedAt)
-	}
-
 	if src.Birthday != nil {
 		out.Birthday = converters.TimestampToTime(src.Birthday)
 	}
 
-	if src.UpdatedAt != nil {
-		out.UpdatedAt = converters.TimestampToTime(src.UpdatedAt)
-	}
-
 	if src.ActivatedAt != nil {
 		out.ActivatedAt = converters.TimestampToTime(src.ActivatedAt)
+	}
+
+	if src.CreatedAt != nil {
+		out.CreatedAt = converters.TimestampToTime(src.CreatedAt)
+	}
+
+	if src.UpdatedAt != nil {
+		out.UpdatedAt = converters.TimestampToTime(src.UpdatedAt)
 	}
 
 	// Apply decorator if provided
@@ -166,11 +166,11 @@ func UserFromUserWithPermissions(
 		Name:         src.Name,
 		Email:        src.Email,
 		Age:          src.Age,
-		CreatedAt:    converters.TimeToTimestamp(src.CreatedAt),
 		Birthday:     converters.TimeToTimestamp(src.Birthday),
-		UpdatedAt:    converters.TimeToTimestamp(src.UpdatedAt),
 		MemberNumber: src.MemberNumber,
 		ActivatedAt:  converters.TimeToTimestamp(src.ActivatedAt),
+		CreatedAt:    converters.TimeToTimestamp(src.CreatedAt),
+		UpdatedAt:    converters.TimeToTimestamp(src.UpdatedAt),
 	}
 	out = dest
 
@@ -208,16 +208,16 @@ func UserToUserWithCustomTimestamps(
 	}
 	out = dest
 
-	if src.CreatedAt != nil {
-		out.CreatedAt = converters.TimestampToInt64(src.CreatedAt)
-	}
-
 	if src.Birthday != nil {
 		out.Birthday = converters.TimestampToTime(src.Birthday)
 	}
 
 	if src.ActivatedAt != nil {
 		out.ActivatedAt = converters.TimestampToTime(src.ActivatedAt)
+	}
+
+	if src.CreatedAt != nil {
+		out.CreatedAt = converters.TimestampToInt64(src.CreatedAt)
 	}
 
 	if src.UpdatedAt != nil {
@@ -252,12 +252,12 @@ func UserFromUserWithCustomTimestamps(
 	*dest = api.User{
 		Id:           src.Id,
 		Name:         src.Name,
-		CreatedAt:    converters.Int64ToTimestamp(src.CreatedAt),
 		Email:        src.Email,
 		Age:          src.Age,
 		Birthday:     converters.TimeToTimestamp(src.Birthday),
 		MemberNumber: src.MemberNumber,
 		ActivatedAt:  converters.TimeToTimestamp(src.ActivatedAt),
+		CreatedAt:    converters.Int64ToTimestamp(src.CreatedAt),
 		UpdatedAt:    converters.TimeToTimestamp(src.UpdatedAt),
 	}
 	out = dest
@@ -384,16 +384,16 @@ func UserToUserWithDefaults(
 	}
 	out = dest
 
-	if src.CreatedAt != nil {
-		out.CreatedAt = converters.TimestampToInt64(src.CreatedAt)
-	}
-
 	if src.Birthday != nil {
 		out.Birthday = converters.TimestampToTime(src.Birthday)
 	}
 
 	if src.ActivatedAt != nil {
 		out.ActivatedAt = converters.TimestampToTime(src.ActivatedAt)
+	}
+
+	if src.CreatedAt != nil {
+		out.CreatedAt = converters.TimestampToInt64(src.CreatedAt)
 	}
 
 	if src.UpdatedAt != nil {
@@ -429,11 +429,11 @@ func UserFromUserWithDefaults(
 		Id:           src.Id,
 		Name:         src.Name,
 		Email:        src.Email,
-		CreatedAt:    converters.Int64ToTimestamp(src.CreatedAt),
 		Age:          src.Age,
 		Birthday:     converters.TimeToTimestamp(src.Birthday),
 		MemberNumber: src.MemberNumber,
 		ActivatedAt:  converters.TimeToTimestamp(src.ActivatedAt),
+		CreatedAt:    converters.Int64ToTimestamp(src.CreatedAt),
 		UpdatedAt:    converters.TimeToTimestamp(src.UpdatedAt),
 	}
 	out = dest

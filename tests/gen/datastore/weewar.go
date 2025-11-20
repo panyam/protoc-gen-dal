@@ -362,8 +362,6 @@ func (*GameMoveGroupDatastore) Kind() string {
 type MoveUnitActionDatastore struct {
 	Key *datastore.Key `datastore:"-"`
 
-	ReconstructedPath []byte `datastore:"reconstructed_path"`
-
 	FromQ int32 `datastore:"from_q"`
 
 	FromR int32 `datastore:"from_r"`
@@ -373,6 +371,8 @@ type MoveUnitActionDatastore struct {
 	ToR int32 `datastore:"to_r"`
 
 	MovementCost float64 `datastore:"movement_cost"`
+
+	ReconstructedPath []byte `datastore:"reconstructed_path"`
 }
 
 // Kind returns the Datastore kind name for MoveUnitActionDatastore.
@@ -388,13 +388,13 @@ type GameMoveDatastore struct {
 
 	MoveType []byte `datastore:"move_type"`
 
-	Changes [][]byte `datastore:"changes"`
-
 	Timestamp time.Time `datastore:"timestamp"`
 
 	SequenceNum int64 `datastore:"sequence_num"`
 
 	IsPermanent bool `datastore:"is_permanent"`
+
+	Changes [][]byte `datastore:"changes"`
 }
 
 // Kind returns the Datastore kind name for GameMoveDatastore.

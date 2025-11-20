@@ -85,10 +85,14 @@ func MergeSourceFields(sourceMsg, targetMsg *protogen.Message) ([]*protogen.Fiel
 
 	// Build result: start with source fields, then apply overrides/additions
 	resultByName := make(map[string]*protogen.Field)
+	// Track source field numbers for fields that get overridden
+	// This ensures we maintain source ordering even when target uses different field numbers
+	sourceFieldNumbers := make(map[string]int32)
 
-	// Copy all source fields to result
+	// Copy all source fields to result and track their numbers
 	for name, field := range sourceFieldsByName {
 		resultByName[name] = field
+		sourceFieldNumbers[name] = int32(field.Desc.Number())
 	}
 
 	// Process target fields: override source or add new
@@ -99,23 +103,32 @@ func MergeSourceFields(sourceMsg, targetMsg *protogen.Message) ([]*protogen.Fiel
 		if HasSkipField(targetField) {
 			// Remove from result if it exists
 			delete(resultByName, fieldName)
+			delete(sourceFieldNumbers, fieldName)
 			continue
 		}
 
 		// Override source field or add new field
 		resultByName[fieldName] = targetField
+		// If this is a new field (not in source), use target's field number
+		if _, existsInSource := sourceFieldsByName[fieldName]; !existsInSource {
+			sourceFieldNumbers[fieldName] = int32(targetField.Desc.Number())
+		}
+		// Otherwise keep the source field number for sorting (already set above)
 	}
 
-	// Convert map back to slice, sorted by field number from the chosen field
-	// (use target field number if overridden, source field number otherwise)
+	// Convert map back to slice
 	var result []*protogen.Field
 	for _, field := range resultByName {
 		result = append(result, field)
 	}
 
-	// Sort by field number to maintain consistent ordering
+	// Sort by SOURCE field numbers to maintain source ordering
+	// This ensures fields appear in the same order as the source proto,
+	// even when target overrides them with different field numbers
 	sort.Slice(result, func(i, j int) bool {
-		return result[i].Desc.Number() < result[j].Desc.Number()
+		iName := string(result[i].Desc.Name())
+		jName := string(result[j].Desc.Name())
+		return sourceFieldNumbers[iName] < sourceFieldNumbers[jName]
 	})
 
 	return result, nil

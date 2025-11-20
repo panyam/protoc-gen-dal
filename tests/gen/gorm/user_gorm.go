@@ -26,15 +26,15 @@ func (*UserGORM) TableName() string {
 
 // UserWithPermissions is the GORM model for api.User
 type UserWithPermissions struct {
-	Id           uint32    `gorm:"primaryKey"`
-	Name         string    `gorm:"<-:create"`
-	Email        string    `gorm:"<-:update"`
-	CreatedAt    time.Time `gorm:"->;autoCreateTime"`
+	Id           uint32 `gorm:"primaryKey"`
+	Name         string `gorm:"<-:create"`
+	Email        string `gorm:"<-:update"`
 	Age          uint32
-	UpdatedAt    time.Time `gorm:"<-;autoUpdateTime"`
 	Birthday     time.Time
 	MemberNumber string
 	ActivatedAt  time.Time
+	CreatedAt    time.Time `gorm:"->;autoCreateTime"`
+	UpdatedAt    time.Time `gorm:"<-;autoUpdateTime"`
 }
 
 // TableName returns the table name for UserWithPermissions
@@ -46,14 +46,14 @@ func (*UserWithPermissions) TableName() string {
 type UserWithCustomTimestamps struct {
 	Id           uint32 `gorm:"primaryKey"`
 	Name         string
-	CreatedAt    int64 `gorm:"autoCreateTime"`
 	Email        string
-	Age          uint32
 	UpdatedMilli int64 `gorm:"autoUpdateTime:milli"`
-	UpdatedNano  int64 `gorm:"autoUpdateTime:nano"`
+	Age          uint32
 	Birthday     time.Time
+	UpdatedNano  int64 `gorm:"autoUpdateTime:nano"`
 	MemberNumber string
 	ActivatedAt  time.Time
+	CreatedAt    int64 `gorm:"autoCreateTime"`
 	UpdatedAt    time.Time
 }
 
@@ -67,12 +67,12 @@ type UserWithIndexes struct {
 	Id           uint32 `gorm:"primaryKey"`
 	Name         string `gorm:"index"`
 	Email        string `gorm:"uniqueIndex"`
-	Age          uint32
 	City         string `gorm:"index:idx_city,sort:desc"`
-	FirstName    string `gorm:"index:idx_name"`
+	Age          uint32
 	Birthday     time.Time
-	MemberNumber string
+	FirstName    string `gorm:"index:idx_name"`
 	LastName     string `gorm:"index:idx_name"`
+	MemberNumber string
 	ActivatedAt  time.Time
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
@@ -90,10 +90,10 @@ type UserWithDefaults struct {
 	Active       bool   `gorm:"default:true"`
 	Email        string
 	Age          uint32
-	CreatedAt    int64 `gorm:"default:CURRENT_TIMESTAMP"`
 	Birthday     time.Time
 	MemberNumber string
 	ActivatedAt  time.Time
+	CreatedAt    int64 `gorm:"default:CURRENT_TIMESTAMP"`
 	UpdatedAt    time.Time
 }
 

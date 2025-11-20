@@ -556,6 +556,19 @@ From `tests/protos/datastore/user.proto`:
 
 **Bug Impact:** Before the fix, Blog.Author and World.WorldData were always nil after round-trip conversion. The template was calling the nested converter but discarding the return value, leaving the destination field nil. This affected every FromTarget converter with nested message fields in both GORM and Datastore generators.
 
+- ✅ **Field Ordering Fix** (COMPLETE)
+  - ✅ Added TestMergeSourceFields_FieldOrdering test to verify field ordering issue
+  - ✅ Fixed MergeSourceFields() to preserve source field order
+  - ✅ Implementation: Track source field numbers separately in sourceFieldNumbers map
+  - ✅ Sort merged fields by source field numbers (not target field numbers)
+  - ✅ New target-only fields use their own field numbers for positioning
+  - ✅ Added uint32, uint64, bool support to testutil GetFieldType and GetTypeName
+  - ✅ Benefits: Deterministic field ordering across regenerations, fields appear in same logical order as source API
+  - ✅ Example: api.User has created_at=8, updated_at=9; gorm.UserWithPermissions overrides as created_at=4, updated_at=5; generated struct has fields in positions 8 and 9
+  - ✅ Implementation in pkg/generator/common/field_merge.go:86-134
+  - ✅ Test coverage in pkg/generator/common/field_merge_ordering_test.go
+  - ✅ All tests passing, generated code verified
+
 **Next:**
 1. **Phase 3.2**: postgres-raw (Go + database/sql)
 2. **Phase 3.3**: firestore (Go)
