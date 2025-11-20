@@ -27,10 +27,16 @@ message AttackRecordGORM {
 
 message WorldGORM {
   option (dal.v1.gorm) = { source: "weewar.v1.World", table: "worlds" };
+  string id = 1 [(dal.v1.column) = {
+    gorm_tags: ["primaryKey"]
+  }];
 }
 
 message WorldDataGORM {
   option (dal.v1.gorm) = { source: "weewar.v1.WorldData", table: "world_data" };
+  string world_id = 1 [(dal.v1.column) = {
+    gorm_tags: ["primaryKey"]
+  }];
 }
 
 ///////// Game related models
@@ -39,6 +45,9 @@ message WorldDataGORM {
 // Describes a game and its metadata
 message GameGORM {
   option (dal.v1.gorm) = { source: "weewar.v1.Game", table: "games" };
+  string id = 1 [(dal.v1.column) = {
+    gorm_tags: ["primaryKey"]
+  }];
 }
 
 message GameConfigurationGORM {
@@ -64,6 +73,9 @@ message GameSettingsGORM {
 // Holds the game's Active/Current state (eg world state)
 message GameStateGORM {
   option (dal.v1.gorm) = { source: "weewar.v1.GameState" };
+  string game_id = 1 [(dal.v1.column) = {
+    gorm_tags: ["primaryKey"]
+  }];
 }
 
 // Holds the game's move history (can be used as a replay log)
@@ -75,12 +87,6 @@ message GameMoveHistoryGORM {
 message GameMoveGroupGORM {
   option (dal.v1.gorm) = { source: "weewar.v1.GameMoveGroup" };
 }
-// A move group - we can allow X moves in one "tick"
-message MoveUnitActionGORM {
-  option (dal.v1.gorm) = { source: "weewar.v1.MoveUnitAction" };
-
-  google.protobuf.Any reconstructed_path = 1;
-}
 
 /**
  * Represents a single move which can be one of many actions in the game
@@ -88,9 +94,13 @@ message MoveUnitActionGORM {
 message GameMoveGORM {
   option (dal.v1.gorm) = { source: "weewar.v1.GameMove" };
 
+  string game_id = 1 [(dal.v1.column) = { gorm_tags: ["primaryKey"] }];
+  string group_number = 2 [(dal.v1.column) = { gorm_tags: ["primaryKey"] }];
+  int32 move_number = 3 [(dal.v1.column) = { gorm_tags: ["primaryKey"] }];
+
   // Field named "move_type" matches the oneof name in source
   // This automatically skips all oneof members (move_unit, attack_unit, end_turn, build_unit)
-  google.protobuf.Any move_type = 1;
+  google.protobuf.Any move_type = 4;
 
-  repeated google.protobuf.Any changes = 2;
+  repeated google.protobuf.Any changes = 5;
 }
