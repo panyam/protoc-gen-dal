@@ -25,9 +25,10 @@ import (
 
 // DALOptions contains configuration for DAL helper generation
 type DALOptions struct {
-	FilenameSuffix string // e.g., "_dal" -> "world_gorm_dal.go"
-	FilenamePrefix string // e.g., "dal_" -> "dal_world_gorm.go"
-	OutputDir      string // e.g., "dal" -> files go to "gen/gorm/dal/" (relative to main output)
+	FilenameSuffix   string // e.g., "_dal" -> "world_gorm_dal.go"
+	FilenamePrefix   string // e.g., "dal_" -> "dal_world_gorm.go"
+	OutputDir        string // e.g., "dal" -> files go to "gen/gorm/dal/" (relative to main output)
+	EntityImportPath string // e.g., "github.com/example/gen/gorm" (auto-detected if empty)
 }
 
 // PrimaryKeyField represents a primary key field in a message
@@ -75,7 +76,17 @@ func GenerateDALHelpers(messages []*collector.MessageInfo, options *DALOptions) 
 
 	// Generate one DAL file per proto file
 	for protoFile, msgs := range fileGroups {
-		content, err := generateDALFileCode(msgs)
+		// Extract entity package info from the first message
+		entityPkgInfo := common.ExtractPackageInfo(msgs[0].TargetMessage)
+
+		// Override with explicit entity import path if provided
+		if options.EntityImportPath != "" {
+			entityPkgInfo.ImportPath = options.EntityImportPath
+			// Extract package name from path (last component)
+			entityPkgInfo.Alias = common.GetPackageAlias(options.EntityImportPath)
+		}
+
+		content, err := generateDALFileCodeWithOptions(msgs, entityPkgInfo, options)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate DAL helpers for %s: %w", protoFile, err)
 		}
@@ -120,13 +131,23 @@ func generateDALFilename(protoFile string, options *DALOptions) string {
 }
 
 // generateDALFileCode generates the DAL helper code for messages in a proto file
+// (backward compatibility wrapper)
 func generateDALFileCode(messages []*collector.MessageInfo) (string, error) {
+	if len(messages) == 0 {
+		return "", fmt.Errorf("no messages to generate DAL helpers for")
+	}
+	entityPkgInfo := common.ExtractPackageInfo(messages[0].TargetMessage)
+	return generateDALFileCodeWithOptions(messages, entityPkgInfo, &DALOptions{})
+}
+
+// generateDALFileCodeWithOptions generates the DAL helper code with subdirectory support
+func generateDALFileCodeWithOptions(messages []*collector.MessageInfo, entityPkgInfo common.PackageInfo, options *DALOptions) (string, error) {
 	if len(messages) == 0 {
 		return "", fmt.Errorf("no messages to generate DAL helpers for")
 	}
 
 	// Extract package name from the first message's target
-	packageName := common.ExtractPackageName(messages[0].TargetMessage)
+	entityPackageName := common.ExtractPackageName(messages[0].TargetMessage)
 
 	// Build DAL data for all messages (skip those without primary keys)
 	var dals []DALData
@@ -145,10 +166,50 @@ func generateDALFileCode(messages []*collector.MessageInfo) (string, error) {
 		return "", nil
 	}
 
+	// Determine package name, imports, and prefix based on OutputDir
+	packageName := entityPackageName
+	imports := common.ImportMap{}
+	entityPrefix := ""
+	gormAlias := "gorm"
+
+	// Always add standard imports
+	imports.Add(common.ImportSpec{Path: "context"})
+	imports.Add(common.ImportSpec{Path: "errors"})
+
+	if options.OutputDir != "" {
+		// When OutputDir is specified, use subdirectory name as package
+		// and import the entity package
+		packageName = strings.TrimSuffix(options.OutputDir, "/")
+		if entityPkgInfo.ImportPath != "" {
+			imports.Add(common.ImportSpec{
+				Alias: entityPkgInfo.Alias,
+				Path:  entityPkgInfo.ImportPath,
+			})
+		}
+		entityPrefix = entityPkgInfo.Alias + "."
+
+		// Handle naming clash: if entity package is "gorm", alias the gorm library
+		if entityPkgInfo.Alias == "gorm" {
+			gormAlias = "gormlib"
+			imports.Add(common.ImportSpec{
+				Alias: gormAlias,
+				Path:  "gorm.io/gorm",
+			})
+		} else {
+			imports.Add(common.ImportSpec{Path: "gorm.io/gorm"})
+		}
+	} else {
+		// No subdirectory, no entity import needed
+		imports.Add(common.ImportSpec{Path: "gorm.io/gorm"})
+	}
+
 	// Build template data
 	data := DALTemplateData{
-		PackageName: packageName,
-		DALs:        dals,
+		PackageName:  packageName,
+		DALs:         dals,
+		Imports:      imports.ToSlice(),
+		EntityPrefix: entityPrefix,
+		GormAlias:    gormAlias,
 	}
 
 	// Render the DAL template
@@ -263,6 +324,9 @@ func getGoType(field *protogen.Field) string {
 
 // DALTemplateData is the root template data for DAL file generation
 type DALTemplateData struct {
-	PackageName string
-	DALs        []DALData
+	PackageName  string
+	DALs         []DALData
+	Imports      []common.ImportSpec // Standard imports (always includes gorm)
+	EntityPrefix string              // Prefix for entity types (e.g., "v1." or "")
+	GormAlias    string              // Alias for gorm library (e.g., "gorm" or "gormlib")
 }

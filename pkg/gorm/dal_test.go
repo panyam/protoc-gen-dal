@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/panyam/protoc-gen-dal/pkg/collector"
+	"github.com/panyam/protoc-gen-dal/pkg/generator/common"
 	"github.com/panyam/protoc-gen-dal/pkg/generator/testutil"
 	dalv1 "github.com/panyam/protoc-gen-dal/protos/gen/dal/v1"
 )
@@ -552,5 +553,82 @@ func TestGenerateDALFileCode_BasicStructure(t *testing.T) {
 		if !strings.Contains(content, expected) {
 			t.Errorf("Expected generated code to contain '%s'", expected)
 		}
+	}
+}
+
+func TestGenerateDALFileCode_WithSubdirectory(t *testing.T) {
+	// Create a simple message with primary key
+	plugin := testutil.CreateTestPlugin(t, &testutil.TestProtoSet{
+		Files: []testutil.TestFile{
+			{
+				Name: "test/user.proto",
+				Pkg:  "test.v1",
+				Messages: []testutil.TestMessage{
+					{
+						Name: "UserGORM",
+						GormOpts: &dalv1.GormOptions{
+							Source: "test.v1.User",
+							Table:  "users",
+						},
+						Fields: []testutil.TestField{
+							{
+								Name:       "id",
+								Number:     1,
+								TypeName:   "uint32",
+								ColumnOpts: &dalv1.ColumnOptions{
+									GormTags: []string{"primaryKey"},
+								},
+							},
+							{Name: "name", Number: 2, TypeName: "string"},
+						},
+					},
+				},
+			},
+		},
+	})
+
+	messages := []*collector.MessageInfo{
+		{TargetMessage: plugin.Files[0].Messages[0]},
+	}
+
+	// Generate DAL code with subdirectory
+	options := &DALOptions{
+		OutputDir: "dal",
+	}
+	entityPkgInfo := common.PackageInfo{
+		ImportPath: "github.com/test/gen/v1",
+		Alias:      "v1",
+	}
+	content, err := generateDALFileCodeWithOptions(messages, entityPkgInfo, options)
+	if err != nil {
+		t.Fatalf("generateDALFileCodeWithOptions failed: %v", err)
+	}
+
+	// Verify package name changed to subdirectory name
+	if !strings.Contains(content, "package dal") {
+		t.Error("Expected package name to be 'dal' when OutputDir is specified")
+	}
+
+	// Verify import for entity package
+	if !strings.Contains(content, `v1 "github.com/test/gen/v1"`) {
+		t.Error("Expected import for entity package when OutputDir is specified")
+	}
+
+	// Verify entity types are prefixed with package alias
+	expectedPrefixed := []string{
+		"*v1.UserGORM",
+		"v1.UserGORM",
+		"[]*v1.UserGORM",
+	}
+
+	for _, expected := range expectedPrefixed {
+		if !strings.Contains(content, expected) {
+			t.Errorf("Expected entity types to be prefixed with 'v1.', missing: %s", expected)
+		}
+	}
+
+	// Verify no unprefixed entity references
+	if strings.Contains(content, "*UserGORM)") || strings.Contains(content, "[]UserGORM") {
+		t.Error("Found unprefixed entity type references (should all be prefixed with 'v1.')")
 	}
 }

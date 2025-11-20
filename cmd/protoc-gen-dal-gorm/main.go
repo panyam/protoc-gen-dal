@@ -31,6 +31,7 @@ func main() {
 	dalFilenameSuffix := flags.String("dal_filename_suffix", "_dal", "Suffix for DAL helper filename (e.g., '_dal' -> 'world_gorm_dal.go')")
 	dalFilenamePrefix := flags.String("dal_filename_prefix", "", "Prefix for DAL helper filename (e.g., 'dal_' -> 'dal_world_gorm.go')")
 	dalOutputDir := flags.String("dal_output_dir", "", "Subdirectory for DAL files relative to main output (e.g., 'dal' -> 'gen/gorm/dal/')")
+	entityImportPath := flags.String("entity_import_path", "", "Import path for entity package (auto-detected from proto go_package if not specified)")
 
 	// Run the plugin
 	protogen.Options{
@@ -63,9 +64,10 @@ func main() {
 		var dalResult *gorm.GenerateResult
 		if *generateDAL {
 			dalResult, err = gorm.GenerateDALHelpers(messages, &gorm.DALOptions{
-				FilenameSuffix: *dalFilenameSuffix,
-				FilenamePrefix: *dalFilenamePrefix,
-				OutputDir:      *dalOutputDir,
+				FilenameSuffix:   *dalFilenameSuffix,
+				FilenamePrefix:   *dalFilenamePrefix,
+				OutputDir:        *dalOutputDir,
+				EntityImportPath: *entityImportPath,
 			})
 			if err != nil {
 				return fmt.Errorf("failed to generate DAL helper code: %w", err)

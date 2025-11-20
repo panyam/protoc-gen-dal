@@ -75,8 +75,8 @@ func (*WorldGORM) TableName() string {
 
 // WorldDataGORM is the GORM model for weewar.v1.WorldData
 type WorldDataGORM struct {
-	WorldId string `gorm:"primaryKey"`
 	Tiles   []TileGORM
+	WorldId string `gorm:"primaryKey"`
 	Units   []UnitGORM
 }
 

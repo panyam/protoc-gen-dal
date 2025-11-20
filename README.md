@@ -125,6 +125,7 @@ plugins:
       - paths=source_relative
       - generate_dal=true
       - dal_output_dir=dal  # Optional: put helpers in subdirectory
+      - entity_import_path=github.com/example/gen  # Required when using subdirectory with buf managed mode
 ```
 
 **Generated helpers** (`gen/gorm/dal/user_gorm_dal.go`):
@@ -186,6 +187,7 @@ editions, err := dal.BatchGet(ctx, db, keys)
 - `dal_filename_suffix="_dal"` - Filename suffix (default: `_dal`)
 - `dal_filename_prefix=""` - Optional filename prefix
 - `dal_output_dir=""` - Optional subdirectory (e.g., `dal`)
+- `entity_import_path=""` - Entity package import path (auto-detected if not specified, required when using buf managed mode with subdirectory)
 
 Primary keys are auto-detected from `gorm_tags: ["primaryKey"]` or fallback to `id` field. Messages without primary keys are skipped.
 
