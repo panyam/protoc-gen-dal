@@ -1753,6 +1753,16 @@ func GameMoveToGameMoveDatastore(
 		out.Timestamp = converters.TimestampToTime(src.Timestamp)
 	}
 
+	if src.Changes != nil {
+		out.Changes = make([][]byte, len(src.Changes))
+		for i, item := range src.Changes {
+			_, err = converters.MessageToAnyBytesConverter(item, &out.Changes[i], nil)
+			if err != nil {
+				return nil, fmt.Errorf("converting Changes[%d]: %w", i, err)
+			}
+		}
+	}
+
 	// Apply decorator if provided
 	if decorator != nil {
 		if err := decorator(src, dest); err != nil {
@@ -1795,6 +1805,16 @@ func GameMoveFromGameMoveDatastore(
 		IsPermanent: src.IsPermanent,
 	}
 	out = dest
+
+	if src.Changes != nil {
+		out.Changes = make([]*api.WorldChange, len(src.Changes))
+		for i, item := range src.Changes {
+			out.Changes[i], err = converters.AnyBytesToMessageConverter[*api.WorldChange](nil, &item, nil)
+			if err != nil {
+				return nil, fmt.Errorf("converting Changes[%d]: %w", i, err)
+			}
+		}
+	}
 
 	// Apply decorator if provided
 	if decorator != nil {

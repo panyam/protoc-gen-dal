@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	api "github.com/panyam/protoc-gen-dal/tests/gen/go/api"
-	"google.golang.org/protobuf/types/known/anypb"
 
 	"github.com/panyam/protoc-gen-dal/pkg/converters"
 )
@@ -45,7 +44,7 @@ func TestRecord1ToTestRecord1Datastore(
 	}
 
 	if src.ExtraData != nil {
-		out.ExtraData, err = converters.MessageToAnyBytes(src.ExtraData)
+		out.ExtraData, err = converters.AnyToBytes(src.ExtraData)
 		if err != nil {
 			return nil, fmt.Errorf("converting ExtraData: %w", err)
 		}
@@ -92,7 +91,7 @@ func TestRecord1FromTestRecord1Datastore(
 	}
 	out = dest
 
-	out.ExtraData, err = converters.AnyBytesToMessage[*anypb.Any](src.ExtraData)
+	out.ExtraData, err = converters.BytesToAny(src.ExtraData)
 	if err != nil {
 		return nil, fmt.Errorf("converting ExtraData: %w", err)
 	}
