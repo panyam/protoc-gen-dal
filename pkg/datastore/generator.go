@@ -22,23 +22,13 @@ import (
 	"github.com/panyam/protoc-gen-dal/pkg/generator/common"
 	"github.com/panyam/protoc-gen-dal/pkg/generator/converter"
 	"github.com/panyam/protoc-gen-dal/pkg/generator/registry"
+	"github.com/panyam/protoc-gen-dal/pkg/generator/types"
 	"google.golang.org/protobuf/compiler/protogen"
 )
 
-// GeneratedFile represents a single generated file.
-type GeneratedFile struct {
-	// Path is the output file path (e.g., "user_datastore.go")
-	Path string
-
-	// Content is the generated Go code
-	Content string
-}
-
-// GenerateResult contains all generated files.
-type GenerateResult struct {
-	// Files is the list of generated files
-	Files []*GeneratedFile
-}
+// GeneratedFile is an alias for the shared type
+type GeneratedFile = types.GeneratedFile
+type GenerateResult = types.GenerateResult
 
 // Generate generates Datastore code for the given messages.
 //
@@ -303,7 +293,7 @@ func generateConverterFileCode(messages []*collector.MessageInfo, msgRegistry *c
 	reg := registry.NewConverterRegistry(messages, datastoreNameFunc)
 
 	// Build converter data for each Datastore message
-	var converters []*ConverterData
+	var converters []*types.ConverterData
 	importsMap := make(common.ImportMap) // Key: import path
 
 	for _, msg := range messages {
@@ -364,7 +354,7 @@ func generateConverterFileCode(messages []*collector.MessageInfo, msgRegistry *c
 }
 
 // buildConverterData builds converter metadata for a single message.
-func buildConverterData(msgInfo *collector.MessageInfo, reg *registry.ConverterRegistry, msgRegistry *common.MessageRegistry) (*ConverterData, error) {
+func buildConverterData(msgInfo *collector.MessageInfo, reg *registry.ConverterRegistry, msgRegistry *common.MessageRegistry) (*types.ConverterData, error) {
 	sourceMsg := msgInfo.SourceMessage
 	targetMsg := msgInfo.TargetMessage
 
@@ -383,7 +373,7 @@ func buildConverterData(msgInfo *collector.MessageInfo, reg *registry.ConverterR
 	}
 
 	// Build field mappings
-	var fieldMappings []*FieldMapping
+	var fieldMappings []*converter.FieldMapping
 	for _, mergedField := range mergedFields {
 		// Find corresponding source field by name
 		var sourceField *protogen.Field
@@ -418,7 +408,7 @@ func buildConverterData(msgInfo *collector.MessageInfo, reg *registry.ConverterR
 	fromTargetSetter := classified.FromTargetSetter
 	fromTargetLoop := classified.FromTargetLoop
 
-	return &ConverterData{
+	return &types.ConverterData{
 		SourceType:    sourceName,
 		TargetType:    targetName,
 		SourcePkgName: sourcePkgName,
@@ -436,7 +426,7 @@ func buildConverterData(msgInfo *collector.MessageInfo, reg *registry.ConverterR
 
 // addRenderStrategies calculates and adds render strategies to a FieldMapping.
 // This is a thin wrapper around the shared AddRenderStrategies utility.
-func addRenderStrategies(mapping *FieldMapping) {
+func addRenderStrategies(mapping *converter.FieldMapping) {
 	if mapping == nil {
 		return
 	}
@@ -458,19 +448,19 @@ func addRenderStrategies(mapping *FieldMapping) {
 }
 
 // buildFieldMapping creates a field mapping with type conversion if needed.
-func buildFieldMapping(sourceField, targetField *protogen.Field, reg *registry.ConverterRegistry, sourcePkgName string, msgRegistry *common.MessageRegistry) *FieldMapping {
+func buildFieldMapping(sourceField, targetField *protogen.Field, reg *registry.ConverterRegistry, sourcePkgName string, msgRegistry *common.MessageRegistry) *converter.FieldMapping {
 	sourceFieldName := fieldName(sourceField)
 	targetFieldName := fieldName(targetField)
 
 	sourceKind := sourceField.Desc.Kind().String()
 	targetKind := targetField.Desc.Kind().String()
 
-	mapping := &FieldMapping{
+	mapping := &converter.FieldMapping{
 		SourceField:     sourceFieldName,
 		TargetField:     targetFieldName,
-		SourceIsPointer: sourceField.Desc.HasPresence(), // Proto3 optional fields are pointers
-		TargetIsPointer: targetField.Desc.HasPresence(), // Datastore entity fields with HasPresence are pointers
-		SourcePkgName:   sourcePkgName,                  // Package name for template rendering
+		SourceIsPointer: sourceKind == "message" || sourceField.Desc.HasPresence(), // protoc-gen-go: message fields are always pointers, optional scalars are pointers
+		TargetIsPointer: targetField.Desc.HasOptionalKeyword(),                     // Only fields with explicit 'optional' keyword become pointers
+		SourcePkgName:   sourcePkgName,                                             // Package name for template rendering
 	}
 
 	// Check for custom converter functions (NEW for Datastore! Was GORM-only)
@@ -649,9 +639,6 @@ func buildFieldMapping(sourceField, targetField *protogen.Field, reg *registry.C
 				mapping.FromTargetConverterFunc = fmt.Sprintf("%sFrom%s", sourceTypeName, targetTypeName)
 				mapping.ToTargetConversionType = converter.ConvertByTransformerWithError
 				mapping.FromTargetConversionType = converter.ConvertByTransformerWithError
-				// Datastore embeds message fields as struct values, not pointers
-				// Override TargetIsPointer for message fields
-				mapping.TargetIsPointer = false
 				// No need to set element types for regular (non-repeated, non-map) message fields
 				addRenderStrategies(mapping)
 				return mapping

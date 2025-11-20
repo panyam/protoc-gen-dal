@@ -22,6 +22,7 @@ import (
 
 	"github.com/panyam/protoc-gen-dal/pkg/generator/common"
 	"github.com/panyam/protoc-gen-dal/pkg/generator/converter"
+	"github.com/panyam/protoc-gen-dal/pkg/generator/types"
 )
 
 // Template data structures
@@ -50,111 +51,8 @@ type StructData struct {
 	Fields []*FieldData
 }
 
-// FieldData contains metadata for a single struct field.
-type FieldData struct {
-	// Name is the Go field name (e.g., "Name")
-	Name string
-
-	// Type is the Go type (e.g., "string")
-	Type string
-
-	// Tags is the struct tag string (e.g., "`datastore:\"name\"`")
-	Tags string
-}
-
-// ConverterFileData contains all data for generating a converter file.
-type ConverterFileData struct {
-	// PackageName is the Go package name
-	PackageName string
-
-	// Imports is the list of import specs with optional aliases
-	Imports []common.ImportSpec
-
-	// Converters is the list of converter functions to generate
-	Converters []*ConverterData
-
-	// HasRepeatedMessageConversions indicates if any converter has repeated/map message conversions (needs fmt)
-	HasRepeatedMessageConversions bool
-}
-
-// ConverterData contains metadata for generating a pair of converter functions.
-type ConverterData struct {
-	// SourceType is the API message type name (e.g., "User")
-	SourceType string
-
-	// TargetType is the Datastore entity type name (e.g., "UserDatastore")
-	TargetType string
-
-	// SourcePkgName is the source package name for imports (e.g., "api")
-	SourcePkgName string
-
-	// FieldMappings is the list of field conversions (for backward compatibility)
-	FieldMappings []*FieldMapping
-
-	// Field groups by render strategy (for struct literal + setters pattern)
-	ToTargetInlineFields []*FieldMapping
-	ToTargetSetterFields []*FieldMapping
-	ToTargetLoopFields   []*FieldMapping
-
-	FromTargetInlineFields []*FieldMapping
-	FromTargetSetterFields []*FieldMapping
-	FromTargetLoopFields   []*FieldMapping
-}
-
-// FieldMapping describes how to convert a single field.
-type FieldMapping struct {
-	// SourceField is the source field name
-	SourceField string
-
-	// TargetField is the target field name
-	TargetField string
-
-	// ToTargetCode is the conversion code for API → Datastore (empty string = simple assignment)
-	ToTargetCode string
-
-	// FromTargetCode is the conversion code for Datastore → API (empty string = simple assignment)
-	FromTargetCode string
-
-	// Conversion and render strategies
-	ToTargetConversionType   converter.ConversionType      // How to convert source → target (user intent)
-	FromTargetConversionType converter.ConversionType      // How to convert target → source (user intent)
-	ToTargetRenderStrategy   converter.FieldRenderStrategy // How to render source → target (implementation)
-	FromTargetRenderStrategy converter.FieldRenderStrategy // How to render target → source (implementation)
-
-	// IsRepeated indicates this is a repeated field (slice/array)
-	IsRepeated bool
-
-	// IsMap indicates this is a map field
-	IsMap bool
-
-	// TargetElementType is the element type for repeated fields or value type for maps
-	TargetElementType string
-
-	// SourceElementType is the source element type for repeated fields or value type for maps
-	SourceElementType string
-
-	// ToTargetConverterFunc is the converter function name for nested message conversions (API → Datastore)
-	ToTargetConverterFunc string
-
-	// FromTargetConverterFunc is the converter function name for nested message conversions (Datastore → API)
-	FromTargetConverterFunc string
-
-	// Pointer characteristics (needed for render strategy calculation)
-	SourceIsPointer bool // Whether source field is a pointer type
-	TargetIsPointer bool // Whether target field is a pointer type
-
-	// SourcePkgName is the source package name for imports (needed for template rendering)
-	SourcePkgName string
-}
-
-// Implement FieldWithStrategy interface for FieldMapping
-func (f *FieldMapping) GetToTargetRenderStrategy() converter.FieldRenderStrategy {
-	return f.ToTargetRenderStrategy
-}
-
-func (f *FieldMapping) GetFromTargetRenderStrategy() converter.FieldRenderStrategy {
-	return f.FromTargetRenderStrategy
-}
+type FieldData = types.FieldData
+type ConverterFileData = types.ConverterFileData
 
 // Embedded templates
 

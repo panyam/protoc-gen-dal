@@ -23,26 +23,16 @@ import (
 	"github.com/panyam/protoc-gen-dal/pkg/generator/common"
 	"github.com/panyam/protoc-gen-dal/pkg/generator/converter"
 	"github.com/panyam/protoc-gen-dal/pkg/generator/registry"
+	"github.com/panyam/protoc-gen-dal/pkg/generator/types"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
 
 	dalv1 "github.com/panyam/protoc-gen-dal/protos/gen/dal/v1"
 )
 
-// GeneratedFile represents a single generated file.
-type GeneratedFile struct {
-	// Path is the output file path (e.g., "book_gorm.go")
-	Path string
-
-	// Content is the generated Go code
-	Content string
-}
-
-// GenerateResult contains all generated files.
-type GenerateResult struct {
-	// Files is the list of generated files
-	Files []*GeneratedFile
-}
+// GeneratedFile is an alias for the shared type
+type GeneratedFile = types.GeneratedFile
+type GenerateResult = types.GenerateResult
 
 // Generate generates GORM code for the given messages.
 //
@@ -282,7 +272,7 @@ func generateConverterFileCode(messages []*collector.MessageInfo, msgRegistry *c
 	registry := registry.NewConverterRegistry(messages, buildStructName)
 
 	// Build converter data for each GORM message
-	var converters []ConverterData
+	var converters []*types.ConverterData
 	importsMap := make(common.ImportMap) // Key: import path
 
 	for _, msg := range messages {
@@ -336,7 +326,6 @@ func generateConverterFileCode(messages []*collector.MessageInfo, msgRegistry *c
 	// Render the converter file template
 	return renderTemplate("converters.go.tmpl", data)
 }
-
 
 // collectEmbeddedTypes collects all message-type fields from a message.
 func collectEmbeddedTypes(msg *protogen.Message, types map[string]*protogen.Message) {
@@ -392,7 +381,7 @@ func buildStructData(msg *collector.MessageInfo, registry *common.MessageRegistr
 }
 
 // buildConverterData builds converter function data from a MessageInfo.
-func buildConverterData(msg *collector.MessageInfo, reg *registry.ConverterRegistry, msgRegistry *common.MessageRegistry) (ConverterData, error) {
+func buildConverterData(msg *collector.MessageInfo, reg *registry.ConverterRegistry, msgRegistry *common.MessageRegistry) (*types.ConverterData, error) {
 	// Extract source type name and package
 	sourceTypeName := string(msg.SourceMessage.Desc.Name())
 	sourcePkgName := common.ExtractPackageName(msg.SourceMessage)
@@ -404,11 +393,11 @@ func buildConverterData(msg *collector.MessageInfo, reg *registry.ConverterRegis
 	// This ensures converters use the same fields as the generated struct
 	mergedFields, err := common.MergeSourceFields(msg.SourceMessage, msg.TargetMessage)
 	if err != nil {
-		return ConverterData{}, fmt.Errorf("failed to merge fields for %s: %w", msg.TargetMessage.Desc.Name(), err)
+		return &types.ConverterData{}, fmt.Errorf("failed to merge fields for %s: %w", msg.TargetMessage.Desc.Name(), err)
 	}
 
 	// Build field mappings between source and GORM with built-in conversions
-	var fieldMappings []FieldMappingData
+	var fieldMappings []*converter.FieldMapping
 
 	// Create a map of source fields by name for quick lookup
 	sourceFields := make(map[string]*protogen.Field)
@@ -436,63 +425,32 @@ func buildConverterData(msg *collector.MessageInfo, reg *registry.ConverterRegis
 		// Set source package name for type references
 		mapping.SourcePkgName = sourcePkgName
 
-		fieldMappings = append(fieldMappings, *mapping)
+		fieldMappings = append(fieldMappings, mapping)
 	}
 
 	// Classify fields by render strategy using shared utility
-	// Convert []FieldMappingData to []*FieldMappingData for generic function
-	fieldMappingPtrs := make([]*FieldMappingData, len(fieldMappings))
-	for i := range fieldMappings {
-		fieldMappingPtrs[i] = &fieldMappings[i]
-	}
-	classified := converter.ClassifyFields(fieldMappingPtrs)
+	classified := converter.ClassifyFields(fieldMappings)
 
-	// Convert back to []FieldMappingData (dereference pointers)
-	toTargetInline := make([]FieldMappingData, len(classified.ToTargetInline))
-	for i, ptr := range classified.ToTargetInline {
-		toTargetInline[i] = *ptr
-	}
-	toTargetSetter := make([]FieldMappingData, len(classified.ToTargetSetter))
-	for i, ptr := range classified.ToTargetSetter {
-		toTargetSetter[i] = *ptr
-	}
-	toTargetLoop := make([]FieldMappingData, len(classified.ToTargetLoop))
-	for i, ptr := range classified.ToTargetLoop {
-		toTargetLoop[i] = *ptr
-	}
-	fromTargetInline := make([]FieldMappingData, len(classified.FromTargetInline))
-	for i, ptr := range classified.FromTargetInline {
-		fromTargetInline[i] = *ptr
-	}
-	fromTargetSetter := make([]FieldMappingData, len(classified.FromTargetSetter))
-	for i, ptr := range classified.FromTargetSetter {
-		fromTargetSetter[i] = *ptr
-	}
-	fromTargetLoop := make([]FieldMappingData, len(classified.FromTargetLoop))
-	for i, ptr := range classified.FromTargetLoop {
-		fromTargetLoop[i] = *ptr
-	}
-
-	return ConverterData{
+	return &types.ConverterData{
 		SourceType:    sourceTypeName,
 		SourcePkgName: sourcePkgName,
 		TargetType:    gormTypeName,
 		FieldMappings: fieldMappings, // Keep for backward compatibility
 
 		// Classified field groups
-		ToTargetInlineFields: toTargetInline,
-		ToTargetSetterFields: toTargetSetter,
-		ToTargetLoopFields:   toTargetLoop,
+		ToTargetInlineFields: classified.ToTargetInline,
+		ToTargetSetterFields: classified.ToTargetSetter,
+		ToTargetLoopFields:   classified.ToTargetLoop,
 
-		FromTargetInlineFields: fromTargetInline,
-		FromTargetSetterFields: fromTargetSetter,
-		FromTargetLoopFields:   fromTargetLoop,
+		FromTargetInlineFields: classified.FromTargetInline,
+		FromTargetSetterFields: classified.FromTargetSetter,
+		FromTargetLoopFields:   classified.FromTargetLoop,
 	}, nil
 }
 
 // addRenderStrategies calculates and adds render strategies to a FieldMappingData.
 // This is a thin wrapper around the shared AddRenderStrategies utility.
-func addRenderStrategies(mapping *FieldMappingData) {
+func addRenderStrategies(mapping *converter.FieldMapping) {
 	if mapping == nil {
 		return
 	}
@@ -514,84 +472,79 @@ func addRenderStrategies(mapping *FieldMappingData) {
 }
 
 // buildFieldConversion generates conversion code for a field pair.
-// Returns FieldMappingData with conversion type and pointer information.
-func buildFieldConversion(sourceField, targetField *protogen.Field, reg *registry.ConverterRegistry, msgRegistry *common.MessageRegistry) *FieldMappingData {
+// Returns converter.FieldMapping with conversion type and pointer information.
+func buildFieldConversion(sourceField, targetField *protogen.Field, reg *registry.ConverterRegistry, msgRegistry *common.MessageRegistry) *converter.FieldMapping {
 	sourceKind := sourceField.Desc.Kind().String()
 	targetKind := targetField.Desc.Kind().String()
 	fieldName := sourceField.GoName
 
 	// Determine if fields are pointers
-	// Source (proto): message fields are always pointers, scalars are pointers only if optional
+	// Source (proto): protoc-gen-go generates message fields as always pointers, optional scalars as pointers
 	sourceIsPointer := sourceKind == "message" || sourceField.Desc.HasPresence()
 
-	// Target (GORM): only pointers if explicitly marked with 'optional' keyword
-	// Non-optional message fields become value types in GORM
-	// HasOptionalKeyword() returns true only for fields with explicit 'optional' in proto
+	// Target (GORM): Only fields with explicit 'optional' keyword become pointers (message or scalar)
+	// This gives us control over pointer vs value semantics in generated structs
 	targetIsPointer := targetField.Desc.HasOptionalKeyword()
 
-	mapping := &FieldMappingData{
+	mapping := &converter.FieldMapping{
 		SourceField:     sourceField.GoName,
 		TargetField:     targetField.GoName,
 		SourceIsPointer: sourceIsPointer,
 		TargetIsPointer: targetIsPointer,
 	}
 
-	// Step 1: Set default conversion type based on field kind
-	// Scalars default to assignment, messages default to transformer with error
-	// Maps and repeated fields apply "applicative" style - check contained type
+	// Mark if map or repeated (needed for later checks)
+	mapping.IsMap = sourceField.Desc.IsMap()
+	mapping.IsRepeated = sourceField.Desc.IsList()
 
-	// Check if this is a map field
-	if sourceField.Desc.IsMap() {
-		mapping.IsMap = true
-		// Map fields: check the value type to determine conversion
-		isPrimitive, _ := converter.CheckMapValueType(sourceField)
-
-		if !isPrimitive {
-			// map<K, MessageType> - needs loop-based converter for values
-			mapping.ToTargetConversionType = converter.ConvertByTransformerWithError
-			mapping.FromTargetConversionType = converter.ConvertByTransformerWithError
-			// Continue to find converter function for the value type
-		} else {
-			// map<K, primitive> - direct assignment (copy entire map)
-			mapping.ToTargetCode = fmt.Sprintf("src.%s", fieldName)
-			mapping.FromTargetCode = fmt.Sprintf("src.%s", fieldName)
-			mapping.ToTargetConversionType = converter.ConvertByAssignment
-			mapping.FromTargetConversionType = converter.ConvertByAssignment
-			// Return early - no further processing needed for primitive maps
-			addRenderStrategies(mapping)
-			return mapping
-		}
-	} else if sourceField.Desc.IsList() {
-		mapping.IsRepeated = true
-		// Repeated fields: check the element type to determine conversion
-		isPrimitive, _ := converter.CheckRepeatedElementType(sourceField)
-
-		if !isPrimitive {
-			// []MessageType - needs loop-based converter for elements
-			mapping.ToTargetConversionType = converter.ConvertByTransformerWithError
-			mapping.FromTargetConversionType = converter.ConvertByTransformerWithError
-			// Continue to find converter function for the element type
-		} else {
-			// []primitive - direct assignment (copy entire slice)
-			mapping.ToTargetCode = fmt.Sprintf("src.%s", fieldName)
-			mapping.FromTargetCode = fmt.Sprintf("src.%s", fieldName)
-			mapping.ToTargetConversionType = converter.ConvertByAssignment
-			mapping.FromTargetConversionType = converter.ConvertByAssignment
-			// Return early - no further processing needed for primitive slices
-			addRenderStrategies(mapping)
-			return mapping
-		}
-	} else if sourceKind == "message" || targetKind == "message" {
-		// Regular message fields (not map or repeated) default to transformer with error
+	// Step 1: Check map fields (primitive maps return early)
+	if converter.BuildMapFieldMapping(converter.MapFieldMappingParams{
+		SourceField: sourceField,
+		TargetField: targetField,
+		Registry:    reg,
+		MsgRegistry: msgRegistry,
+		FieldName:   fieldName,
+	}, mapping) {
+		addRenderStrategies(mapping)
+		return mapping
+	}
+	// If map with message values, set defaults and continue
+	if mapping.IsMap {
 		mapping.ToTargetConversionType = converter.ConvertByTransformerWithError
 		mapping.FromTargetConversionType = converter.ConvertByTransformerWithError
-	} else {
-		// Scalar types default to assignment
-		mapping.ToTargetConversionType = converter.ConvertByAssignment
-		mapping.FromTargetConversionType = converter.ConvertByAssignment
 	}
 
-	// Step 2: Check for custom converter functions (highest priority - overrides defaults)
+	// Step 2: Check repeated fields (primitive slices return early)
+	if converter.BuildRepeatedFieldMapping(converter.RepeatedFieldMappingParams{
+		SourceField: sourceField,
+		TargetField: targetField,
+		Registry:    reg,
+		MsgRegistry: msgRegistry,
+		FieldName:   fieldName,
+	}, mapping) {
+		addRenderStrategies(mapping)
+		return mapping
+	}
+	// If repeated with message elements, set defaults and continue
+	if mapping.IsRepeated {
+		mapping.ToTargetConversionType = converter.ConvertByTransformerWithError
+		mapping.FromTargetConversionType = converter.ConvertByTransformerWithError
+	}
+
+	// Set default conversion types for non-map, non-repeated fields
+	if !mapping.IsMap && !mapping.IsRepeated {
+		if sourceKind == "message" || targetKind == "message" {
+			// Regular message fields default to transformer with error
+			mapping.ToTargetConversionType = converter.ConvertByTransformerWithError
+			mapping.FromTargetConversionType = converter.ConvertByTransformerWithError
+		} else {
+			// Scalar types default to assignment
+			mapping.ToTargetConversionType = converter.ConvertByAssignment
+			mapping.FromTargetConversionType = converter.ConvertByAssignment
+		}
+	}
+
+	// Step 3: Check for custom converter functions (highest priority - overrides defaults)
 	toTargetCode, fromTargetCode := common.ExtractCustomConverters(targetField, fieldName)
 	if toTargetCode != "" {
 		mapping.ToTargetCode = toTargetCode
@@ -602,151 +555,41 @@ func buildFieldConversion(sourceField, targetField *protogen.Field, reg *registr
 		return mapping
 	}
 
-	// Step 3: Check for known type conversions using the generic type mapping registry
-	// This handles Timestamp→int64, Timestamp→time.Time, uint32→string, etc.
-	toCode, fromCode, convType, targetIsPtr := converter.BuildConversionCode(sourceField, targetField)
-	if toCode != "" && fromCode != "" {
-		mapping.ToTargetCode = toCode
-		mapping.FromTargetCode = fromCode
-		mapping.ToTargetConversionType = convType
-		mapping.FromTargetConversionType = convType
-		// Apply pointer override if specified
-		if targetIsPtr != nil {
-			mapping.TargetIsPointer = *targetIsPtr
-		}
+	// Step 4: Check for known type conversions using shared utility
+	if converter.BuildKnownTypeMapping(sourceField, targetField, mapping) {
 		addRenderStrategies(mapping)
 		return mapping
 	}
 
-	// Same types - direct assignment (override message default)
-	if sourceKind == targetKind && sourceKind != "message" {
-		mapping.ToTargetCode = fmt.Sprintf("src.%s", fieldName)
-		mapping.FromTargetCode = fmt.Sprintf("src.%s", fieldName)
-		mapping.ToTargetConversionType = converter.ConvertByAssignment
-		mapping.FromTargetConversionType = converter.ConvertByAssignment
+	// Step 5: Check for same-type fields (excluding messages for GORM)
+	if converter.BuildSameTypeMapping(sourceKind, targetKind, fieldName, true, mapping) {
 		addRenderStrategies(mapping)
 		return mapping
 	}
 
-	// Both are messages - use nested converter if available
-	// For repeated/map fields, we look up converter for the element/value type
-	if sourceKind == "message" && targetKind == "message" {
-		var sourceTypeName, targetTypeName string
-		var sourceMsg, targetMsg *protogen.Message
-		var targetFieldMsg *protogen.Message // The actual target field's message type
-
-		if mapping.IsRepeated {
-			// For repeated fields, get the element type
-			sourceMsg = sourceField.Message
-			targetFieldMsg = targetField.Message
-			// Check if target is a well-known type first
-			if _, isWellKnown := common.GetWellKnownTypeMapping(targetFieldMsg); !isWellKnown {
-				// Use MessageRegistry to resolve source → target mapping
-				targetMsg = msgRegistry.LookupTargetMessage(sourceMsg)
-			}
-		} else if mapping.IsMap {
-			// For map fields, get the value type
-			sourceMapEntry := sourceField.Message
-			sourceMsg = sourceMapEntry.Fields[1].Message // value field
-			targetMapEntry := targetField.Message
-			targetFieldMsg = targetMapEntry.Fields[1].Message
-			// Check if target is a well-known type first
-			if _, isWellKnown := common.GetWellKnownTypeMapping(targetFieldMsg); !isWellKnown {
-				// Use MessageRegistry to resolve source → target mapping
-				targetMsg = msgRegistry.LookupTargetMessage(sourceMsg)
-			}
-		} else {
-			// Regular message field
-			sourceMsg = sourceField.Message
-			targetFieldMsg = targetField.Message
-			// Check if target is a well-known type first
-			if _, isWellKnown := common.GetWellKnownTypeMapping(targetFieldMsg); !isWellKnown {
-				// Use MessageRegistry to resolve source → target mapping
-				targetMsg = msgRegistry.LookupTargetMessage(sourceMsg)
-			}
-		}
-
-		// Check if target is a well-known type (e.g., google.protobuf.Any)
-		if wkt, isWellKnown := common.GetWellKnownTypeMapping(targetFieldMsg); isWellKnown {
-			// Handle well-known type conversion (e.g., Message → Any serialization)
-			// For google.protobuf.Any, automatically serialize using protobuf marshaling
-			if wkt.ProtoFullName == "google.protobuf.Any" {
-				// Build the fully qualified type: *api.Path (not *.Path)
-				// Extract package name from source message
-				sourcePkgName := common.ExtractPackageName(sourceMsg)
-				sourceTypeName := fmt.Sprintf("*%s.%s", sourcePkgName, sourceMsg.Desc.Name())
-
-				if mapping.IsRepeated {
-					// For repeated Any fields: []Message → [][]byte
-					// Use loop-based conversion with element converter functions
-					// SourceElementType should be just the type name (e.g., "WorldChange")
-					// since template constructs []*api.WorldChange from SourcePkgName + SourceElementType
-					mapping.SourceElementType = string(sourceMsg.Desc.Name())
-					mapping.TargetElementType = "[]byte"
-					// Use wrapper converters that match standard converter signature (dest, src, decorator)
-					mapping.ToTargetConverterFunc = "converters.MessageToAnyBytesConverter"
-					// For FromTargetConverterFunc, we need the full type with pointer and package
-					mapping.FromTargetConverterFunc = fmt.Sprintf("converters.AnyBytesToMessageConverter[%s]", sourceTypeName)
-					mapping.ToTargetConversionType = converter.ConvertByTransformerWithError
-					mapping.FromTargetConversionType = converter.ConvertByTransformerWithError
-				} else {
-					// For single Any fields: Message → []byte
-					// Generate direct conversion code
-					mapping.ToTargetCode = fmt.Sprintf("converters.MessageToAnyBytes(src.%s)", fieldName)
-					mapping.FromTargetCode = fmt.Sprintf("converters.AnyBytesToMessage[%s](src.%s)",
-						sourceTypeName, fieldName)
-					mapping.ToTargetConversionType = converter.ConvertByTransformerWithError
-					mapping.FromTargetConversionType = converter.ConvertByTransformerWithError
-				}
-				addRenderStrategies(mapping)
-				return mapping
-			}
-			// Other well-known types can be added here
-			return nil
-		}
-
-		if sourceMsg != nil && targetMsg != nil {
-			sourceTypeName = string(sourceMsg.Desc.Name())
-			// Use MessageRegistry to get the correct GORM struct name
-			targetTypeName = msgRegistry.GetStructName(targetMsg)
-
-			// Check if converter exists for this nested type
-			if reg.HasConverter(sourceTypeName, targetTypeName) {
-				mapping.ToTargetConverterFunc = fmt.Sprintf("%sTo%s", sourceTypeName, targetTypeName)
-				mapping.FromTargetConverterFunc = fmt.Sprintf("%sFrom%s", sourceTypeName, targetTypeName)
-				// For repeated/map fields, store the element/value types
-				if mapping.IsRepeated || mapping.IsMap {
-					mapping.TargetElementType = targetTypeName
-					mapping.SourceElementType = sourceTypeName
-				}
-				// Keep default converter.ConvertByTransformerWithError (already set in Step 1)
-				addRenderStrategies(mapping)
-				return mapping
-			}
-			// No converter available - warn user and skip (decorator must handle)
-			if mapping.IsRepeated {
-				log.Printf("WARNING: Field '%s' is []%s but no converter found for element type.\n",
-					fieldName, sourceTypeName)
-			} else if mapping.IsMap {
-				log.Printf("WARNING: Field '%s' is map<K, %s> but no converter found for value type.\n",
-					fieldName, sourceTypeName)
-			} else {
-				log.Printf("WARNING: Field '%s' has matching message types (%s → %s) but no converter found.\n",
-					fieldName, sourceTypeName, targetTypeName)
-			}
-			log.Printf("         If you want automatic conversion, add 'source' annotation to %s message.\n",
-				targetMsg.Desc.Name())
-			log.Printf("         Skipping field - handle in decorator function.\n\n")
-			return nil
-		}
+	// Step 6: Check for message→message conversions using shared utility
+	msgStatus := converter.BuildMessageToMessageMapping(converter.MessageFieldMappingParams{
+		SourceField: sourceField,
+		TargetField: targetField,
+		SourceKind:  sourceKind,
+		TargetKind:  targetKind,
+		Registry:    reg,
+		MsgRegistry: msgRegistry,
+		FieldName:   fieldName,
+		IsRepeated:  mapping.IsRepeated,
+		IsMap:       mapping.IsMap,
+	}, mapping)
+	if msgStatus == -1 {
+		// No converter available - already logged warning - skip field
+		return nil
+	} else if msgStatus == 1 {
+		// Conversion found
+		addRenderStrategies(mapping)
+		return mapping
 	}
 
-	// Numeric conversions - use casting
-	if common.IsNumericKind(sourceKind) && common.IsNumericKind(targetKind) {
-		mapping.ToTargetCode = fmt.Sprintf("%s(src.%s)", common.ProtoKindToGoType(targetKind), fieldName)
-		mapping.FromTargetCode = fmt.Sprintf("%s(src.%s)", common.ProtoKindToGoType(sourceKind), fieldName)
-		mapping.ToTargetConversionType = converter.ConvertByAssignment
-		mapping.FromTargetConversionType = converter.ConvertByAssignment
+	// Step 7: Check for numeric type conversions using shared utility
+	if converter.BuildNumericTypeMapping(sourceKind, targetKind, fieldName, mapping) {
 		addRenderStrategies(mapping)
 		return mapping
 	}
@@ -759,7 +602,6 @@ func buildFieldConversion(sourceField, targetField *protogen.Field, reg *registr
 	log.Printf("         Field will be skipped in converter - handle in decorator function.")
 	return nil
 }
-
 
 // buildStructName generates the GORM struct name from the target message name.
 // E.g., "BookGorm" -> "BookGORM"
@@ -800,9 +642,9 @@ func buildField(field *protogen.Field, sourcePkgName string, registry *common.Me
 	gormTag := extractGormTags(field)
 
 	return FieldData{
-		Name:    goName,
-		Type:    goType,
-		GormTag: gormTag,
+		Name: goName,
+		Type: goType,
+		Tags: gormTag,
 	}, nil
 }
 

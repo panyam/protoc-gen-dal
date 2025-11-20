@@ -1702,11 +1702,9 @@ func MoveUnitActionFromMoveUnitActionDatastore(
 	}
 	out = dest
 
-	if src.ReconstructedPath != nil {
-		out.ReconstructedPath, err = converters.AnyBytesToMessage[*api.Path](src.ReconstructedPath)
-		if err != nil {
-			return nil, fmt.Errorf("converting ReconstructedPath: %w", err)
-		}
+	out.ReconstructedPath, err = converters.AnyBytesToMessage[*api.Path](src.ReconstructedPath)
+	if err != nil {
+		return nil, fmt.Errorf("converting ReconstructedPath: %w", err)
 	}
 
 	// Apply decorator if provided

@@ -554,10 +554,13 @@ func ProductToProductDatastore(
 		Name:       src.Name,
 		Tags:       src.Tags,
 		Categories: src.Categories,
-		Metadata:   src.Metadata,
 		Ratings:    src.Ratings,
 	}
 	out = dest
+
+	if src.Metadata != nil {
+		out.Metadata = src.Metadata
+	}
 
 	// Apply decorator if provided
 	if decorator != nil {

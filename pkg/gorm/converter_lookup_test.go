@@ -19,6 +19,7 @@ import (
 
 	"github.com/panyam/protoc-gen-dal/pkg/collector"
 	"github.com/panyam/protoc-gen-dal/pkg/generator/common"
+	"github.com/panyam/protoc-gen-dal/pkg/generator/converter"
 	"github.com/panyam/protoc-gen-dal/pkg/generator/registry"
 	"github.com/panyam/protoc-gen-dal/pkg/generator/testutil"
 	dalv1 "github.com/panyam/protoc-gen-dal/protos/gen/dal/v1"
@@ -115,10 +116,10 @@ func TestConverterLookup_NestedMessage(t *testing.T) {
 	}
 
 	// Check that screenshot_info field has a converter mapping
-	var screenshotMapping *FieldMappingData
-	for i := range converterData.FieldMappings {
-		if converterData.FieldMappings[i].SourceField == "ScreenshotInfo" {
-			screenshotMapping = &converterData.FieldMappings[i]
+	var screenshotMapping *converter.FieldMapping
+	for _, mapping := range converterData.FieldMappings {
+		if mapping.SourceField == "ScreenshotInfo" {
+			screenshotMapping = mapping
 			break
 		}
 	}
@@ -224,10 +225,10 @@ func TestConverterLookup_RepeatedMessage(t *testing.T) {
 	}
 
 	// Check tiles field mapping
-	var tilesMapping *FieldMappingData
-	for i := range converterData.FieldMappings {
-		if converterData.FieldMappings[i].SourceField == "Tiles" {
-			tilesMapping = &converterData.FieldMappings[i]
+	var tilesMapping *converter.FieldMapping
+	for _, mapping := range converterData.FieldMappings {
+		if mapping.SourceField == "Tiles" {
+			tilesMapping = mapping
 			break
 		}
 	}
@@ -329,10 +330,10 @@ func TestConverterLookup_MapWithMessageValue(t *testing.T) {
 	}
 
 	// Check players map field
-	var playersMapping *FieldMappingData
-	for i := range converterData.FieldMappings {
-		if converterData.FieldMappings[i].SourceField == "Players" {
-			playersMapping = &converterData.FieldMappings[i]
+	var playersMapping *converter.FieldMapping
+	for _, mapping := range converterData.FieldMappings {
+		if mapping.SourceField == "Players" {
+			playersMapping = mapping
 			break
 		}
 	}

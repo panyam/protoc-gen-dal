@@ -92,11 +92,9 @@ func TestRecord1FromTestRecord1Datastore(
 	}
 	out = dest
 
-	if src.ExtraData != nil {
-		out.ExtraData, err = converters.AnyBytesToMessage[*anypb.Any](src.ExtraData)
-		if err != nil {
-			return nil, fmt.Errorf("converting ExtraData: %w", err)
-		}
+	out.ExtraData, err = converters.AnyBytesToMessage[*anypb.Any](src.ExtraData)
+	if err != nil {
+		return nil, fmt.Errorf("converting ExtraData: %w", err)
 	}
 
 	// Apply decorator if provided
