@@ -4,17 +4,17 @@ package gorm
 import (
 	"time"
 
-	api "github.com/panyam/protoc-gen-dal/tests/gen/go/api"
+	v1 "github.com/panyam/protoc-gen-dal/tests/gen/go/weewar/v1"
 )
 
-// IndexInfoGORM is the GORM model for api.IndexInfo
+// IndexInfoGORM is the GORM model for weewar.v1.IndexInfo
 type IndexInfoGORM struct {
 	LastUpdatedAt time.Time
 	LastIndexedAt time.Time
 	NeedsIndexing bool
 }
 
-// TileGORM is the GORM model for api.Tile
+// TileGORM is the GORM model for weewar.v1.Tile
 type TileGORM struct {
 	Q                int32
 	R                int32
@@ -25,7 +25,7 @@ type TileGORM struct {
 	LastToppedupTurn int32
 }
 
-// UnitGORM is the GORM model for api.Unit
+// UnitGORM is the GORM model for weewar.v1.Unit
 type UnitGORM struct {
 	Q                       int32
 	R                       int32
@@ -42,7 +42,7 @@ type UnitGORM struct {
 	ChosenAlternative       string
 }
 
-// AttackRecordGORM is the GORM model for api.AttackRecord
+// AttackRecordGORM is the GORM model for weewar.v1.AttackRecord
 type AttackRecordGORM struct {
 	Q          int32
 	R          int32
@@ -50,7 +50,7 @@ type AttackRecordGORM struct {
 	TurnNumber int32
 }
 
-// WorldGORM is the GORM model for api.World
+// WorldGORM is the GORM model for weewar.v1.World
 type WorldGORM struct {
 	CreatedAt           time.Time
 	UpdatedAt           time.Time
@@ -73,7 +73,7 @@ func (*WorldGORM) TableName() string {
 	return "worlds"
 }
 
-// WorldDataGORM is the GORM model for api.WorldData
+// WorldDataGORM is the GORM model for weewar.v1.WorldData
 type WorldDataGORM struct {
 	Tiles []TileGORM
 	Units []UnitGORM
@@ -84,7 +84,7 @@ func (*WorldDataGORM) TableName() string {
 	return "world_data"
 }
 
-// GameGORM is the GORM model for api.Game
+// GameGORM is the GORM model for weewar.v1.Game
 type GameGORM struct {
 	CreatedAt           time.Time
 	UpdatedAt           time.Time
@@ -107,7 +107,7 @@ func (*GameGORM) TableName() string {
 	return "games"
 }
 
-// GameConfigurationGORM is the GORM model for api.GameConfiguration
+// GameConfigurationGORM is the GORM model for weewar.v1.GameConfiguration
 type GameConfigurationGORM struct {
 	Players       []GamePlayerGORM
 	Teams         []GameTeamGORM
@@ -115,7 +115,7 @@ type GameConfigurationGORM struct {
 	Settings      GameSettingsGORM
 }
 
-// IncomeConfigGORM is the GORM model for api.IncomeConfig
+// IncomeConfigGORM is the GORM model for weewar.v1.IncomeConfig
 type IncomeConfigGORM struct {
 	StartingCoins     int32
 	GameIncome        int32
@@ -126,7 +126,7 @@ type IncomeConfigGORM struct {
 	MinesIncome       int32
 }
 
-// GamePlayerGORM is the GORM model for api.GamePlayer
+// GamePlayerGORM is the GORM model for weewar.v1.GamePlayer
 type GamePlayerGORM struct {
 	PlayerId      int32
 	PlayerType    string
@@ -138,7 +138,7 @@ type GamePlayerGORM struct {
 	Coins         int32
 }
 
-// GameTeamGORM is the GORM model for api.GameTeam
+// GameTeamGORM is the GORM model for weewar.v1.GameTeam
 type GameTeamGORM struct {
 	TeamId   int32
 	Name     string
@@ -146,7 +146,7 @@ type GameTeamGORM struct {
 	IsActive bool
 }
 
-// GameSettingsGORM is the GORM model for api.GameSettings
+// GameSettingsGORM is the GORM model for weewar.v1.GameSettings
 type GameSettingsGORM struct {
 	AllowedUnits  []int32
 	TurnTimeLimit int32
@@ -154,7 +154,7 @@ type GameSettingsGORM struct {
 	MaxTurns      int32
 }
 
-// GameStateGORM is the GORM model for api.GameState
+// GameStateGORM is the GORM model for weewar.v1.GameState
 type GameStateGORM struct {
 	UpdatedAt     time.Time
 	GameId        string
@@ -163,26 +163,26 @@ type GameStateGORM struct {
 	WorldData     WorldDataGORM
 	StateHash     string
 	Version       int64
-	Status        api.GameStatus
+	Status        v1.GameStatus
 	Finished      bool
 	WinningPlayer int32
 	WinningTeam   int32
 }
 
-// GameMoveHistoryGORM is the GORM model for api.GameMoveHistory
+// GameMoveHistoryGORM is the GORM model for weewar.v1.GameMoveHistory
 type GameMoveHistoryGORM struct {
 	GameId string
 	Groups []GameMoveGroupGORM
 }
 
-// GameMoveGroupGORM is the GORM model for api.GameMoveGroup
+// GameMoveGroupGORM is the GORM model for weewar.v1.GameMoveGroup
 type GameMoveGroupGORM struct {
 	StartedAt time.Time
 	EndedAt   time.Time
 	Moves     []GameMoveGORM
 }
 
-// MoveUnitActionGORM is the GORM model for api.MoveUnitAction
+// MoveUnitActionGORM is the GORM model for weewar.v1.MoveUnitAction
 type MoveUnitActionGORM struct {
 	FromQ             int32
 	FromR             int32
@@ -192,10 +192,10 @@ type MoveUnitActionGORM struct {
 	ReconstructedPath []byte
 }
 
-// GameMoveGORM is the GORM model for api.GameMove
+// GameMoveGORM is the GORM model for weewar.v1.GameMove
 type GameMoveGORM struct {
-	Player      int32
 	MoveType    []byte
+	Player      int32
 	Timestamp   time.Time
 	SequenceNum int64
 	IsPermanent bool

@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package api;
+package weewar.v1;
 import "google/protobuf/timestamp.proto";
 option go_package = "github.com/panyam/protoc-gen-dal/tests/gen/go/api;testapi";
 

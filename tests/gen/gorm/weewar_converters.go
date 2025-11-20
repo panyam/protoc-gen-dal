@@ -5,15 +5,15 @@ import (
 	"fmt"
 
 	"github.com/panyam/protoc-gen-dal/pkg/converters"
-	api "github.com/panyam/protoc-gen-dal/tests/gen/go/api"
+	v1 "github.com/panyam/protoc-gen-dal/tests/gen/go/weewar/v1"
 )
 
-// IndexInfoToIndexInfoGORM converts a api.IndexInfo to IndexInfoGORM.
+// IndexInfoToIndexInfoGORM converts a v1.IndexInfo to IndexInfoGORM.
 // The optional decorator function allows custom field transformations.
 func IndexInfoToIndexInfoGORM(
-	src *api.IndexInfo,
+	src *v1.IndexInfo,
 	dest *IndexInfoGORM,
-	decorator func(*api.IndexInfo, *IndexInfoGORM) error,
+	decorator func(*v1.IndexInfo, *IndexInfoGORM) error,
 ) (out *IndexInfoGORM, err error) {
 	if src == nil {
 		return nil, nil
@@ -46,22 +46,22 @@ func IndexInfoToIndexInfoGORM(
 	return dest, nil
 }
 
-// IndexInfoFromIndexInfoGORM converts a IndexInfoGORM back to api.IndexInfo.
+// IndexInfoFromIndexInfoGORM converts a IndexInfoGORM back to v1.IndexInfo.
 // The optional decorator function allows custom field transformations.
 func IndexInfoFromIndexInfoGORM(
-	dest *api.IndexInfo,
+	dest *v1.IndexInfo,
 	src *IndexInfoGORM,
-	decorator func(dest *api.IndexInfo, src *IndexInfoGORM) error,
-) (out *api.IndexInfo, err error) {
+	decorator func(dest *v1.IndexInfo, src *IndexInfoGORM) error,
+) (out *v1.IndexInfo, err error) {
 	if src == nil {
 		return nil, nil
 	}
 	if dest == nil {
-		dest = &api.IndexInfo{}
+		dest = &v1.IndexInfo{}
 	}
 
 	// Initialize struct with inline values
-	*dest = api.IndexInfo{
+	*dest = v1.IndexInfo{
 		LastUpdatedAt: converters.TimeToTimestamp(src.LastUpdatedAt),
 		LastIndexedAt: converters.TimeToTimestamp(src.LastIndexedAt),
 		NeedsIndexing: src.NeedsIndexing,
@@ -78,12 +78,12 @@ func IndexInfoFromIndexInfoGORM(
 	return out, nil
 }
 
-// TileToTileGORM converts a api.Tile to TileGORM.
+// TileToTileGORM converts a v1.Tile to TileGORM.
 // The optional decorator function allows custom field transformations.
 func TileToTileGORM(
-	src *api.Tile,
+	src *v1.Tile,
 	dest *TileGORM,
-	decorator func(*api.Tile, *TileGORM) error,
+	decorator func(*v1.Tile, *TileGORM) error,
 ) (out *TileGORM, err error) {
 	if src == nil {
 		return nil, nil
@@ -114,22 +114,22 @@ func TileToTileGORM(
 	return dest, nil
 }
 
-// TileFromTileGORM converts a TileGORM back to api.Tile.
+// TileFromTileGORM converts a TileGORM back to v1.Tile.
 // The optional decorator function allows custom field transformations.
 func TileFromTileGORM(
-	dest *api.Tile,
+	dest *v1.Tile,
 	src *TileGORM,
-	decorator func(dest *api.Tile, src *TileGORM) error,
-) (out *api.Tile, err error) {
+	decorator func(dest *v1.Tile, src *TileGORM) error,
+) (out *v1.Tile, err error) {
 	if src == nil {
 		return nil, nil
 	}
 	if dest == nil {
-		dest = &api.Tile{}
+		dest = &v1.Tile{}
 	}
 
 	// Initialize struct with inline values
-	*dest = api.Tile{
+	*dest = v1.Tile{
 		Q:                src.Q,
 		R:                src.R,
 		TileType:         src.TileType,
@@ -150,12 +150,12 @@ func TileFromTileGORM(
 	return out, nil
 }
 
-// UnitToUnitGORM converts a api.Unit to UnitGORM.
+// UnitToUnitGORM converts a v1.Unit to UnitGORM.
 // The optional decorator function allows custom field transformations.
 func UnitToUnitGORM(
-	src *api.Unit,
+	src *v1.Unit,
 	dest *UnitGORM,
-	decorator func(*api.Unit, *UnitGORM) error,
+	decorator func(*v1.Unit, *UnitGORM) error,
 ) (out *UnitGORM, err error) {
 	if src == nil {
 		return nil, nil
@@ -201,22 +201,22 @@ func UnitToUnitGORM(
 	return dest, nil
 }
 
-// UnitFromUnitGORM converts a UnitGORM back to api.Unit.
+// UnitFromUnitGORM converts a UnitGORM back to v1.Unit.
 // The optional decorator function allows custom field transformations.
 func UnitFromUnitGORM(
-	dest *api.Unit,
+	dest *v1.Unit,
 	src *UnitGORM,
-	decorator func(dest *api.Unit, src *UnitGORM) error,
-) (out *api.Unit, err error) {
+	decorator func(dest *v1.Unit, src *UnitGORM) error,
+) (out *v1.Unit, err error) {
 	if src == nil {
 		return nil, nil
 	}
 	if dest == nil {
-		dest = &api.Unit{}
+		dest = &v1.Unit{}
 	}
 
 	// Initialize struct with inline values
-	*dest = api.Unit{
+	*dest = v1.Unit{
 		Q:                       src.Q,
 		R:                       src.R,
 		Player:                  src.Player,
@@ -233,7 +233,7 @@ func UnitFromUnitGORM(
 	out = dest
 
 	if src.AttackHistory != nil {
-		out.AttackHistory = make([]*api.AttackRecord, len(src.AttackHistory))
+		out.AttackHistory = make([]*v1.AttackRecord, len(src.AttackHistory))
 		for i, item := range src.AttackHistory {
 			out.AttackHistory[i], err = AttackRecordFromAttackRecordGORM(nil, &item, nil)
 			if err != nil {
@@ -252,12 +252,12 @@ func UnitFromUnitGORM(
 	return out, nil
 }
 
-// AttackRecordToAttackRecordGORM converts a api.AttackRecord to AttackRecordGORM.
+// AttackRecordToAttackRecordGORM converts a v1.AttackRecord to AttackRecordGORM.
 // The optional decorator function allows custom field transformations.
 func AttackRecordToAttackRecordGORM(
-	src *api.AttackRecord,
+	src *v1.AttackRecord,
 	dest *AttackRecordGORM,
-	decorator func(*api.AttackRecord, *AttackRecordGORM) error,
+	decorator func(*v1.AttackRecord, *AttackRecordGORM) error,
 ) (out *AttackRecordGORM, err error) {
 	if src == nil {
 		return nil, nil
@@ -285,22 +285,22 @@ func AttackRecordToAttackRecordGORM(
 	return dest, nil
 }
 
-// AttackRecordFromAttackRecordGORM converts a AttackRecordGORM back to api.AttackRecord.
+// AttackRecordFromAttackRecordGORM converts a AttackRecordGORM back to v1.AttackRecord.
 // The optional decorator function allows custom field transformations.
 func AttackRecordFromAttackRecordGORM(
-	dest *api.AttackRecord,
+	dest *v1.AttackRecord,
 	src *AttackRecordGORM,
-	decorator func(dest *api.AttackRecord, src *AttackRecordGORM) error,
-) (out *api.AttackRecord, err error) {
+	decorator func(dest *v1.AttackRecord, src *AttackRecordGORM) error,
+) (out *v1.AttackRecord, err error) {
 	if src == nil {
 		return nil, nil
 	}
 	if dest == nil {
-		dest = &api.AttackRecord{}
+		dest = &v1.AttackRecord{}
 	}
 
 	// Initialize struct with inline values
-	*dest = api.AttackRecord{
+	*dest = v1.AttackRecord{
 		Q:          src.Q,
 		R:          src.R,
 		IsRanged:   src.IsRanged,
@@ -318,12 +318,12 @@ func AttackRecordFromAttackRecordGORM(
 	return out, nil
 }
 
-// WorldToWorldGORM converts a api.World to WorldGORM.
+// WorldToWorldGORM converts a v1.World to WorldGORM.
 // The optional decorator function allows custom field transformations.
 func WorldToWorldGORM(
-	src *api.World,
+	src *v1.World,
 	dest *WorldGORM,
-	decorator func(*api.World, *WorldGORM) error,
+	decorator func(*v1.World, *WorldGORM) error,
 ) (out *WorldGORM, err error) {
 	if src == nil {
 		return nil, nil
@@ -388,22 +388,22 @@ func WorldToWorldGORM(
 	return dest, nil
 }
 
-// WorldFromWorldGORM converts a WorldGORM back to api.World.
+// WorldFromWorldGORM converts a WorldGORM back to v1.World.
 // The optional decorator function allows custom field transformations.
 func WorldFromWorldGORM(
-	dest *api.World,
+	dest *v1.World,
 	src *WorldGORM,
-	decorator func(dest *api.World, src *WorldGORM) error,
-) (out *api.World, err error) {
+	decorator func(dest *v1.World, src *WorldGORM) error,
+) (out *v1.World, err error) {
 	if src == nil {
 		return nil, nil
 	}
 	if dest == nil {
-		dest = &api.World{}
+		dest = &v1.World{}
 	}
 
 	// Initialize struct with inline values
-	*dest = api.World{
+	*dest = v1.World{
 		CreatedAt:   converters.TimeToTimestamp(src.CreatedAt),
 		UpdatedAt:   converters.TimeToTimestamp(src.UpdatedAt),
 		Id:          src.Id,
@@ -444,12 +444,12 @@ func WorldFromWorldGORM(
 	return out, nil
 }
 
-// WorldDataToWorldDataGORM converts a api.WorldData to WorldDataGORM.
+// WorldDataToWorldDataGORM converts a v1.WorldData to WorldDataGORM.
 // The optional decorator function allows custom field transformations.
 func WorldDataToWorldDataGORM(
-	src *api.WorldData,
+	src *v1.WorldData,
 	dest *WorldDataGORM,
-	decorator func(*api.WorldData, *WorldDataGORM) error,
+	decorator func(*v1.WorldData, *WorldDataGORM) error,
 ) (out *WorldDataGORM, err error) {
 	if src == nil {
 		return nil, nil
@@ -491,26 +491,26 @@ func WorldDataToWorldDataGORM(
 	return dest, nil
 }
 
-// WorldDataFromWorldDataGORM converts a WorldDataGORM back to api.WorldData.
+// WorldDataFromWorldDataGORM converts a WorldDataGORM back to v1.WorldData.
 // The optional decorator function allows custom field transformations.
 func WorldDataFromWorldDataGORM(
-	dest *api.WorldData,
+	dest *v1.WorldData,
 	src *WorldDataGORM,
-	decorator func(dest *api.WorldData, src *WorldDataGORM) error,
-) (out *api.WorldData, err error) {
+	decorator func(dest *v1.WorldData, src *WorldDataGORM) error,
+) (out *v1.WorldData, err error) {
 	if src == nil {
 		return nil, nil
 	}
 	if dest == nil {
-		dest = &api.WorldData{}
+		dest = &v1.WorldData{}
 	}
 
 	// Initialize struct with inline values
-	*dest = api.WorldData{}
+	*dest = v1.WorldData{}
 	out = dest
 
 	if src.Tiles != nil {
-		out.Tiles = make([]*api.Tile, len(src.Tiles))
+		out.Tiles = make([]*v1.Tile, len(src.Tiles))
 		for i, item := range src.Tiles {
 			out.Tiles[i], err = TileFromTileGORM(nil, &item, nil)
 			if err != nil {
@@ -519,7 +519,7 @@ func WorldDataFromWorldDataGORM(
 		}
 	}
 	if src.Units != nil {
-		out.Units = make([]*api.Unit, len(src.Units))
+		out.Units = make([]*v1.Unit, len(src.Units))
 		for i, item := range src.Units {
 			out.Units[i], err = UnitFromUnitGORM(nil, &item, nil)
 			if err != nil {
@@ -538,12 +538,12 @@ func WorldDataFromWorldDataGORM(
 	return out, nil
 }
 
-// GameToGameGORM converts a api.Game to GameGORM.
+// GameToGameGORM converts a v1.Game to GameGORM.
 // The optional decorator function allows custom field transformations.
 func GameToGameGORM(
-	src *api.Game,
+	src *v1.Game,
 	dest *GameGORM,
-	decorator func(*api.Game, *GameGORM) error,
+	decorator func(*v1.Game, *GameGORM) error,
 ) (out *GameGORM, err error) {
 	if src == nil {
 		return nil, nil
@@ -603,22 +603,22 @@ func GameToGameGORM(
 	return dest, nil
 }
 
-// GameFromGameGORM converts a GameGORM back to api.Game.
+// GameFromGameGORM converts a GameGORM back to v1.Game.
 // The optional decorator function allows custom field transformations.
 func GameFromGameGORM(
-	dest *api.Game,
+	dest *v1.Game,
 	src *GameGORM,
-	decorator func(dest *api.Game, src *GameGORM) error,
-) (out *api.Game, err error) {
+	decorator func(dest *v1.Game, src *GameGORM) error,
+) (out *v1.Game, err error) {
 	if src == nil {
 		return nil, nil
 	}
 	if dest == nil {
-		dest = &api.Game{}
+		dest = &v1.Game{}
 	}
 
 	// Initialize struct with inline values
-	*dest = api.Game{
+	*dest = v1.Game{
 		CreatedAt:   converters.TimeToTimestamp(src.CreatedAt),
 		UpdatedAt:   converters.TimeToTimestamp(src.UpdatedAt),
 		Id:          src.Id,
@@ -656,12 +656,12 @@ func GameFromGameGORM(
 	return out, nil
 }
 
-// GameConfigurationToGameConfigurationGORM converts a api.GameConfiguration to GameConfigurationGORM.
+// GameConfigurationToGameConfigurationGORM converts a v1.GameConfiguration to GameConfigurationGORM.
 // The optional decorator function allows custom field transformations.
 func GameConfigurationToGameConfigurationGORM(
-	src *api.GameConfiguration,
+	src *v1.GameConfiguration,
 	dest *GameConfigurationGORM,
-	decorator func(*api.GameConfiguration, *GameConfigurationGORM) error,
+	decorator func(*v1.GameConfiguration, *GameConfigurationGORM) error,
 ) (out *GameConfigurationGORM, err error) {
 	if src == nil {
 		return nil, nil
@@ -716,22 +716,22 @@ func GameConfigurationToGameConfigurationGORM(
 	return dest, nil
 }
 
-// GameConfigurationFromGameConfigurationGORM converts a GameConfigurationGORM back to api.GameConfiguration.
+// GameConfigurationFromGameConfigurationGORM converts a GameConfigurationGORM back to v1.GameConfiguration.
 // The optional decorator function allows custom field transformations.
 func GameConfigurationFromGameConfigurationGORM(
-	dest *api.GameConfiguration,
+	dest *v1.GameConfiguration,
 	src *GameConfigurationGORM,
-	decorator func(dest *api.GameConfiguration, src *GameConfigurationGORM) error,
-) (out *api.GameConfiguration, err error) {
+	decorator func(dest *v1.GameConfiguration, src *GameConfigurationGORM) error,
+) (out *v1.GameConfiguration, err error) {
 	if src == nil {
 		return nil, nil
 	}
 	if dest == nil {
-		dest = &api.GameConfiguration{}
+		dest = &v1.GameConfiguration{}
 	}
 
 	// Initialize struct with inline values
-	*dest = api.GameConfiguration{}
+	*dest = v1.GameConfiguration{}
 	out = dest
 
 	out.IncomeConfigs, err = IncomeConfigFromIncomeConfigGORM(nil, &src.IncomeConfigs, nil)
@@ -744,7 +744,7 @@ func GameConfigurationFromGameConfigurationGORM(
 	}
 
 	if src.Players != nil {
-		out.Players = make([]*api.GamePlayer, len(src.Players))
+		out.Players = make([]*v1.GamePlayer, len(src.Players))
 		for i, item := range src.Players {
 			out.Players[i], err = GamePlayerFromGamePlayerGORM(nil, &item, nil)
 			if err != nil {
@@ -753,7 +753,7 @@ func GameConfigurationFromGameConfigurationGORM(
 		}
 	}
 	if src.Teams != nil {
-		out.Teams = make([]*api.GameTeam, len(src.Teams))
+		out.Teams = make([]*v1.GameTeam, len(src.Teams))
 		for i, item := range src.Teams {
 			out.Teams[i], err = GameTeamFromGameTeamGORM(nil, &item, nil)
 			if err != nil {
@@ -772,12 +772,12 @@ func GameConfigurationFromGameConfigurationGORM(
 	return out, nil
 }
 
-// IncomeConfigToIncomeConfigGORM converts a api.IncomeConfig to IncomeConfigGORM.
+// IncomeConfigToIncomeConfigGORM converts a v1.IncomeConfig to IncomeConfigGORM.
 // The optional decorator function allows custom field transformations.
 func IncomeConfigToIncomeConfigGORM(
-	src *api.IncomeConfig,
+	src *v1.IncomeConfig,
 	dest *IncomeConfigGORM,
-	decorator func(*api.IncomeConfig, *IncomeConfigGORM) error,
+	decorator func(*v1.IncomeConfig, *IncomeConfigGORM) error,
 ) (out *IncomeConfigGORM, err error) {
 	if src == nil {
 		return nil, nil
@@ -808,22 +808,22 @@ func IncomeConfigToIncomeConfigGORM(
 	return dest, nil
 }
 
-// IncomeConfigFromIncomeConfigGORM converts a IncomeConfigGORM back to api.IncomeConfig.
+// IncomeConfigFromIncomeConfigGORM converts a IncomeConfigGORM back to v1.IncomeConfig.
 // The optional decorator function allows custom field transformations.
 func IncomeConfigFromIncomeConfigGORM(
-	dest *api.IncomeConfig,
+	dest *v1.IncomeConfig,
 	src *IncomeConfigGORM,
-	decorator func(dest *api.IncomeConfig, src *IncomeConfigGORM) error,
-) (out *api.IncomeConfig, err error) {
+	decorator func(dest *v1.IncomeConfig, src *IncomeConfigGORM) error,
+) (out *v1.IncomeConfig, err error) {
 	if src == nil {
 		return nil, nil
 	}
 	if dest == nil {
-		dest = &api.IncomeConfig{}
+		dest = &v1.IncomeConfig{}
 	}
 
 	// Initialize struct with inline values
-	*dest = api.IncomeConfig{
+	*dest = v1.IncomeConfig{
 		StartingCoins:     src.StartingCoins,
 		GameIncome:        src.GameIncome,
 		LandbaseIncome:    src.LandbaseIncome,
@@ -844,12 +844,12 @@ func IncomeConfigFromIncomeConfigGORM(
 	return out, nil
 }
 
-// GamePlayerToGamePlayerGORM converts a api.GamePlayer to GamePlayerGORM.
+// GamePlayerToGamePlayerGORM converts a v1.GamePlayer to GamePlayerGORM.
 // The optional decorator function allows custom field transformations.
 func GamePlayerToGamePlayerGORM(
-	src *api.GamePlayer,
+	src *v1.GamePlayer,
 	dest *GamePlayerGORM,
-	decorator func(*api.GamePlayer, *GamePlayerGORM) error,
+	decorator func(*v1.GamePlayer, *GamePlayerGORM) error,
 ) (out *GamePlayerGORM, err error) {
 	if src == nil {
 		return nil, nil
@@ -881,22 +881,22 @@ func GamePlayerToGamePlayerGORM(
 	return dest, nil
 }
 
-// GamePlayerFromGamePlayerGORM converts a GamePlayerGORM back to api.GamePlayer.
+// GamePlayerFromGamePlayerGORM converts a GamePlayerGORM back to v1.GamePlayer.
 // The optional decorator function allows custom field transformations.
 func GamePlayerFromGamePlayerGORM(
-	dest *api.GamePlayer,
+	dest *v1.GamePlayer,
 	src *GamePlayerGORM,
-	decorator func(dest *api.GamePlayer, src *GamePlayerGORM) error,
-) (out *api.GamePlayer, err error) {
+	decorator func(dest *v1.GamePlayer, src *GamePlayerGORM) error,
+) (out *v1.GamePlayer, err error) {
 	if src == nil {
 		return nil, nil
 	}
 	if dest == nil {
-		dest = &api.GamePlayer{}
+		dest = &v1.GamePlayer{}
 	}
 
 	// Initialize struct with inline values
-	*dest = api.GamePlayer{
+	*dest = v1.GamePlayer{
 		PlayerId:      src.PlayerId,
 		PlayerType:    src.PlayerType,
 		Color:         src.Color,
@@ -918,12 +918,12 @@ func GamePlayerFromGamePlayerGORM(
 	return out, nil
 }
 
-// GameTeamToGameTeamGORM converts a api.GameTeam to GameTeamGORM.
+// GameTeamToGameTeamGORM converts a v1.GameTeam to GameTeamGORM.
 // The optional decorator function allows custom field transformations.
 func GameTeamToGameTeamGORM(
-	src *api.GameTeam,
+	src *v1.GameTeam,
 	dest *GameTeamGORM,
-	decorator func(*api.GameTeam, *GameTeamGORM) error,
+	decorator func(*v1.GameTeam, *GameTeamGORM) error,
 ) (out *GameTeamGORM, err error) {
 	if src == nil {
 		return nil, nil
@@ -951,22 +951,22 @@ func GameTeamToGameTeamGORM(
 	return dest, nil
 }
 
-// GameTeamFromGameTeamGORM converts a GameTeamGORM back to api.GameTeam.
+// GameTeamFromGameTeamGORM converts a GameTeamGORM back to v1.GameTeam.
 // The optional decorator function allows custom field transformations.
 func GameTeamFromGameTeamGORM(
-	dest *api.GameTeam,
+	dest *v1.GameTeam,
 	src *GameTeamGORM,
-	decorator func(dest *api.GameTeam, src *GameTeamGORM) error,
-) (out *api.GameTeam, err error) {
+	decorator func(dest *v1.GameTeam, src *GameTeamGORM) error,
+) (out *v1.GameTeam, err error) {
 	if src == nil {
 		return nil, nil
 	}
 	if dest == nil {
-		dest = &api.GameTeam{}
+		dest = &v1.GameTeam{}
 	}
 
 	// Initialize struct with inline values
-	*dest = api.GameTeam{
+	*dest = v1.GameTeam{
 		TeamId:   src.TeamId,
 		Name:     src.Name,
 		Color:    src.Color,
@@ -984,12 +984,12 @@ func GameTeamFromGameTeamGORM(
 	return out, nil
 }
 
-// GameSettingsToGameSettingsGORM converts a api.GameSettings to GameSettingsGORM.
+// GameSettingsToGameSettingsGORM converts a v1.GameSettings to GameSettingsGORM.
 // The optional decorator function allows custom field transformations.
 func GameSettingsToGameSettingsGORM(
-	src *api.GameSettings,
+	src *v1.GameSettings,
 	dest *GameSettingsGORM,
-	decorator func(*api.GameSettings, *GameSettingsGORM) error,
+	decorator func(*v1.GameSettings, *GameSettingsGORM) error,
 ) (out *GameSettingsGORM, err error) {
 	if src == nil {
 		return nil, nil
@@ -1017,22 +1017,22 @@ func GameSettingsToGameSettingsGORM(
 	return dest, nil
 }
 
-// GameSettingsFromGameSettingsGORM converts a GameSettingsGORM back to api.GameSettings.
+// GameSettingsFromGameSettingsGORM converts a GameSettingsGORM back to v1.GameSettings.
 // The optional decorator function allows custom field transformations.
 func GameSettingsFromGameSettingsGORM(
-	dest *api.GameSettings,
+	dest *v1.GameSettings,
 	src *GameSettingsGORM,
-	decorator func(dest *api.GameSettings, src *GameSettingsGORM) error,
-) (out *api.GameSettings, err error) {
+	decorator func(dest *v1.GameSettings, src *GameSettingsGORM) error,
+) (out *v1.GameSettings, err error) {
 	if src == nil {
 		return nil, nil
 	}
 	if dest == nil {
-		dest = &api.GameSettings{}
+		dest = &v1.GameSettings{}
 	}
 
 	// Initialize struct with inline values
-	*dest = api.GameSettings{
+	*dest = v1.GameSettings{
 		AllowedUnits:  src.AllowedUnits,
 		TurnTimeLimit: src.TurnTimeLimit,
 		TeamMode:      src.TeamMode,
@@ -1050,12 +1050,12 @@ func GameSettingsFromGameSettingsGORM(
 	return out, nil
 }
 
-// GameStateToGameStateGORM converts a api.GameState to GameStateGORM.
+// GameStateToGameStateGORM converts a v1.GameState to GameStateGORM.
 // The optional decorator function allows custom field transformations.
 func GameStateToGameStateGORM(
-	src *api.GameState,
+	src *v1.GameState,
 	dest *GameStateGORM,
-	decorator func(*api.GameState, *GameStateGORM) error,
+	decorator func(*v1.GameState, *GameStateGORM) error,
 ) (out *GameStateGORM, err error) {
 	if src == nil {
 		return nil, nil
@@ -1099,22 +1099,22 @@ func GameStateToGameStateGORM(
 	return dest, nil
 }
 
-// GameStateFromGameStateGORM converts a GameStateGORM back to api.GameState.
+// GameStateFromGameStateGORM converts a GameStateGORM back to v1.GameState.
 // The optional decorator function allows custom field transformations.
 func GameStateFromGameStateGORM(
-	dest *api.GameState,
+	dest *v1.GameState,
 	src *GameStateGORM,
-	decorator func(dest *api.GameState, src *GameStateGORM) error,
-) (out *api.GameState, err error) {
+	decorator func(dest *v1.GameState, src *GameStateGORM) error,
+) (out *v1.GameState, err error) {
 	if src == nil {
 		return nil, nil
 	}
 	if dest == nil {
-		dest = &api.GameState{}
+		dest = &v1.GameState{}
 	}
 
 	// Initialize struct with inline values
-	*dest = api.GameState{
+	*dest = v1.GameState{
 		UpdatedAt:     converters.TimeToTimestamp(src.UpdatedAt),
 		GameId:        src.GameId,
 		TurnCounter:   src.TurnCounter,
@@ -1143,12 +1143,12 @@ func GameStateFromGameStateGORM(
 	return out, nil
 }
 
-// GameMoveHistoryToGameMoveHistoryGORM converts a api.GameMoveHistory to GameMoveHistoryGORM.
+// GameMoveHistoryToGameMoveHistoryGORM converts a v1.GameMoveHistory to GameMoveHistoryGORM.
 // The optional decorator function allows custom field transformations.
 func GameMoveHistoryToGameMoveHistoryGORM(
-	src *api.GameMoveHistory,
+	src *v1.GameMoveHistory,
 	dest *GameMoveHistoryGORM,
-	decorator func(*api.GameMoveHistory, *GameMoveHistoryGORM) error,
+	decorator func(*v1.GameMoveHistory, *GameMoveHistoryGORM) error,
 ) (out *GameMoveHistoryGORM, err error) {
 	if src == nil {
 		return nil, nil
@@ -1183,28 +1183,28 @@ func GameMoveHistoryToGameMoveHistoryGORM(
 	return dest, nil
 }
 
-// GameMoveHistoryFromGameMoveHistoryGORM converts a GameMoveHistoryGORM back to api.GameMoveHistory.
+// GameMoveHistoryFromGameMoveHistoryGORM converts a GameMoveHistoryGORM back to v1.GameMoveHistory.
 // The optional decorator function allows custom field transformations.
 func GameMoveHistoryFromGameMoveHistoryGORM(
-	dest *api.GameMoveHistory,
+	dest *v1.GameMoveHistory,
 	src *GameMoveHistoryGORM,
-	decorator func(dest *api.GameMoveHistory, src *GameMoveHistoryGORM) error,
-) (out *api.GameMoveHistory, err error) {
+	decorator func(dest *v1.GameMoveHistory, src *GameMoveHistoryGORM) error,
+) (out *v1.GameMoveHistory, err error) {
 	if src == nil {
 		return nil, nil
 	}
 	if dest == nil {
-		dest = &api.GameMoveHistory{}
+		dest = &v1.GameMoveHistory{}
 	}
 
 	// Initialize struct with inline values
-	*dest = api.GameMoveHistory{
+	*dest = v1.GameMoveHistory{
 		GameId: src.GameId,
 	}
 	out = dest
 
 	if src.Groups != nil {
-		out.Groups = make([]*api.GameMoveGroup, len(src.Groups))
+		out.Groups = make([]*v1.GameMoveGroup, len(src.Groups))
 		for i, item := range src.Groups {
 			out.Groups[i], err = GameMoveGroupFromGameMoveGroupGORM(nil, &item, nil)
 			if err != nil {
@@ -1223,12 +1223,12 @@ func GameMoveHistoryFromGameMoveHistoryGORM(
 	return out, nil
 }
 
-// GameMoveGroupToGameMoveGroupGORM converts a api.GameMoveGroup to GameMoveGroupGORM.
+// GameMoveGroupToGameMoveGroupGORM converts a v1.GameMoveGroup to GameMoveGroupGORM.
 // The optional decorator function allows custom field transformations.
 func GameMoveGroupToGameMoveGroupGORM(
-	src *api.GameMoveGroup,
+	src *v1.GameMoveGroup,
 	dest *GameMoveGroupGORM,
-	decorator func(*api.GameMoveGroup, *GameMoveGroupGORM) error,
+	decorator func(*v1.GameMoveGroup, *GameMoveGroupGORM) error,
 ) (out *GameMoveGroupGORM, err error) {
 	if src == nil {
 		return nil, nil
@@ -1269,29 +1269,29 @@ func GameMoveGroupToGameMoveGroupGORM(
 	return dest, nil
 }
 
-// GameMoveGroupFromGameMoveGroupGORM converts a GameMoveGroupGORM back to api.GameMoveGroup.
+// GameMoveGroupFromGameMoveGroupGORM converts a GameMoveGroupGORM back to v1.GameMoveGroup.
 // The optional decorator function allows custom field transformations.
 func GameMoveGroupFromGameMoveGroupGORM(
-	dest *api.GameMoveGroup,
+	dest *v1.GameMoveGroup,
 	src *GameMoveGroupGORM,
-	decorator func(dest *api.GameMoveGroup, src *GameMoveGroupGORM) error,
-) (out *api.GameMoveGroup, err error) {
+	decorator func(dest *v1.GameMoveGroup, src *GameMoveGroupGORM) error,
+) (out *v1.GameMoveGroup, err error) {
 	if src == nil {
 		return nil, nil
 	}
 	if dest == nil {
-		dest = &api.GameMoveGroup{}
+		dest = &v1.GameMoveGroup{}
 	}
 
 	// Initialize struct with inline values
-	*dest = api.GameMoveGroup{
+	*dest = v1.GameMoveGroup{
 		StartedAt: converters.TimeToTimestamp(src.StartedAt),
 		EndedAt:   converters.TimeToTimestamp(src.EndedAt),
 	}
 	out = dest
 
 	if src.Moves != nil {
-		out.Moves = make([]*api.GameMove, len(src.Moves))
+		out.Moves = make([]*v1.GameMove, len(src.Moves))
 		for i, item := range src.Moves {
 			out.Moves[i], err = GameMoveFromGameMoveGORM(nil, &item, nil)
 			if err != nil {
@@ -1310,12 +1310,12 @@ func GameMoveGroupFromGameMoveGroupGORM(
 	return out, nil
 }
 
-// MoveUnitActionToMoveUnitActionGORM converts a api.MoveUnitAction to MoveUnitActionGORM.
+// MoveUnitActionToMoveUnitActionGORM converts a v1.MoveUnitAction to MoveUnitActionGORM.
 // The optional decorator function allows custom field transformations.
 func MoveUnitActionToMoveUnitActionGORM(
-	src *api.MoveUnitAction,
+	src *v1.MoveUnitAction,
 	dest *MoveUnitActionGORM,
-	decorator func(*api.MoveUnitAction, *MoveUnitActionGORM) error,
+	decorator func(*v1.MoveUnitAction, *MoveUnitActionGORM) error,
 ) (out *MoveUnitActionGORM, err error) {
 	if src == nil {
 		return nil, nil
@@ -1351,22 +1351,22 @@ func MoveUnitActionToMoveUnitActionGORM(
 	return dest, nil
 }
 
-// MoveUnitActionFromMoveUnitActionGORM converts a MoveUnitActionGORM back to api.MoveUnitAction.
+// MoveUnitActionFromMoveUnitActionGORM converts a MoveUnitActionGORM back to v1.MoveUnitAction.
 // The optional decorator function allows custom field transformations.
 func MoveUnitActionFromMoveUnitActionGORM(
-	dest *api.MoveUnitAction,
+	dest *v1.MoveUnitAction,
 	src *MoveUnitActionGORM,
-	decorator func(dest *api.MoveUnitAction, src *MoveUnitActionGORM) error,
-) (out *api.MoveUnitAction, err error) {
+	decorator func(dest *v1.MoveUnitAction, src *MoveUnitActionGORM) error,
+) (out *v1.MoveUnitAction, err error) {
 	if src == nil {
 		return nil, nil
 	}
 	if dest == nil {
-		dest = &api.MoveUnitAction{}
+		dest = &v1.MoveUnitAction{}
 	}
 
 	// Initialize struct with inline values
-	*dest = api.MoveUnitAction{
+	*dest = v1.MoveUnitAction{
 		FromQ:        src.FromQ,
 		FromR:        src.FromR,
 		ToQ:          src.ToQ,
@@ -1375,7 +1375,7 @@ func MoveUnitActionFromMoveUnitActionGORM(
 	}
 	out = dest
 
-	out.ReconstructedPath, err = converters.AnyBytesToMessage[*api.Path](src.ReconstructedPath)
+	out.ReconstructedPath, err = converters.AnyBytesToMessage[*v1.Path](src.ReconstructedPath)
 	if err != nil {
 		return nil, fmt.Errorf("converting ReconstructedPath: %w", err)
 	}
@@ -1390,12 +1390,12 @@ func MoveUnitActionFromMoveUnitActionGORM(
 	return out, nil
 }
 
-// GameMoveToGameMoveGORM converts a api.GameMove to GameMoveGORM.
+// GameMoveToGameMoveGORM converts a v1.GameMove to GameMoveGORM.
 // The optional decorator function allows custom field transformations.
 func GameMoveToGameMoveGORM(
-	src *api.GameMove,
+	src *v1.GameMove,
 	dest *GameMoveGORM,
-	decorator func(*api.GameMove, *GameMoveGORM) error,
+	decorator func(*v1.GameMove, *GameMoveGORM) error,
 ) (out *GameMoveGORM, err error) {
 	if src == nil {
 		return nil, nil
@@ -1436,22 +1436,22 @@ func GameMoveToGameMoveGORM(
 	return dest, nil
 }
 
-// GameMoveFromGameMoveGORM converts a GameMoveGORM back to api.GameMove.
+// GameMoveFromGameMoveGORM converts a GameMoveGORM back to v1.GameMove.
 // The optional decorator function allows custom field transformations.
 func GameMoveFromGameMoveGORM(
-	dest *api.GameMove,
+	dest *v1.GameMove,
 	src *GameMoveGORM,
-	decorator func(dest *api.GameMove, src *GameMoveGORM) error,
-) (out *api.GameMove, err error) {
+	decorator func(dest *v1.GameMove, src *GameMoveGORM) error,
+) (out *v1.GameMove, err error) {
 	if src == nil {
 		return nil, nil
 	}
 	if dest == nil {
-		dest = &api.GameMove{}
+		dest = &v1.GameMove{}
 	}
 
 	// Initialize struct with inline values
-	*dest = api.GameMove{
+	*dest = v1.GameMove{
 		Player:      src.Player,
 		Timestamp:   converters.TimeToTimestamp(src.Timestamp),
 		SequenceNum: src.SequenceNum,
@@ -1460,9 +1460,9 @@ func GameMoveFromGameMoveGORM(
 	out = dest
 
 	if src.Changes != nil {
-		out.Changes = make([]*api.WorldChange, len(src.Changes))
+		out.Changes = make([]*v1.WorldChange, len(src.Changes))
 		for i, item := range src.Changes {
-			out.Changes[i], err = converters.AnyBytesToMessageConverter[*api.WorldChange](nil, &item, nil)
+			out.Changes[i], err = converters.AnyBytesToMessageConverter[*v1.WorldChange](nil, &item, nil)
 			if err != nil {
 				return nil, fmt.Errorf("converting Changes[%d]: %w", i, err)
 			}

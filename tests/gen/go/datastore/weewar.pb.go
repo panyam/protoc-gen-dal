@@ -11,8 +11,8 @@ import (
 	sync "sync"
 	unsafe "unsafe"
 
-	_ "github.com/panyam/protoc-gen-dal/tests/gen/go/api"
 	_ "github.com/panyam/protoc-gen-dal/tests/gen/go/dal/v1"
+	_ "github.com/panyam/protoc-gen-dal/tests/gen/go/weewar/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	anypb "google.golang.org/protobuf/types/known/anypb"
@@ -674,33 +674,31 @@ var File_datastore_weewar_proto protoreflect.FileDescriptor
 
 const file_datastore_weewar_proto_rawDesc = "" +
 	"\n" +
-	"\x16datastore/weewar.proto\x12\tdatastore\x1a\x18dal/v1/annotations.proto\x1a\x10api/weewar.proto\x1a\x19google/protobuf/any.proto\")\n" +
-	"\x12IndexInfoDatastore:\x13Ҧ\x1d\x0f*\rapi.IndexInfo\"\x1f\n" +
-	"\rTileDatastore:\x0eҦ\x1d\n" +
-	"*\bapi.Tile\"\x1f\n" +
-	"\rUnitDatastore:\x0eҦ\x1d\n" +
-	"*\bapi.Unit\"/\n" +
-	"\x15AttackRecordDatastore:\x16Ҧ\x1d\x12*\x10api.AttackRecord\")\n" +
-	"\x0eWorldDatastore:\x17Ҧ\x1d\x13\n" +
-	"\x06worlds*\tapi.World\"5\n" +
-	"\x12WorldDataDatastore:\x1fҦ\x1d\x1b\n" +
+	"\x16datastore/weewar.proto\x12\tdatastore\x1a\x18dal/v1/annotations.proto\x1a\x16weewar/v1/models.proto\x1a\x19google/protobuf/any.proto\"/\n" +
+	"\x12IndexInfoDatastore:\x19Ҧ\x1d\x15*\x13weewar.v1.IndexInfo\"%\n" +
+	"\rTileDatastore:\x14Ҧ\x1d\x10*\x0eweewar.v1.Tile\"%\n" +
+	"\rUnitDatastore:\x14Ҧ\x1d\x10*\x0eweewar.v1.Unit\"5\n" +
+	"\x15AttackRecordDatastore:\x1cҦ\x1d\x18*\x16weewar.v1.AttackRecord\"/\n" +
+	"\x0eWorldDatastore:\x1dҦ\x1d\x19\n" +
+	"\x06worlds*\x0fweewar.v1.World\";\n" +
+	"\x12WorldDataDatastore:%Ҧ\x1d!\n" +
 	"\n" +
-	"world_data*\rapi.WorldData\"&\n" +
-	"\rGameDatastore:\x15Ҧ\x1d\x11\n" +
-	"\x05games*\bapi.Game\"9\n" +
-	"\x1aGameConfigurationDatastore:\x1bҦ\x1d\x17*\x15api.GameConfiguration\"/\n" +
-	"\x15IncomeConfigDatastore:\x16Ҧ\x1d\x12*\x10api.IncomeConfig\"+\n" +
-	"\x13GamePlayerDatastore:\x14Ҧ\x1d\x10*\x0eapi.GamePlayer\"'\n" +
-	"\x11GameTeamDatastore:\x12Ҧ\x1d\x0e*\fapi.GameTeam\"/\n" +
-	"\x15GameSettingsDatastore:\x16Ҧ\x1d\x12*\x10api.GameSettings\")\n" +
-	"\x12GameStateDatastore:\x13Ҧ\x1d\x0f*\rapi.GameState\"5\n" +
-	"\x18GameMoveHistoryDatastore:\x19Ҧ\x1d\x15*\x13api.GameMoveHistory\"1\n" +
-	"\x16GameMoveGroupDatastore:\x17Ҧ\x1d\x13*\x11api.GameMoveGroup\"x\n" +
+	"world_data*\x13weewar.v1.WorldData\",\n" +
+	"\rGameDatastore:\x1bҦ\x1d\x17\n" +
+	"\x05games*\x0eweewar.v1.Game\"?\n" +
+	"\x1aGameConfigurationDatastore:!Ҧ\x1d\x1d*\x1bweewar.v1.GameConfiguration\"5\n" +
+	"\x15IncomeConfigDatastore:\x1cҦ\x1d\x18*\x16weewar.v1.IncomeConfig\"1\n" +
+	"\x13GamePlayerDatastore:\x1aҦ\x1d\x16*\x14weewar.v1.GamePlayer\"-\n" +
+	"\x11GameTeamDatastore:\x18Ҧ\x1d\x14*\x12weewar.v1.GameTeam\"5\n" +
+	"\x15GameSettingsDatastore:\x1cҦ\x1d\x18*\x16weewar.v1.GameSettings\"/\n" +
+	"\x12GameStateDatastore:\x19Ҧ\x1d\x15*\x13weewar.v1.GameState\";\n" +
+	"\x18GameMoveHistoryDatastore:\x1fҦ\x1d\x1b*\x19weewar.v1.GameMoveHistory\"7\n" +
+	"\x16GameMoveGroupDatastore:\x1dҦ\x1d\x19*\x17weewar.v1.GameMoveGroup\"~\n" +
 	"\x17MoveUnitActionDatastore\x12C\n" +
-	"\x12reconstructed_path\x18\x01 \x01(\v2\x14.google.protobuf.AnyR\x11reconstructedPath:\x18Ҧ\x1d\x14*\x12api.MoveUnitAction\"\x8a\x01\n" +
+	"\x12reconstructed_path\x18\x01 \x01(\v2\x14.google.protobuf.AnyR\x11reconstructedPath:\x1eҦ\x1d\x1a*\x18weewar.v1.MoveUnitAction\"\x90\x01\n" +
 	"\x11GameMoveDatastore\x121\n" +
 	"\tmove_type\x18\x01 \x01(\v2\x14.google.protobuf.AnyR\bmoveType\x12.\n" +
-	"\achanges\x18\x02 \x03(\v2\x14.google.protobuf.AnyR\achanges:\x12Ҧ\x1d\x0e*\fapi.GameMoveB\x99\x01\n" +
+	"\achanges\x18\x02 \x03(\v2\x14.google.protobuf.AnyR\achanges:\x18Ҧ\x1d\x14*\x12weewar.v1.GameMoveB\x99\x01\n" +
 	"\rcom.datastoreB\vWeewarProtoP\x01Z7github.com/panyam/protoc-gen-dal/tests/gen/go/datastore\xa2\x02\x03DXX\xaa\x02\tDatastore\xca\x02\tDatastore\xe2\x02\x15Datastore\\GPBMetadata\xea\x02\tDatastoreb\x06proto3"
 
 var (

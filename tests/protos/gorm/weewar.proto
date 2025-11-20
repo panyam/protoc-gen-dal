@@ -3,34 +3,34 @@ syntax = "proto3";
 package gorm;
 
 import "dal/v1/annotations.proto";
-import "api/weewar.proto";
+import "weewar/v1/models.proto";
 import "google/protobuf/any.proto";
 
 option go_package = "github.com/panyam/protoc-gen-dal/tests/gen/dal;testdal";
 
 
 message IndexInfoGORM {
-  option (dal.v1.gorm) = { source: "api.IndexInfo" };
+  option (dal.v1.gorm) = { source: "weewar.v1.IndexInfo" };
 }
 
 message TileGORM {
-  option (dal.v1.gorm) = { source: "api.Tile" };
+  option (dal.v1.gorm) = { source: "weewar.v1.Tile" };
 }
 
 message UnitGORM {
-  option (dal.v1.gorm) = { source: "api.Unit" };
+  option (dal.v1.gorm) = { source: "weewar.v1.Unit" };
 }
 
 message AttackRecordGORM {
-  option (dal.v1.gorm) = { source: "api.AttackRecord" };
+  option (dal.v1.gorm) = { source: "weewar.v1.AttackRecord" };
 }
 
 message WorldGORM {
-  option (dal.v1.gorm) = { source: "api.World", table: "worlds" };
+  option (dal.v1.gorm) = { source: "weewar.v1.World", table: "worlds" };
 }
 
 message WorldDataGORM {
-  option (dal.v1.gorm) = { source: "api.WorldData", table: "world_data" };
+  option (dal.v1.gorm) = { source: "weewar.v1.WorldData", table: "world_data" };
 }
 
 ///////// Game related models
@@ -38,46 +38,46 @@ message WorldDataGORM {
 
 // Describes a game and its metadata
 message GameGORM {
-  option (dal.v1.gorm) = { source: "api.Game", table: "games" };
+  option (dal.v1.gorm) = { source: "weewar.v1.Game", table: "games" };
 }
 
 message GameConfigurationGORM {
-  option (dal.v1.gorm) = { source: "api.GameConfiguration" };
+  option (dal.v1.gorm) = { source: "weewar.v1.GameConfiguration" };
 }
 
 message IncomeConfigGORM {
-  option (dal.v1.gorm) = { source: "api.IncomeConfig" };
+  option (dal.v1.gorm) = { source: "weewar.v1.IncomeConfig" };
 }
 
 message GamePlayerGORM {
-  option (dal.v1.gorm) = { source: "api.GamePlayer" };
+  option (dal.v1.gorm) = { source: "weewar.v1.GamePlayer" };
 }
 
 message GameTeamGORM {
-  option (dal.v1.gorm) = { source: "api.GameTeam" };
+  option (dal.v1.gorm) = { source: "weewar.v1.GameTeam" };
 }
 
 message GameSettingsGORM {
-  option (dal.v1.gorm) = { source: "api.GameSettings" };
+  option (dal.v1.gorm) = { source: "weewar.v1.GameSettings" };
 }
 
 // Holds the game's Active/Current state (eg world state)
 message GameStateGORM {
-  option (dal.v1.gorm) = { source: "api.GameState" };
+  option (dal.v1.gorm) = { source: "weewar.v1.GameState" };
 }
 
 // Holds the game's move history (can be used as a replay log)
 message GameMoveHistoryGORM {
-  option (dal.v1.gorm) = { source: "api.GameMoveHistory" };
+  option (dal.v1.gorm) = { source: "weewar.v1.GameMoveHistory" };
 }
 
 // A move group - we can allow X moves in one "tick"
 message GameMoveGroupGORM {
-  option (dal.v1.gorm) = { source: "api.GameMoveGroup" };
+  option (dal.v1.gorm) = { source: "weewar.v1.GameMoveGroup" };
 }
 // A move group - we can allow X moves in one "tick"
 message MoveUnitActionGORM {
-  option (dal.v1.gorm) = { source: "api.MoveUnitAction" };
+  option (dal.v1.gorm) = { source: "weewar.v1.MoveUnitAction" };
 
   google.protobuf.Any reconstructed_path = 1;
 }
@@ -86,7 +86,7 @@ message MoveUnitActionGORM {
  * Represents a single move which can be one of many actions in the game
  */
 message GameMoveGORM {
-  option (dal.v1.gorm) = { source: "api.GameMove" };
+  option (dal.v1.gorm) = { source: "weewar.v1.GameMove" };
 
   // Field named "move_type" matches the oneof name in source
   // This automatically skips all oneof members (move_unit, attack_unit, end_turn, build_unit)

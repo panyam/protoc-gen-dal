@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/panyam/protoc-gen-dal/tests/gen/go/api"
+	wwv1 "github.com/panyam/protoc-gen-dal/tests/gen/go/weewar/v1"
 	"github.com/panyam/protoc-gen-dal/tests/gen/gorm"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -12,7 +12,7 @@ import (
 // TestTileConversion_SimpleStruct verifies that Tile (a simple struct with multiple int32 fields)
 // converts correctly.
 func TestTileConversion_SimpleStruct(t *testing.T) {
-	src := &api.Tile{
+	src := &wwv1.Tile{
 		Q:                1,
 		R:                2,
 		TileType:         3,
@@ -96,7 +96,7 @@ func TestTileConversion_SimpleStruct(t *testing.T) {
 // TestUnitConversion_WithNestedMessages verifies that Unit (with repeated AttackRecord)
 // converts correctly.
 func TestUnitConversion_WithNestedMessages(t *testing.T) {
-	src := &api.Unit{
+	src := &wwv1.Unit{
 		Q:                       5,
 		R:                       6,
 		Player:                  2,
@@ -107,11 +107,11 @@ func TestUnitConversion_WithNestedMessages(t *testing.T) {
 		LastActedTurn:           15,
 		LastToppedupTurn:        14,
 		AttacksReceivedThisTurn: 2,
-		AttackHistory: []*api.AttackRecord{
+		AttackHistory: []*wwv1.AttackRecord{
 			{Q: 4, R: 5, IsRanged: true, TurnNumber: 14},
 			{Q: 6, R: 7, IsRanged: false, TurnNumber: 15},
 		},
-		ProgressionStep:    1,
+		ProgressionStep:   1,
 		ChosenAlternative: "attack",
 	}
 
@@ -201,13 +201,13 @@ func TestUnitConversion_WithNestedMessages(t *testing.T) {
 // TestWorldDataConversion_DeepNestedStructures verifies that WorldData with
 // repeated Tiles and Units converts correctly (2-level nesting).
 func TestWorldDataConversion_DeepNestedStructures(t *testing.T) {
-	src := &api.WorldData{
-		Tiles: []*api.Tile{
+	src := &wwv1.WorldData{
+		Tiles: []*wwv1.Tile{
 			{Q: 0, R: 0, TileType: 1, Player: 0, Shortcut: "T1"},
 			{Q: 1, R: 0, TileType: 2, Player: 1, Shortcut: "T2"},
 			{Q: 0, R: 1, TileType: 1, Player: 0, Shortcut: "T3"},
 		},
-		Units: []*api.Unit{
+		Units: []*wwv1.Unit{
 			{Q: 0, R: 0, Player: 1, UnitType: 100, AvailableHealth: 100, DistanceLeft: 5.0},
 			{Q: 1, R: 0, Player: 2, UnitType: 101, AvailableHealth: 80, DistanceLeft: 4.5},
 		},
@@ -281,7 +281,7 @@ func TestWorldConversion_ThreeLevelNesting(t *testing.T) {
 	createdAt := time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC)
 	updatedAt := time.Date(2024, 6, 15, 14, 30, 0, 0, time.UTC)
 
-	src := &api.World{
+	src := &wwv1.World{
 		CreatedAt:   timestamppb.New(createdAt),
 		UpdatedAt:   timestamppb.New(updatedAt),
 		Id:          "world-123",
@@ -291,12 +291,12 @@ func TestWorldConversion_ThreeLevelNesting(t *testing.T) {
 		Tags:        []string{"test", "weewar", "game"},
 		ImageUrl:    "https://example.com/world.png",
 		Difficulty:  "medium",
-		WorldData: &api.WorldData{
-			Tiles: []*api.Tile{
+		WorldData: &wwv1.WorldData{
+			Tiles: []*wwv1.Tile{
 				{Q: 0, R: 0, TileType: 1, Player: 0},
 				{Q: 1, R: 0, TileType: 2, Player: 1},
 			},
-			Units: []*api.Unit{
+			Units: []*wwv1.Unit{
 				{Q: 0, R: 0, Player: 1, UnitType: 100, AvailableHealth: 100},
 			},
 		},
@@ -418,42 +418,42 @@ func TestGameMoveConversion_RepeatedAnyField(t *testing.T) {
 
 	// Create some WorldChange messages with oneof fields
 	// WorldChange uses oneof, so we create UnitMovedChange and UnitDamagedChange
-	previousUnit := &api.Unit{
+	previousUnit := &wwv1.Unit{
 		Q: 1, R: 2, Player: 1, UnitType: 100, AvailableHealth: 100, DistanceLeft: 5.0,
 	}
 
-	movedUnit := &api.Unit{
+	movedUnit := &wwv1.Unit{
 		Q: 2, R: 2, Player: 1, UnitType: 100, AvailableHealth: 100, DistanceLeft: 4.0,
 	}
 
-	damagedUnit := &api.Unit{
+	damagedUnit := &wwv1.Unit{
 		Q: 1, R: 2, Player: 1, UnitType: 100, AvailableHealth: 80, DistanceLeft: 5.0,
 	}
 
-	change1 := &api.WorldChange{
-		ChangeType: &api.WorldChange_UnitMoved{
-			UnitMoved: &api.UnitMovedChange{
+	change1 := &wwv1.WorldChange{
+		ChangeType: &wwv1.WorldChange_UnitMoved{
+			UnitMoved: &wwv1.UnitMovedChange{
 				PreviousUnit: previousUnit,
 				UpdatedUnit:  movedUnit,
 			},
 		},
 	}
 
-	change2 := &api.WorldChange{
-		ChangeType: &api.WorldChange_UnitDamaged{
-			UnitDamaged: &api.UnitDamagedChange{
+	change2 := &wwv1.WorldChange{
+		ChangeType: &wwv1.WorldChange_UnitDamaged{
+			UnitDamaged: &wwv1.UnitDamagedChange{
 				PreviousUnit: previousUnit,
 				UpdatedUnit:  damagedUnit,
 			},
 		},
 	}
 
-	src := &api.GameMove{
+	src := &wwv1.GameMove{
 		Player:      1,
 		Timestamp:   timestamppb.New(timestamp),
 		SequenceNum: 42,
 		IsPermanent: true,
-		Changes:     []*api.WorldChange{change1, change2},
+		Changes:     []*wwv1.WorldChange{change1, change2},
 		// Note: We're not testing the oneof move_type field here as it requires
 		// special handling that may need decorator functions
 	}
@@ -546,9 +546,9 @@ func TestIndexInfoConversion_NestedTimestamps(t *testing.T) {
 	lastUpdatedAt := time.Date(2024, 6, 15, 10, 0, 0, 0, time.UTC)
 	lastIndexedAt := time.Date(2024, 6, 15, 9, 0, 0, 0, time.UTC)
 
-	src := &api.IndexInfo{
-		LastUpdatedAt:  timestamppb.New(lastUpdatedAt),
-		LastIndexedAt:  timestamppb.New(lastIndexedAt),
+	src := &wwv1.IndexInfo{
+		LastUpdatedAt: timestamppb.New(lastUpdatedAt),
+		LastIndexedAt: timestamppb.New(lastIndexedAt),
 		NeedsIndexing: true,
 	}
 
@@ -596,10 +596,10 @@ func TestIndexInfoConversion_NestedTimestamps(t *testing.T) {
 func TestEmptyWorldData_NilSlices(t *testing.T) {
 	testCases := []struct {
 		name string
-		data *api.WorldData
+		data *wwv1.WorldData
 	}{
-		{"NilSlices", &api.WorldData{Tiles: nil, Units: nil}},
-		{"EmptySlices", &api.WorldData{Tiles: []*api.Tile{}, Units: []*api.Unit{}}},
+		{"NilSlices", &wwv1.WorldData{Tiles: nil, Units: nil}},
+		{"EmptySlices", &wwv1.WorldData{Tiles: []*wwv1.Tile{}, Units: []*wwv1.Unit{}}},
 	}
 
 	for _, tc := range testCases {

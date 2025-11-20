@@ -3,34 +3,34 @@ syntax = "proto3";
 package datastore;
 
 import "dal/v1/annotations.proto";
-import "api/weewar.proto";
+import "weewar/v1/models.proto";
 import "google/protobuf/any.proto";
 
 option go_package = "github.com/panyam/protoc-gen-dal/tests/gen/dal;testdal";
 
 
 message IndexInfoDatastore {
-  option (dal.v1.datastore_options) = { source: "api.IndexInfo" };
+  option (dal.v1.datastore_options) = { source: "weewar.v1.IndexInfo" };
 }
 
 message TileDatastore {
-  option (dal.v1.datastore_options) = { source: "api.Tile" };
+  option (dal.v1.datastore_options) = { source: "weewar.v1.Tile" };
 }
 
 message UnitDatastore {
-  option (dal.v1.datastore_options) = { source: "api.Unit" };
+  option (dal.v1.datastore_options) = { source: "weewar.v1.Unit" };
 }
 
 message AttackRecordDatastore {
-  option (dal.v1.datastore_options) = { source: "api.AttackRecord" };
+  option (dal.v1.datastore_options) = { source: "weewar.v1.AttackRecord" };
 }
 
 message WorldDatastore {
-  option (dal.v1.datastore_options) = { source: "api.World", kind: "worlds" };
+  option (dal.v1.datastore_options) = { source: "weewar.v1.World", kind: "worlds" };
 }
 
 message WorldDataDatastore {
-  option (dal.v1.datastore_options) = { source: "api.WorldData", kind: "world_data" };
+  option (dal.v1.datastore_options) = { source: "weewar.v1.WorldData", kind: "world_data" };
 }
 
 ///////// Game related models
@@ -38,46 +38,46 @@ message WorldDataDatastore {
 
 // Describes a game and its metadata
 message GameDatastore {
-  option (dal.v1.datastore_options) = { source: "api.Game", kind: "games" };
+  option (dal.v1.datastore_options) = { source: "weewar.v1.Game", kind: "games" };
 }
 
 message GameConfigurationDatastore {
-  option (dal.v1.datastore_options) = { source: "api.GameConfiguration" };
+  option (dal.v1.datastore_options) = { source: "weewar.v1.GameConfiguration" };
 }
 
 message IncomeConfigDatastore {
-  option (dal.v1.datastore_options) = { source: "api.IncomeConfig" };
+  option (dal.v1.datastore_options) = { source: "weewar.v1.IncomeConfig" };
 }
 
 message GamePlayerDatastore {
-  option (dal.v1.datastore_options) = { source: "api.GamePlayer" };
+  option (dal.v1.datastore_options) = { source: "weewar.v1.GamePlayer" };
 }
 
 message GameTeamDatastore {
-  option (dal.v1.datastore_options) = { source: "api.GameTeam" };
+  option (dal.v1.datastore_options) = { source: "weewar.v1.GameTeam" };
 }
 
 message GameSettingsDatastore {
-  option (dal.v1.datastore_options) = { source: "api.GameSettings" };
+  option (dal.v1.datastore_options) = { source: "weewar.v1.GameSettings" };
 }
 
 // Holds the game's Active/Current state (eg world state)
 message GameStateDatastore {
-  option (dal.v1.datastore_options) = { source: "api.GameState" };
+  option (dal.v1.datastore_options) = { source: "weewar.v1.GameState" };
 }
 
 // Holds the game's move history (can be used as a replay log)
 message GameMoveHistoryDatastore {
-  option (dal.v1.datastore_options) = { source: "api.GameMoveHistory" };
+  option (dal.v1.datastore_options) = { source: "weewar.v1.GameMoveHistory" };
 }
 
 // A move group - we can allow X moves in one "tick"
 message GameMoveGroupDatastore {
-  option (dal.v1.datastore_options) = { source: "api.GameMoveGroup" };
+  option (dal.v1.datastore_options) = { source: "weewar.v1.GameMoveGroup" };
 }
 // A move group - we can allow X moves in one "tick"
 message MoveUnitActionDatastore {
-  option (dal.v1.datastore_options) = { source: "api.MoveUnitAction" };
+  option (dal.v1.datastore_options) = { source: "weewar.v1.MoveUnitAction" };
 
   google.protobuf.Any reconstructed_path = 1;
 }
@@ -86,7 +86,7 @@ message MoveUnitActionDatastore {
  * Represents a single move which can be one of many actions in the game
  */
 message GameMoveDatastore {
-  option (dal.v1.datastore_options) = { source: "api.GameMove" };
+  option (dal.v1.datastore_options) = { source: "weewar.v1.GameMove" };
 
   // Field named "move_type" matches the oneof name in source
   // This automatically skips all oneof members (move_unit, attack_unit, end_turn, build_unit)

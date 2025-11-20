@@ -2,7 +2,7 @@
 package datastore
 
 import (
-	api "github.com/panyam/protoc-gen-dal/tests/gen/go/api"
+	v1 "github.com/panyam/protoc-gen-dal/tests/gen/go/weewar/v1"
 
 	"fmt"
 
@@ -22,9 +22,9 @@ import (
 //   - Converted IndexInfoDatastore entity
 //   - Error if conversion fails
 func IndexInfoToIndexInfoDatastore(
-	src *api.IndexInfo,
+	src *v1.IndexInfo,
 	dest *IndexInfoDatastore,
-	decorator func(*api.IndexInfo, *IndexInfoDatastore) error,
+	decorator func(*v1.IndexInfo, *IndexInfoDatastore) error,
 ) (out *IndexInfoDatastore, err error) {
 	if src == nil {
 		return nil, nil
@@ -70,19 +70,19 @@ func IndexInfoToIndexInfoDatastore(
 //   - Converted IndexInfo message
 //   - Error if conversion fails
 func IndexInfoFromIndexInfoDatastore(
-	dest *api.IndexInfo,
+	dest *v1.IndexInfo,
 	src *IndexInfoDatastore,
-	decorator func(*api.IndexInfo, *IndexInfoDatastore) error,
-) (out *api.IndexInfo, err error) {
+	decorator func(*v1.IndexInfo, *IndexInfoDatastore) error,
+) (out *v1.IndexInfo, err error) {
 	if src == nil {
 		return nil, nil
 	}
 	if dest == nil {
-		dest = &api.IndexInfo{}
+		dest = &v1.IndexInfo{}
 	}
 
 	// Initialize struct with inline values
-	*dest = api.IndexInfo{
+	*dest = v1.IndexInfo{
 		LastUpdatedAt: converters.TimeToTimestamp(src.LastUpdatedAt),
 		LastIndexedAt: converters.TimeToTimestamp(src.LastIndexedAt),
 		NeedsIndexing: src.NeedsIndexing,
@@ -112,9 +112,9 @@ func IndexInfoFromIndexInfoDatastore(
 //   - Converted TileDatastore entity
 //   - Error if conversion fails
 func TileToTileDatastore(
-	src *api.Tile,
+	src *v1.Tile,
 	dest *TileDatastore,
-	decorator func(*api.Tile, *TileDatastore) error,
+	decorator func(*v1.Tile, *TileDatastore) error,
 ) (out *TileDatastore, err error) {
 	if src == nil {
 		return nil, nil
@@ -158,19 +158,19 @@ func TileToTileDatastore(
 //   - Converted Tile message
 //   - Error if conversion fails
 func TileFromTileDatastore(
-	dest *api.Tile,
+	dest *v1.Tile,
 	src *TileDatastore,
-	decorator func(*api.Tile, *TileDatastore) error,
-) (out *api.Tile, err error) {
+	decorator func(*v1.Tile, *TileDatastore) error,
+) (out *v1.Tile, err error) {
 	if src == nil {
 		return nil, nil
 	}
 	if dest == nil {
-		dest = &api.Tile{}
+		dest = &v1.Tile{}
 	}
 
 	// Initialize struct with inline values
-	*dest = api.Tile{
+	*dest = v1.Tile{
 		Q:                src.Q,
 		R:                src.R,
 		TileType:         src.TileType,
@@ -204,9 +204,9 @@ func TileFromTileDatastore(
 //   - Converted UnitDatastore entity
 //   - Error if conversion fails
 func UnitToUnitDatastore(
-	src *api.Unit,
+	src *v1.Unit,
 	dest *UnitDatastore,
-	decorator func(*api.Unit, *UnitDatastore) error,
+	decorator func(*v1.Unit, *UnitDatastore) error,
 ) (out *UnitDatastore, err error) {
 	if src == nil {
 		return nil, nil
@@ -265,19 +265,19 @@ func UnitToUnitDatastore(
 //   - Converted Unit message
 //   - Error if conversion fails
 func UnitFromUnitDatastore(
-	dest *api.Unit,
+	dest *v1.Unit,
 	src *UnitDatastore,
-	decorator func(*api.Unit, *UnitDatastore) error,
-) (out *api.Unit, err error) {
+	decorator func(*v1.Unit, *UnitDatastore) error,
+) (out *v1.Unit, err error) {
 	if src == nil {
 		return nil, nil
 	}
 	if dest == nil {
-		dest = &api.Unit{}
+		dest = &v1.Unit{}
 	}
 
 	// Initialize struct with inline values
-	*dest = api.Unit{
+	*dest = v1.Unit{
 		Q:                       src.Q,
 		R:                       src.R,
 		Player:                  src.Player,
@@ -294,7 +294,7 @@ func UnitFromUnitDatastore(
 	out = dest
 
 	if src.AttackHistory != nil {
-		out.AttackHistory = make([]*api.AttackRecord, len(src.AttackHistory))
+		out.AttackHistory = make([]*v1.AttackRecord, len(src.AttackHistory))
 		for i, item := range src.AttackHistory {
 			out.AttackHistory[i], err = AttackRecordFromAttackRecordDatastore(nil, &item, nil)
 			if err != nil {
@@ -326,9 +326,9 @@ func UnitFromUnitDatastore(
 //   - Converted AttackRecordDatastore entity
 //   - Error if conversion fails
 func AttackRecordToAttackRecordDatastore(
-	src *api.AttackRecord,
+	src *v1.AttackRecord,
 	dest *AttackRecordDatastore,
-	decorator func(*api.AttackRecord, *AttackRecordDatastore) error,
+	decorator func(*v1.AttackRecord, *AttackRecordDatastore) error,
 ) (out *AttackRecordDatastore, err error) {
 	if src == nil {
 		return nil, nil
@@ -369,19 +369,19 @@ func AttackRecordToAttackRecordDatastore(
 //   - Converted AttackRecord message
 //   - Error if conversion fails
 func AttackRecordFromAttackRecordDatastore(
-	dest *api.AttackRecord,
+	dest *v1.AttackRecord,
 	src *AttackRecordDatastore,
-	decorator func(*api.AttackRecord, *AttackRecordDatastore) error,
-) (out *api.AttackRecord, err error) {
+	decorator func(*v1.AttackRecord, *AttackRecordDatastore) error,
+) (out *v1.AttackRecord, err error) {
 	if src == nil {
 		return nil, nil
 	}
 	if dest == nil {
-		dest = &api.AttackRecord{}
+		dest = &v1.AttackRecord{}
 	}
 
 	// Initialize struct with inline values
-	*dest = api.AttackRecord{
+	*dest = v1.AttackRecord{
 		Q:          src.Q,
 		R:          src.R,
 		IsRanged:   src.IsRanged,
@@ -412,9 +412,9 @@ func AttackRecordFromAttackRecordDatastore(
 //   - Converted WorldDatastore entity
 //   - Error if conversion fails
 func WorldToWorldDatastore(
-	src *api.World,
+	src *v1.World,
 	dest *WorldDatastore,
-	decorator func(*api.World, *WorldDatastore) error,
+	decorator func(*v1.World, *WorldDatastore) error,
 ) (out *WorldDatastore, err error) {
 	if src == nil {
 		return nil, nil
@@ -492,19 +492,19 @@ func WorldToWorldDatastore(
 //   - Converted World message
 //   - Error if conversion fails
 func WorldFromWorldDatastore(
-	dest *api.World,
+	dest *v1.World,
 	src *WorldDatastore,
-	decorator func(*api.World, *WorldDatastore) error,
-) (out *api.World, err error) {
+	decorator func(*v1.World, *WorldDatastore) error,
+) (out *v1.World, err error) {
 	if src == nil {
 		return nil, nil
 	}
 	if dest == nil {
-		dest = &api.World{}
+		dest = &v1.World{}
 	}
 
 	// Initialize struct with inline values
-	*dest = api.World{
+	*dest = v1.World{
 		CreatedAt:   converters.TimeToTimestamp(src.CreatedAt),
 		UpdatedAt:   converters.TimeToTimestamp(src.UpdatedAt),
 		Id:          src.Id,
@@ -561,9 +561,9 @@ func WorldFromWorldDatastore(
 //   - Converted WorldDataDatastore entity
 //   - Error if conversion fails
 func WorldDataToWorldDataDatastore(
-	src *api.WorldData,
+	src *v1.WorldData,
 	dest *WorldDataDatastore,
-	decorator func(*api.WorldData, *WorldDataDatastore) error,
+	decorator func(*v1.WorldData, *WorldDataDatastore) error,
 ) (out *WorldDataDatastore, err error) {
 	if src == nil {
 		return nil, nil
@@ -618,23 +618,23 @@ func WorldDataToWorldDataDatastore(
 //   - Converted WorldData message
 //   - Error if conversion fails
 func WorldDataFromWorldDataDatastore(
-	dest *api.WorldData,
+	dest *v1.WorldData,
 	src *WorldDataDatastore,
-	decorator func(*api.WorldData, *WorldDataDatastore) error,
-) (out *api.WorldData, err error) {
+	decorator func(*v1.WorldData, *WorldDataDatastore) error,
+) (out *v1.WorldData, err error) {
 	if src == nil {
 		return nil, nil
 	}
 	if dest == nil {
-		dest = &api.WorldData{}
+		dest = &v1.WorldData{}
 	}
 
 	// Initialize struct with inline values
-	*dest = api.WorldData{}
+	*dest = v1.WorldData{}
 	out = dest
 
 	if src.Tiles != nil {
-		out.Tiles = make([]*api.Tile, len(src.Tiles))
+		out.Tiles = make([]*v1.Tile, len(src.Tiles))
 		for i, item := range src.Tiles {
 			out.Tiles[i], err = TileFromTileDatastore(nil, &item, nil)
 			if err != nil {
@@ -643,7 +643,7 @@ func WorldDataFromWorldDataDatastore(
 		}
 	}
 	if src.Units != nil {
-		out.Units = make([]*api.Unit, len(src.Units))
+		out.Units = make([]*v1.Unit, len(src.Units))
 		for i, item := range src.Units {
 			out.Units[i], err = UnitFromUnitDatastore(nil, &item, nil)
 			if err != nil {
@@ -675,9 +675,9 @@ func WorldDataFromWorldDataDatastore(
 //   - Converted GameDatastore entity
 //   - Error if conversion fails
 func GameToGameDatastore(
-	src *api.Game,
+	src *v1.Game,
 	dest *GameDatastore,
-	decorator func(*api.Game, *GameDatastore) error,
+	decorator func(*v1.Game, *GameDatastore) error,
 ) (out *GameDatastore, err error) {
 	if src == nil {
 		return nil, nil
@@ -750,19 +750,19 @@ func GameToGameDatastore(
 //   - Converted Game message
 //   - Error if conversion fails
 func GameFromGameDatastore(
-	dest *api.Game,
+	dest *v1.Game,
 	src *GameDatastore,
-	decorator func(*api.Game, *GameDatastore) error,
-) (out *api.Game, err error) {
+	decorator func(*v1.Game, *GameDatastore) error,
+) (out *v1.Game, err error) {
 	if src == nil {
 		return nil, nil
 	}
 	if dest == nil {
-		dest = &api.Game{}
+		dest = &v1.Game{}
 	}
 
 	// Initialize struct with inline values
-	*dest = api.Game{
+	*dest = v1.Game{
 		CreatedAt:   converters.TimeToTimestamp(src.CreatedAt),
 		UpdatedAt:   converters.TimeToTimestamp(src.UpdatedAt),
 		Id:          src.Id,
@@ -815,9 +815,9 @@ func GameFromGameDatastore(
 //   - Converted GameConfigurationDatastore entity
 //   - Error if conversion fails
 func GameConfigurationToGameConfigurationDatastore(
-	src *api.GameConfiguration,
+	src *v1.GameConfiguration,
 	dest *GameConfigurationDatastore,
-	decorator func(*api.GameConfiguration, *GameConfigurationDatastore) error,
+	decorator func(*v1.GameConfiguration, *GameConfigurationDatastore) error,
 ) (out *GameConfigurationDatastore, err error) {
 	if src == nil {
 		return nil, nil
@@ -885,19 +885,19 @@ func GameConfigurationToGameConfigurationDatastore(
 //   - Converted GameConfiguration message
 //   - Error if conversion fails
 func GameConfigurationFromGameConfigurationDatastore(
-	dest *api.GameConfiguration,
+	dest *v1.GameConfiguration,
 	src *GameConfigurationDatastore,
-	decorator func(*api.GameConfiguration, *GameConfigurationDatastore) error,
-) (out *api.GameConfiguration, err error) {
+	decorator func(*v1.GameConfiguration, *GameConfigurationDatastore) error,
+) (out *v1.GameConfiguration, err error) {
 	if src == nil {
 		return nil, nil
 	}
 	if dest == nil {
-		dest = &api.GameConfiguration{}
+		dest = &v1.GameConfiguration{}
 	}
 
 	// Initialize struct with inline values
-	*dest = api.GameConfiguration{}
+	*dest = v1.GameConfiguration{}
 	out = dest
 
 	out.IncomeConfigs, err = IncomeConfigFromIncomeConfigDatastore(nil, &src.IncomeConfigs, nil)
@@ -911,7 +911,7 @@ func GameConfigurationFromGameConfigurationDatastore(
 	}
 
 	if src.Players != nil {
-		out.Players = make([]*api.GamePlayer, len(src.Players))
+		out.Players = make([]*v1.GamePlayer, len(src.Players))
 		for i, item := range src.Players {
 			out.Players[i], err = GamePlayerFromGamePlayerDatastore(nil, &item, nil)
 			if err != nil {
@@ -920,7 +920,7 @@ func GameConfigurationFromGameConfigurationDatastore(
 		}
 	}
 	if src.Teams != nil {
-		out.Teams = make([]*api.GameTeam, len(src.Teams))
+		out.Teams = make([]*v1.GameTeam, len(src.Teams))
 		for i, item := range src.Teams {
 			out.Teams[i], err = GameTeamFromGameTeamDatastore(nil, &item, nil)
 			if err != nil {
@@ -952,9 +952,9 @@ func GameConfigurationFromGameConfigurationDatastore(
 //   - Converted IncomeConfigDatastore entity
 //   - Error if conversion fails
 func IncomeConfigToIncomeConfigDatastore(
-	src *api.IncomeConfig,
+	src *v1.IncomeConfig,
 	dest *IncomeConfigDatastore,
-	decorator func(*api.IncomeConfig, *IncomeConfigDatastore) error,
+	decorator func(*v1.IncomeConfig, *IncomeConfigDatastore) error,
 ) (out *IncomeConfigDatastore, err error) {
 	if src == nil {
 		return nil, nil
@@ -998,19 +998,19 @@ func IncomeConfigToIncomeConfigDatastore(
 //   - Converted IncomeConfig message
 //   - Error if conversion fails
 func IncomeConfigFromIncomeConfigDatastore(
-	dest *api.IncomeConfig,
+	dest *v1.IncomeConfig,
 	src *IncomeConfigDatastore,
-	decorator func(*api.IncomeConfig, *IncomeConfigDatastore) error,
-) (out *api.IncomeConfig, err error) {
+	decorator func(*v1.IncomeConfig, *IncomeConfigDatastore) error,
+) (out *v1.IncomeConfig, err error) {
 	if src == nil {
 		return nil, nil
 	}
 	if dest == nil {
-		dest = &api.IncomeConfig{}
+		dest = &v1.IncomeConfig{}
 	}
 
 	// Initialize struct with inline values
-	*dest = api.IncomeConfig{
+	*dest = v1.IncomeConfig{
 		StartingCoins:     src.StartingCoins,
 		GameIncome:        src.GameIncome,
 		LandbaseIncome:    src.LandbaseIncome,
@@ -1044,9 +1044,9 @@ func IncomeConfigFromIncomeConfigDatastore(
 //   - Converted GamePlayerDatastore entity
 //   - Error if conversion fails
 func GamePlayerToGamePlayerDatastore(
-	src *api.GamePlayer,
+	src *v1.GamePlayer,
 	dest *GamePlayerDatastore,
-	decorator func(*api.GamePlayer, *GamePlayerDatastore) error,
+	decorator func(*v1.GamePlayer, *GamePlayerDatastore) error,
 ) (out *GamePlayerDatastore, err error) {
 	if src == nil {
 		return nil, nil
@@ -1091,19 +1091,19 @@ func GamePlayerToGamePlayerDatastore(
 //   - Converted GamePlayer message
 //   - Error if conversion fails
 func GamePlayerFromGamePlayerDatastore(
-	dest *api.GamePlayer,
+	dest *v1.GamePlayer,
 	src *GamePlayerDatastore,
-	decorator func(*api.GamePlayer, *GamePlayerDatastore) error,
-) (out *api.GamePlayer, err error) {
+	decorator func(*v1.GamePlayer, *GamePlayerDatastore) error,
+) (out *v1.GamePlayer, err error) {
 	if src == nil {
 		return nil, nil
 	}
 	if dest == nil {
-		dest = &api.GamePlayer{}
+		dest = &v1.GamePlayer{}
 	}
 
 	// Initialize struct with inline values
-	*dest = api.GamePlayer{
+	*dest = v1.GamePlayer{
 		PlayerId:      src.PlayerId,
 		PlayerType:    src.PlayerType,
 		Color:         src.Color,
@@ -1138,9 +1138,9 @@ func GamePlayerFromGamePlayerDatastore(
 //   - Converted GameTeamDatastore entity
 //   - Error if conversion fails
 func GameTeamToGameTeamDatastore(
-	src *api.GameTeam,
+	src *v1.GameTeam,
 	dest *GameTeamDatastore,
-	decorator func(*api.GameTeam, *GameTeamDatastore) error,
+	decorator func(*v1.GameTeam, *GameTeamDatastore) error,
 ) (out *GameTeamDatastore, err error) {
 	if src == nil {
 		return nil, nil
@@ -1181,19 +1181,19 @@ func GameTeamToGameTeamDatastore(
 //   - Converted GameTeam message
 //   - Error if conversion fails
 func GameTeamFromGameTeamDatastore(
-	dest *api.GameTeam,
+	dest *v1.GameTeam,
 	src *GameTeamDatastore,
-	decorator func(*api.GameTeam, *GameTeamDatastore) error,
-) (out *api.GameTeam, err error) {
+	decorator func(*v1.GameTeam, *GameTeamDatastore) error,
+) (out *v1.GameTeam, err error) {
 	if src == nil {
 		return nil, nil
 	}
 	if dest == nil {
-		dest = &api.GameTeam{}
+		dest = &v1.GameTeam{}
 	}
 
 	// Initialize struct with inline values
-	*dest = api.GameTeam{
+	*dest = v1.GameTeam{
 		TeamId:   src.TeamId,
 		Name:     src.Name,
 		Color:    src.Color,
@@ -1224,9 +1224,9 @@ func GameTeamFromGameTeamDatastore(
 //   - Converted GameSettingsDatastore entity
 //   - Error if conversion fails
 func GameSettingsToGameSettingsDatastore(
-	src *api.GameSettings,
+	src *v1.GameSettings,
 	dest *GameSettingsDatastore,
-	decorator func(*api.GameSettings, *GameSettingsDatastore) error,
+	decorator func(*v1.GameSettings, *GameSettingsDatastore) error,
 ) (out *GameSettingsDatastore, err error) {
 	if src == nil {
 		return nil, nil
@@ -1267,19 +1267,19 @@ func GameSettingsToGameSettingsDatastore(
 //   - Converted GameSettings message
 //   - Error if conversion fails
 func GameSettingsFromGameSettingsDatastore(
-	dest *api.GameSettings,
+	dest *v1.GameSettings,
 	src *GameSettingsDatastore,
-	decorator func(*api.GameSettings, *GameSettingsDatastore) error,
-) (out *api.GameSettings, err error) {
+	decorator func(*v1.GameSettings, *GameSettingsDatastore) error,
+) (out *v1.GameSettings, err error) {
 	if src == nil {
 		return nil, nil
 	}
 	if dest == nil {
-		dest = &api.GameSettings{}
+		dest = &v1.GameSettings{}
 	}
 
 	// Initialize struct with inline values
-	*dest = api.GameSettings{
+	*dest = v1.GameSettings{
 		AllowedUnits:  src.AllowedUnits,
 		TurnTimeLimit: src.TurnTimeLimit,
 		TeamMode:      src.TeamMode,
@@ -1310,9 +1310,9 @@ func GameSettingsFromGameSettingsDatastore(
 //   - Converted GameStateDatastore entity
 //   - Error if conversion fails
 func GameStateToGameStateDatastore(
-	src *api.GameState,
+	src *v1.GameState,
 	dest *GameStateDatastore,
-	decorator func(*api.GameState, *GameStateDatastore) error,
+	decorator func(*v1.GameState, *GameStateDatastore) error,
 ) (out *GameStateDatastore, err error) {
 	if src == nil {
 		return nil, nil
@@ -1369,19 +1369,19 @@ func GameStateToGameStateDatastore(
 //   - Converted GameState message
 //   - Error if conversion fails
 func GameStateFromGameStateDatastore(
-	dest *api.GameState,
+	dest *v1.GameState,
 	src *GameStateDatastore,
-	decorator func(*api.GameState, *GameStateDatastore) error,
-) (out *api.GameState, err error) {
+	decorator func(*v1.GameState, *GameStateDatastore) error,
+) (out *v1.GameState, err error) {
 	if src == nil {
 		return nil, nil
 	}
 	if dest == nil {
-		dest = &api.GameState{}
+		dest = &v1.GameState{}
 	}
 
 	// Initialize struct with inline values
-	*dest = api.GameState{
+	*dest = v1.GameState{
 		UpdatedAt:     converters.TimeToTimestamp(src.UpdatedAt),
 		GameId:        src.GameId,
 		TurnCounter:   src.TurnCounter,
@@ -1423,9 +1423,9 @@ func GameStateFromGameStateDatastore(
 //   - Converted GameMoveHistoryDatastore entity
 //   - Error if conversion fails
 func GameMoveHistoryToGameMoveHistoryDatastore(
-	src *api.GameMoveHistory,
+	src *v1.GameMoveHistory,
 	dest *GameMoveHistoryDatastore,
-	decorator func(*api.GameMoveHistory, *GameMoveHistoryDatastore) error,
+	decorator func(*v1.GameMoveHistory, *GameMoveHistoryDatastore) error,
 ) (out *GameMoveHistoryDatastore, err error) {
 	if src == nil {
 		return nil, nil
@@ -1473,25 +1473,25 @@ func GameMoveHistoryToGameMoveHistoryDatastore(
 //   - Converted GameMoveHistory message
 //   - Error if conversion fails
 func GameMoveHistoryFromGameMoveHistoryDatastore(
-	dest *api.GameMoveHistory,
+	dest *v1.GameMoveHistory,
 	src *GameMoveHistoryDatastore,
-	decorator func(*api.GameMoveHistory, *GameMoveHistoryDatastore) error,
-) (out *api.GameMoveHistory, err error) {
+	decorator func(*v1.GameMoveHistory, *GameMoveHistoryDatastore) error,
+) (out *v1.GameMoveHistory, err error) {
 	if src == nil {
 		return nil, nil
 	}
 	if dest == nil {
-		dest = &api.GameMoveHistory{}
+		dest = &v1.GameMoveHistory{}
 	}
 
 	// Initialize struct with inline values
-	*dest = api.GameMoveHistory{
+	*dest = v1.GameMoveHistory{
 		GameId: src.GameId,
 	}
 	out = dest
 
 	if src.Groups != nil {
-		out.Groups = make([]*api.GameMoveGroup, len(src.Groups))
+		out.Groups = make([]*v1.GameMoveGroup, len(src.Groups))
 		for i, item := range src.Groups {
 			out.Groups[i], err = GameMoveGroupFromGameMoveGroupDatastore(nil, &item, nil)
 			if err != nil {
@@ -1523,9 +1523,9 @@ func GameMoveHistoryFromGameMoveHistoryDatastore(
 //   - Converted GameMoveGroupDatastore entity
 //   - Error if conversion fails
 func GameMoveGroupToGameMoveGroupDatastore(
-	src *api.GameMoveGroup,
+	src *v1.GameMoveGroup,
 	dest *GameMoveGroupDatastore,
-	decorator func(*api.GameMoveGroup, *GameMoveGroupDatastore) error,
+	decorator func(*v1.GameMoveGroup, *GameMoveGroupDatastore) error,
 ) (out *GameMoveGroupDatastore, err error) {
 	if src == nil {
 		return nil, nil
@@ -1579,26 +1579,26 @@ func GameMoveGroupToGameMoveGroupDatastore(
 //   - Converted GameMoveGroup message
 //   - Error if conversion fails
 func GameMoveGroupFromGameMoveGroupDatastore(
-	dest *api.GameMoveGroup,
+	dest *v1.GameMoveGroup,
 	src *GameMoveGroupDatastore,
-	decorator func(*api.GameMoveGroup, *GameMoveGroupDatastore) error,
-) (out *api.GameMoveGroup, err error) {
+	decorator func(*v1.GameMoveGroup, *GameMoveGroupDatastore) error,
+) (out *v1.GameMoveGroup, err error) {
 	if src == nil {
 		return nil, nil
 	}
 	if dest == nil {
-		dest = &api.GameMoveGroup{}
+		dest = &v1.GameMoveGroup{}
 	}
 
 	// Initialize struct with inline values
-	*dest = api.GameMoveGroup{
+	*dest = v1.GameMoveGroup{
 		StartedAt: converters.TimeToTimestamp(src.StartedAt),
 		EndedAt:   converters.TimeToTimestamp(src.EndedAt),
 	}
 	out = dest
 
 	if src.Moves != nil {
-		out.Moves = make([]*api.GameMove, len(src.Moves))
+		out.Moves = make([]*v1.GameMove, len(src.Moves))
 		for i, item := range src.Moves {
 			out.Moves[i], err = GameMoveFromGameMoveDatastore(nil, &item, nil)
 			if err != nil {
@@ -1630,9 +1630,9 @@ func GameMoveGroupFromGameMoveGroupDatastore(
 //   - Converted MoveUnitActionDatastore entity
 //   - Error if conversion fails
 func MoveUnitActionToMoveUnitActionDatastore(
-	src *api.MoveUnitAction,
+	src *v1.MoveUnitAction,
 	dest *MoveUnitActionDatastore,
-	decorator func(*api.MoveUnitAction, *MoveUnitActionDatastore) error,
+	decorator func(*v1.MoveUnitAction, *MoveUnitActionDatastore) error,
 ) (out *MoveUnitActionDatastore, err error) {
 	if src == nil {
 		return nil, nil
@@ -1681,19 +1681,19 @@ func MoveUnitActionToMoveUnitActionDatastore(
 //   - Converted MoveUnitAction message
 //   - Error if conversion fails
 func MoveUnitActionFromMoveUnitActionDatastore(
-	dest *api.MoveUnitAction,
+	dest *v1.MoveUnitAction,
 	src *MoveUnitActionDatastore,
-	decorator func(*api.MoveUnitAction, *MoveUnitActionDatastore) error,
-) (out *api.MoveUnitAction, err error) {
+	decorator func(*v1.MoveUnitAction, *MoveUnitActionDatastore) error,
+) (out *v1.MoveUnitAction, err error) {
 	if src == nil {
 		return nil, nil
 	}
 	if dest == nil {
-		dest = &api.MoveUnitAction{}
+		dest = &v1.MoveUnitAction{}
 	}
 
 	// Initialize struct with inline values
-	*dest = api.MoveUnitAction{
+	*dest = v1.MoveUnitAction{
 		FromQ:        src.FromQ,
 		FromR:        src.FromR,
 		ToQ:          src.ToQ,
@@ -1702,7 +1702,7 @@ func MoveUnitActionFromMoveUnitActionDatastore(
 	}
 	out = dest
 
-	out.ReconstructedPath, err = converters.AnyBytesToMessage[*api.Path](src.ReconstructedPath)
+	out.ReconstructedPath, err = converters.AnyBytesToMessage[*v1.Path](src.ReconstructedPath)
 	if err != nil {
 		return nil, fmt.Errorf("converting ReconstructedPath: %w", err)
 	}
@@ -1730,9 +1730,9 @@ func MoveUnitActionFromMoveUnitActionDatastore(
 //   - Converted GameMoveDatastore entity
 //   - Error if conversion fails
 func GameMoveToGameMoveDatastore(
-	src *api.GameMove,
+	src *v1.GameMove,
 	dest *GameMoveDatastore,
-	decorator func(*api.GameMove, *GameMoveDatastore) error,
+	decorator func(*v1.GameMove, *GameMoveDatastore) error,
 ) (out *GameMoveDatastore, err error) {
 	if src == nil {
 		return nil, nil
@@ -1786,19 +1786,19 @@ func GameMoveToGameMoveDatastore(
 //   - Converted GameMove message
 //   - Error if conversion fails
 func GameMoveFromGameMoveDatastore(
-	dest *api.GameMove,
+	dest *v1.GameMove,
 	src *GameMoveDatastore,
-	decorator func(*api.GameMove, *GameMoveDatastore) error,
-) (out *api.GameMove, err error) {
+	decorator func(*v1.GameMove, *GameMoveDatastore) error,
+) (out *v1.GameMove, err error) {
 	if src == nil {
 		return nil, nil
 	}
 	if dest == nil {
-		dest = &api.GameMove{}
+		dest = &v1.GameMove{}
 	}
 
 	// Initialize struct with inline values
-	*dest = api.GameMove{
+	*dest = v1.GameMove{
 		Player:      src.Player,
 		Timestamp:   converters.TimeToTimestamp(src.Timestamp),
 		SequenceNum: src.SequenceNum,
@@ -1807,9 +1807,9 @@ func GameMoveFromGameMoveDatastore(
 	out = dest
 
 	if src.Changes != nil {
-		out.Changes = make([]*api.WorldChange, len(src.Changes))
+		out.Changes = make([]*v1.WorldChange, len(src.Changes))
 		for i, item := range src.Changes {
-			out.Changes[i], err = converters.AnyBytesToMessageConverter[*api.WorldChange](nil, &item, nil)
+			out.Changes[i], err = converters.AnyBytesToMessageConverter[*v1.WorldChange](nil, &item, nil)
 			if err != nil {
 				return nil, fmt.Errorf("converting Changes[%d]: %w", i, err)
 			}

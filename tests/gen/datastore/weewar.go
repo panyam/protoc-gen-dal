@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/datastore"
-	api "github.com/panyam/protoc-gen-dal/tests/gen/go/api"
+	v1 "github.com/panyam/protoc-gen-dal/tests/gen/go/weewar/v1"
 )
 
 // IndexInfoDatastore is the Datastore entity for the source message.
@@ -314,7 +314,7 @@ type GameStateDatastore struct {
 
 	Version int64 `datastore:"version"`
 
-	Status api.GameStatus `datastore:"status"`
+	Status v1.GameStatus `datastore:"status"`
 
 	Finished bool `datastore:"finished"`
 

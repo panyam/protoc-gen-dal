@@ -11,8 +11,8 @@ import (
 	sync "sync"
 	unsafe "unsafe"
 
-	_ "github.com/panyam/protoc-gen-dal/tests/gen/go/api"
 	_ "github.com/panyam/protoc-gen-dal/tests/gen/go/dal/v1"
+	_ "github.com/panyam/protoc-gen-dal/tests/gen/go/weewar/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	anypb "google.golang.org/protobuf/types/known/anypb"
@@ -674,47 +674,45 @@ var File_gorm_weewar_proto protoreflect.FileDescriptor
 
 const file_gorm_weewar_proto_rawDesc = "" +
 	"\n" +
-	"\x11gorm/weewar.proto\x12\x04gorm\x1a\x18dal/v1/annotations.proto\x1a\x10api/weewar.proto\x1a\x19google/protobuf/any.proto\"$\n" +
-	"\rIndexInfoGORM:\x13ʦ\x1d\x0f\n" +
-	"\rapi.IndexInfo\"\x1a\n" +
-	"\bTileGORM:\x0eʦ\x1d\n" +
-	"\n" +
-	"\bapi.Tile\"\x1a\n" +
-	"\bUnitGORM:\x0eʦ\x1d\n" +
-	"\n" +
-	"\bapi.Unit\"*\n" +
-	"\x10AttackRecordGORM:\x16ʦ\x1d\x12\n" +
-	"\x10api.AttackRecord\"$\n" +
-	"\tWorldGORM:\x17ʦ\x1d\x13\n" +
-	"\tapi.World\x12\x06worlds\"0\n" +
-	"\rWorldDataGORM:\x1fʦ\x1d\x1b\n" +
-	"\rapi.WorldData\x12\n" +
-	"world_data\"!\n" +
-	"\bGameGORM:\x15ʦ\x1d\x11\n" +
-	"\bapi.Game\x12\x05games\"4\n" +
-	"\x15GameConfigurationGORM:\x1bʦ\x1d\x17\n" +
-	"\x15api.GameConfiguration\"*\n" +
-	"\x10IncomeConfigGORM:\x16ʦ\x1d\x12\n" +
-	"\x10api.IncomeConfig\"&\n" +
-	"\x0eGamePlayerGORM:\x14ʦ\x1d\x10\n" +
-	"\x0eapi.GamePlayer\"\"\n" +
-	"\fGameTeamGORM:\x12ʦ\x1d\x0e\n" +
-	"\fapi.GameTeam\"*\n" +
-	"\x10GameSettingsGORM:\x16ʦ\x1d\x12\n" +
-	"\x10api.GameSettings\"$\n" +
-	"\rGameStateGORM:\x13ʦ\x1d\x0f\n" +
-	"\rapi.GameState\"0\n" +
-	"\x13GameMoveHistoryGORM:\x19ʦ\x1d\x15\n" +
-	"\x13api.GameMoveHistory\",\n" +
-	"\x11GameMoveGroupGORM:\x17ʦ\x1d\x13\n" +
-	"\x11api.GameMoveGroup\"s\n" +
+	"\x11gorm/weewar.proto\x12\x04gorm\x1a\x18dal/v1/annotations.proto\x1a\x16weewar/v1/models.proto\x1a\x19google/protobuf/any.proto\"*\n" +
+	"\rIndexInfoGORM:\x19ʦ\x1d\x15\n" +
+	"\x13weewar.v1.IndexInfo\" \n" +
+	"\bTileGORM:\x14ʦ\x1d\x10\n" +
+	"\x0eweewar.v1.Tile\" \n" +
+	"\bUnitGORM:\x14ʦ\x1d\x10\n" +
+	"\x0eweewar.v1.Unit\"0\n" +
+	"\x10AttackRecordGORM:\x1cʦ\x1d\x18\n" +
+	"\x16weewar.v1.AttackRecord\"*\n" +
+	"\tWorldGORM:\x1dʦ\x1d\x19\n" +
+	"\x0fweewar.v1.World\x12\x06worlds\"6\n" +
+	"\rWorldDataGORM:%ʦ\x1d!\n" +
+	"\x13weewar.v1.WorldData\x12\n" +
+	"world_data\"'\n" +
+	"\bGameGORM:\x1bʦ\x1d\x17\n" +
+	"\x0eweewar.v1.Game\x12\x05games\":\n" +
+	"\x15GameConfigurationGORM:!ʦ\x1d\x1d\n" +
+	"\x1bweewar.v1.GameConfiguration\"0\n" +
+	"\x10IncomeConfigGORM:\x1cʦ\x1d\x18\n" +
+	"\x16weewar.v1.IncomeConfig\",\n" +
+	"\x0eGamePlayerGORM:\x1aʦ\x1d\x16\n" +
+	"\x14weewar.v1.GamePlayer\"(\n" +
+	"\fGameTeamGORM:\x18ʦ\x1d\x14\n" +
+	"\x12weewar.v1.GameTeam\"0\n" +
+	"\x10GameSettingsGORM:\x1cʦ\x1d\x18\n" +
+	"\x16weewar.v1.GameSettings\"*\n" +
+	"\rGameStateGORM:\x19ʦ\x1d\x15\n" +
+	"\x13weewar.v1.GameState\"6\n" +
+	"\x13GameMoveHistoryGORM:\x1fʦ\x1d\x1b\n" +
+	"\x19weewar.v1.GameMoveHistory\"2\n" +
+	"\x11GameMoveGroupGORM:\x1dʦ\x1d\x19\n" +
+	"\x17weewar.v1.GameMoveGroup\"y\n" +
 	"\x12MoveUnitActionGORM\x12C\n" +
-	"\x12reconstructed_path\x18\x01 \x01(\v2\x14.google.protobuf.AnyR\x11reconstructedPath:\x18ʦ\x1d\x14\n" +
-	"\x12api.MoveUnitAction\"\x85\x01\n" +
+	"\x12reconstructed_path\x18\x01 \x01(\v2\x14.google.protobuf.AnyR\x11reconstructedPath:\x1eʦ\x1d\x1a\n" +
+	"\x18weewar.v1.MoveUnitAction\"\x8b\x01\n" +
 	"\fGameMoveGORM\x121\n" +
 	"\tmove_type\x18\x01 \x01(\v2\x14.google.protobuf.AnyR\bmoveType\x12.\n" +
-	"\achanges\x18\x02 \x03(\v2\x14.google.protobuf.AnyR\achanges:\x12ʦ\x1d\x0e\n" +
-	"\fapi.GameMoveB{\n" +
+	"\achanges\x18\x02 \x03(\v2\x14.google.protobuf.AnyR\achanges:\x18ʦ\x1d\x14\n" +
+	"\x12weewar.v1.GameMoveB{\n" +
 	"\bcom.gormB\vWeewarProtoP\x01Z2github.com/panyam/protoc-gen-dal/tests/gen/go/gorm\xa2\x02\x03GXX\xaa\x02\x04Gorm\xca\x02\x04Gorm\xe2\x02\x10Gorm\\GPBMetadata\xea\x02\x04Gormb\x06proto3"
 
 var (
