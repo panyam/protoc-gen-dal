@@ -147,6 +147,15 @@ type FieldMapping struct {
 	SourcePkgName string
 }
 
+// Implement FieldWithStrategy interface for FieldMapping
+func (f *FieldMapping) GetToTargetRenderStrategy() converter.FieldRenderStrategy {
+	return f.ToTargetRenderStrategy
+}
+
+func (f *FieldMapping) GetFromTargetRenderStrategy() converter.FieldRenderStrategy {
+	return f.FromTargetRenderStrategy
+}
+
 // Embedded templates
 
 //go:embed templates/file.go.tmpl

@@ -388,9 +388,9 @@ type GameMoveDatastore struct {
 
 	Player int32 `datastore:"player"`
 
-	Changes [][]byte `datastore:"changes"`
-
 	Timestamp time.Time `datastore:"timestamp"`
+
+	Changes [][]byte `datastore:"changes"`
 
 	SequenceNum int64 `datastore:"sequence_num"`
 

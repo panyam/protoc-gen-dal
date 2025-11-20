@@ -17,7 +17,6 @@ package datastore
 import (
 	"fmt"
 	"log"
-	"strings"
 
 	"github.com/panyam/protoc-gen-dal/pkg/collector"
 	"github.com/panyam/protoc-gen-dal/pkg/generator/common"
@@ -152,16 +151,10 @@ func buildTemplateData(messages []*collector.MessageInfo, registry *common.Messa
 
 		// Add source package import if needed (for enum types)
 		if msgInfo.SourceMessage != nil {
-			sourceImportPath := string(msgInfo.SourceMessage.GoIdent.GoImportPath)
-			// Extract base path without ;packagename suffix for import
-			if idx := strings.LastIndex(sourceImportPath, ";"); idx != -1 {
-				sourceImportPath = sourceImportPath[:idx]
-			}
-			// Use last path component as alias (e.g., "api" from ".../go/api")
-			sourcePkgAlias := common.GetPackageAlias(sourceImportPath)
+			pkgInfo := common.ExtractPackageInfo(msgInfo.SourceMessage)
 			importsMap.Add(common.ImportSpec{
-				Alias: sourcePkgAlias,
-				Path:  sourceImportPath,
+				Alias: pkgInfo.Alias,
+				Path:  pkgInfo.ImportPath,
 			})
 		}
 	}
@@ -194,14 +187,10 @@ func buildStructData(msgInfo *collector.MessageInfo, registry *common.MessageReg
 	}
 
 	// Extract source package alias for enum type references
-	// Use import path's last component as alias (e.g., "api" from ".../go/api")
 	var sourcePkgName string
 	if sourceMsg != nil {
-		sourceImportPath := string(sourceMsg.GoIdent.GoImportPath)
-		if idx := strings.LastIndex(sourceImportPath, ";"); idx != -1 {
-			sourceImportPath = sourceImportPath[:idx]
-		}
-		sourcePkgName = common.GetPackageAlias(sourceImportPath)
+		pkgInfo := common.ExtractPackageInfo(sourceMsg)
+		sourcePkgName = pkgInfo.Alias
 	}
 
 	// Extract fields from merged list
@@ -330,17 +319,14 @@ func generateConverterFileCode(messages []*collector.MessageInfo, msgRegistry *c
 		converters = append(converters, converterData)
 
 		// Add import for source message package with alias
-		sourceImportPath := string(msg.SourceMessage.GoIdent.GoImportPath)
-		// Extract base path without ;packagename suffix for import
-		if idx := strings.LastIndex(sourceImportPath, ";"); idx != -1 {
-			sourceImportPath = sourceImportPath[:idx]
-		}
-		// Use last path component as alias (e.g., "api" from ".../go/api")
-		sourcePkgAlias := common.GetPackageAlias(sourceImportPath)
+		pkgInfo := common.ExtractPackageInfo(msg.SourceMessage)
 		importsMap.Add(common.ImportSpec{
-			Alias: sourcePkgAlias,
-			Path:  sourceImportPath,
+			Alias: pkgInfo.Alias,
+			Path:  pkgInfo.ImportPath,
 		})
+
+		// Collect custom converter package imports (new for Datastore!)
+		common.CollectCustomConverterImports(msg.TargetMessage, importsMap)
 	}
 
 	// Build import list
@@ -386,12 +372,8 @@ func buildConverterData(msgInfo *collector.MessageInfo, reg *registry.ConverterR
 	targetName := string(targetMsg.Desc.Name())
 
 	// Extract source package alias for imports
-	// Use import path's last component as alias (e.g., "api" from ".../go/api")
-	sourceImportPath := string(sourceMsg.GoIdent.GoImportPath)
-	if idx := strings.LastIndex(sourceImportPath, ";"); idx != -1 {
-		sourceImportPath = sourceImportPath[:idx]
-	}
-	sourcePkgName := common.GetPackageAlias(sourceImportPath)
+	pkgInfo := common.ExtractPackageInfo(sourceMsg)
+	sourcePkgName := pkgInfo.Alias
 
 	// Merge source and target fields (same as buildStructData)
 	// This ensures converters use the same fields as the generated struct
@@ -427,33 +409,14 @@ func buildConverterData(msgInfo *collector.MessageInfo, reg *registry.ConverterR
 		fieldMappings = append(fieldMappings, mapping)
 	}
 
-	// Classify fields by render strategy
-	var toTargetInline, toTargetSetter, toTargetLoop []*FieldMapping
-	var fromTargetInline, fromTargetSetter, fromTargetLoop []*FieldMapping
-
-	for _, mapping := range fieldMappings {
-		// Classify ToTarget direction
-		switch mapping.ToTargetRenderStrategy {
-		case converter.StrategyInlineValue:
-			toTargetInline = append(toTargetInline, mapping)
-		case converter.StrategySetterSimple, converter.StrategySetterTransform,
-			converter.StrategySetterWithError, converter.StrategySetterIgnoreError:
-			toTargetSetter = append(toTargetSetter, mapping)
-		case converter.StrategyLoopRepeated, converter.StrategyLoopMap:
-			toTargetLoop = append(toTargetLoop, mapping)
-		}
-
-		// Classify FromTarget direction
-		switch mapping.FromTargetRenderStrategy {
-		case converter.StrategyInlineValue:
-			fromTargetInline = append(fromTargetInline, mapping)
-		case converter.StrategySetterSimple, converter.StrategySetterTransform,
-			converter.StrategySetterWithError, converter.StrategySetterIgnoreError:
-			fromTargetSetter = append(fromTargetSetter, mapping)
-		case converter.StrategyLoopRepeated, converter.StrategyLoopMap:
-			fromTargetLoop = append(fromTargetLoop, mapping)
-		}
-	}
+	// Classify fields by render strategy using shared utility
+	classified := converter.ClassifyFields(fieldMappings)
+	toTargetInline := classified.ToTargetInline
+	toTargetSetter := classified.ToTargetSetter
+	toTargetLoop := classified.ToTargetLoop
+	fromTargetInline := classified.FromTargetInline
+	fromTargetSetter := classified.FromTargetSetter
+	fromTargetLoop := classified.FromTargetLoop
 
 	return &ConverterData{
 		SourceType:    sourceName,
@@ -471,35 +434,27 @@ func buildConverterData(msgInfo *collector.MessageInfo, reg *registry.ConverterR
 	}, nil
 }
 
-// addRenderStrategies calculates and populates render strategies for a field mapping.
-// This determines how the field conversion should be rendered in the template based on
-// the ConversionType and field characteristics (pointer, repeated, map, etc.).
+// addRenderStrategies calculates and adds render strategies to a FieldMapping.
+// This is a thin wrapper around the shared AddRenderStrategies utility.
 func addRenderStrategies(mapping *FieldMapping) {
 	if mapping == nil {
 		return
 	}
 
-	// Build characteristics for ToTarget direction (API → Datastore)
-	chars := converter.FieldCharacteristics{
-		IsPointer:          mapping.SourceIsPointer,
-		IsRepeated:         mapping.IsRepeated,
-		IsMap:              mapping.IsMap,
-		HasMessageElements: mapping.IsRepeated && mapping.ToTargetConverterFunc != "",
-		HasMessageValues:   mapping.IsMap && mapping.ToTargetConverterFunc != "",
-	}
-
-	mapping.ToTargetRenderStrategy = converter.DetermineRenderStrategy(
+	// Use shared utility to calculate render strategies
+	toTargetStrategy, fromTargetStrategy := converter.AddRenderStrategies(
 		mapping.ToTargetConversionType,
-		chars,
+		mapping.FromTargetConversionType,
+		mapping.SourceIsPointer,
+		mapping.TargetIsPointer,
+		mapping.IsRepeated,
+		mapping.IsMap,
+		mapping.ToTargetConverterFunc != "",
+		mapping.FromTargetConverterFunc != "",
 	)
 
-	// Build characteristics for FromTarget direction (Datastore → API)
-	charsFrom := chars
-	charsFrom.IsPointer = mapping.TargetIsPointer
-	mapping.FromTargetRenderStrategy = converter.DetermineRenderStrategy(
-		mapping.FromTargetConversionType,
-		charsFrom,
-	)
+	mapping.ToTargetRenderStrategy = toTargetStrategy
+	mapping.FromTargetRenderStrategy = fromTargetStrategy
 }
 
 // buildFieldMapping creates a field mapping with type conversion if needed.
@@ -516,6 +471,18 @@ func buildFieldMapping(sourceField, targetField *protogen.Field, reg *registry.C
 		SourceIsPointer: sourceField.Desc.HasPresence(), // Proto3 optional fields are pointers
 		TargetIsPointer: targetField.Desc.HasPresence(), // Datastore entity fields with HasPresence are pointers
 		SourcePkgName:   sourcePkgName,                  // Package name for template rendering
+	}
+
+	// Check for custom converter functions (NEW for Datastore! Was GORM-only)
+	// These have highest priority and override all default conversions
+	toTargetCode, fromTargetCode := common.ExtractCustomConverters(targetField, sourceFieldName)
+	if toTargetCode != "" {
+		mapping.ToTargetCode = toTargetCode
+		mapping.FromTargetCode = fromTargetCode
+		mapping.ToTargetConversionType = converter.ConvertByTransformer
+		mapping.FromTargetConversionType = converter.ConvertByTransformer
+		addRenderStrategies(mapping)
+		return mapping
 	}
 
 	// Check if this is a map field
