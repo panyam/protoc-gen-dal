@@ -51,7 +51,7 @@ func (d *{{ .DALTypeName }}) Update(ctx context.Context, db *{{ $.GormAlias }}.D
 }
 
 // Save creates or updates a {{ $.EntityPrefix }}{{ .StructName }} record (upsert).
-// If the record doesn't exist (RowsAffected == 0), it will call WillCreate hook and then create the record.
+// If the record doesn't exist, it will call WillCreate hook before saving.
 // For conditional updates (optimistic locking), pass a db with WHERE conditions:
 //   dal.Save(ctx, db.Where("version = ?", oldVersion), obj)
 func (d *{{ .DALTypeName }}) Save(ctx context.Context, db *{{ $.GormAlias }}.DB, obj *{{ $.EntityPrefix }}{{ .StructName }}) error {
@@ -62,17 +62,26 @@ func (d *{{ .DALTypeName }}) Save(ctx context.Context, db *{{ $.GormAlias }}.DB,
 	}
 {{- end }}
 
-	result := db.Save(obj)
-	if result.Error == nil && result.RowsAffected == 0 {
-		// Record doesn't exist - about to create
-		if d.WillCreate != nil {
-			if err := d.WillCreate(ctx, obj); err != nil {
-				return err
+	// Check if record exists by trying to fetch it
+	var existing {{ $.EntityPrefix }}{{ .StructName }}
+	err := db.First(&existing, {{ range $i, $pk := .PrimaryKeys }}{{if $i}}, {{end}}"{{ snakeCase $pk.Name }} = ?"{{ end }}{{ range .PrimaryKeys }}, obj.{{ .Name }}{{ end }}).Error
+
+	if err != nil {
+		if errors.Is(err, {{ $.GormAlias }}.ErrRecordNotFound) {
+			// Record doesn't exist - call WillCreate hook before saving
+			if d.WillCreate != nil {
+				if err := d.WillCreate(ctx, obj); err != nil {
+					return err
+				}
 			}
+		} else {
+			// Other error
+			return err
 		}
-		return db.Create(obj).Error
 	}
-	return result.Error
+
+	// Save (create or update)
+	return db.Save(obj).Error
 }
 
 // Get retrieves a {{ $.EntityPrefix }}{{ .StructName }} record by primary key{{ if .HasCompositePK }}s{{ end }}.

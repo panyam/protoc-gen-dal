@@ -110,6 +110,17 @@ func loadTemplates() (*template.Template, error) {
 			}
 			return string(s[0]|0x20) + s[1:] // Convert first char to lowercase
 		},
+		"snakeCase": func(s string) string {
+			// Convert CamelCase to snake_case
+			var result []rune
+			for i, r := range s {
+				if i > 0 && r >= 'A' && r <= 'Z' {
+					result = append(result, '_')
+				}
+				result = append(result, r|0x20) // Convert to lowercase
+			}
+			return string(result)
+		},
 		"buildWhereClause": func(keys []PrimaryKeyField) string {
 			// Build "field1 = ? AND field2 = ?" with corresponding params
 			var conditions []string

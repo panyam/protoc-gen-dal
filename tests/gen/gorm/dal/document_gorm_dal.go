@@ -42,7 +42,7 @@ func (d *DocumentGormPartialDAL) Update(ctx context.Context, db *gormlib.DB, obj
 }
 
 // Save creates or updates a gorm.DocumentGormPartial record (upsert).
-// If the record doesn't exist (RowsAffected == 0), it will call WillCreate hook and then create the record.
+// If the record doesn't exist, it will call WillCreate hook before saving.
 // For conditional updates (optimistic locking), pass a db with WHERE conditions:
 //
 //	dal.Save(ctx, db.Where("version = ?", oldVersion), obj)
@@ -52,17 +52,26 @@ func (d *DocumentGormPartialDAL) Save(ctx context.Context, db *gormlib.DB, obj *
 		return errors.New("primary key 'Id' cannot be empty")
 	}
 
-	result := db.Save(obj)
-	if result.Error == nil && result.RowsAffected == 0 {
-		// Record doesn't exist - about to create
-		if d.WillCreate != nil {
-			if err := d.WillCreate(ctx, obj); err != nil {
-				return err
+	// Check if record exists by trying to fetch it
+	var existing gorm.DocumentGormPartial
+	err := db.First(&existing, "id = ?", obj.Id).Error
+
+	if err != nil {
+		if errors.Is(err, gormlib.ErrRecordNotFound) {
+			// Record doesn't exist - call WillCreate hook before saving
+			if d.WillCreate != nil {
+				if err := d.WillCreate(ctx, obj); err != nil {
+					return err
+				}
 			}
+		} else {
+			// Other error
+			return err
 		}
-		return db.Create(obj).Error
 	}
-	return result.Error
+
+	// Save (create or update)
+	return db.Save(obj).Error
 }
 
 // Get retrieves a gorm.DocumentGormPartial record by primary key.
@@ -137,7 +146,7 @@ func (d *DocumentGormSkipDAL) Update(ctx context.Context, db *gormlib.DB, obj *g
 }
 
 // Save creates or updates a gorm.DocumentGormSkip record (upsert).
-// If the record doesn't exist (RowsAffected == 0), it will call WillCreate hook and then create the record.
+// If the record doesn't exist, it will call WillCreate hook before saving.
 // For conditional updates (optimistic locking), pass a db with WHERE conditions:
 //
 //	dal.Save(ctx, db.Where("version = ?", oldVersion), obj)
@@ -147,17 +156,26 @@ func (d *DocumentGormSkipDAL) Save(ctx context.Context, db *gormlib.DB, obj *gor
 		return errors.New("primary key 'Id' cannot be empty")
 	}
 
-	result := db.Save(obj)
-	if result.Error == nil && result.RowsAffected == 0 {
-		// Record doesn't exist - about to create
-		if d.WillCreate != nil {
-			if err := d.WillCreate(ctx, obj); err != nil {
-				return err
+	// Check if record exists by trying to fetch it
+	var existing gorm.DocumentGormSkip
+	err := db.First(&existing, "id = ?", obj.Id).Error
+
+	if err != nil {
+		if errors.Is(err, gormlib.ErrRecordNotFound) {
+			// Record doesn't exist - call WillCreate hook before saving
+			if d.WillCreate != nil {
+				if err := d.WillCreate(ctx, obj); err != nil {
+					return err
+				}
 			}
+		} else {
+			// Other error
+			return err
 		}
-		return db.Create(obj).Error
 	}
-	return result.Error
+
+	// Save (create or update)
+	return db.Save(obj).Error
 }
 
 // Get retrieves a gorm.DocumentGormSkip record by primary key.

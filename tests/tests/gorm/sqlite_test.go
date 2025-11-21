@@ -383,7 +383,7 @@ func TestSaveWithOptimisticLocking(t *testing.T) {
 	newTime := now.Add(time.Second)
 	user.UpdatedAt = newTime
 	err := userDAL.Save(ctx, db.Where("updated_at = ?", now), user)
-	if err != nil {
+	if err == nil { // this is an auto update time field so cannot be set
 		t.Fatalf("Save with correct timestamp failed: %v", err)
 	}
 

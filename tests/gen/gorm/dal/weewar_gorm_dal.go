@@ -42,7 +42,7 @@ func (d *WorldGORMDAL) Update(ctx context.Context, db *gormlib.DB, obj *gorm.Wor
 }
 
 // Save creates or updates a gorm.WorldGORM record (upsert).
-// If the record doesn't exist (RowsAffected == 0), it will call WillCreate hook and then create the record.
+// If the record doesn't exist, it will call WillCreate hook before saving.
 // For conditional updates (optimistic locking), pass a db with WHERE conditions:
 //
 //	dal.Save(ctx, db.Where("version = ?", oldVersion), obj)
@@ -52,17 +52,26 @@ func (d *WorldGORMDAL) Save(ctx context.Context, db *gormlib.DB, obj *gorm.World
 		return errors.New("primary key 'Id' cannot be empty")
 	}
 
-	result := db.Save(obj)
-	if result.Error == nil && result.RowsAffected == 0 {
-		// Record doesn't exist - about to create
-		if d.WillCreate != nil {
-			if err := d.WillCreate(ctx, obj); err != nil {
-				return err
+	// Check if record exists by trying to fetch it
+	var existing gorm.WorldGORM
+	err := db.First(&existing, "id = ?", obj.Id).Error
+
+	if err != nil {
+		if errors.Is(err, gormlib.ErrRecordNotFound) {
+			// Record doesn't exist - call WillCreate hook before saving
+			if d.WillCreate != nil {
+				if err := d.WillCreate(ctx, obj); err != nil {
+					return err
+				}
 			}
+		} else {
+			// Other error
+			return err
 		}
-		return db.Create(obj).Error
 	}
-	return result.Error
+
+	// Save (create or update)
+	return db.Save(obj).Error
 }
 
 // Get retrieves a gorm.WorldGORM record by primary key.
@@ -137,7 +146,7 @@ func (d *WorldDataGORMDAL) Update(ctx context.Context, db *gormlib.DB, obj *gorm
 }
 
 // Save creates or updates a gorm.WorldDataGORM record (upsert).
-// If the record doesn't exist (RowsAffected == 0), it will call WillCreate hook and then create the record.
+// If the record doesn't exist, it will call WillCreate hook before saving.
 // For conditional updates (optimistic locking), pass a db with WHERE conditions:
 //
 //	dal.Save(ctx, db.Where("version = ?", oldVersion), obj)
@@ -147,17 +156,26 @@ func (d *WorldDataGORMDAL) Save(ctx context.Context, db *gormlib.DB, obj *gorm.W
 		return errors.New("primary key 'WorldId' cannot be empty")
 	}
 
-	result := db.Save(obj)
-	if result.Error == nil && result.RowsAffected == 0 {
-		// Record doesn't exist - about to create
-		if d.WillCreate != nil {
-			if err := d.WillCreate(ctx, obj); err != nil {
-				return err
+	// Check if record exists by trying to fetch it
+	var existing gorm.WorldDataGORM
+	err := db.First(&existing, "world_id = ?", obj.WorldId).Error
+
+	if err != nil {
+		if errors.Is(err, gormlib.ErrRecordNotFound) {
+			// Record doesn't exist - call WillCreate hook before saving
+			if d.WillCreate != nil {
+				if err := d.WillCreate(ctx, obj); err != nil {
+					return err
+				}
 			}
+		} else {
+			// Other error
+			return err
 		}
-		return db.Create(obj).Error
 	}
-	return result.Error
+
+	// Save (create or update)
+	return db.Save(obj).Error
 }
 
 // Get retrieves a gorm.WorldDataGORM record by primary key.
@@ -232,7 +250,7 @@ func (d *GameGORMDAL) Update(ctx context.Context, db *gormlib.DB, obj *gorm.Game
 }
 
 // Save creates or updates a gorm.GameGORM record (upsert).
-// If the record doesn't exist (RowsAffected == 0), it will call WillCreate hook and then create the record.
+// If the record doesn't exist, it will call WillCreate hook before saving.
 // For conditional updates (optimistic locking), pass a db with WHERE conditions:
 //
 //	dal.Save(ctx, db.Where("version = ?", oldVersion), obj)
@@ -242,17 +260,26 @@ func (d *GameGORMDAL) Save(ctx context.Context, db *gormlib.DB, obj *gorm.GameGO
 		return errors.New("primary key 'Id' cannot be empty")
 	}
 
-	result := db.Save(obj)
-	if result.Error == nil && result.RowsAffected == 0 {
-		// Record doesn't exist - about to create
-		if d.WillCreate != nil {
-			if err := d.WillCreate(ctx, obj); err != nil {
-				return err
+	// Check if record exists by trying to fetch it
+	var existing gorm.GameGORM
+	err := db.First(&existing, "id = ?", obj.Id).Error
+
+	if err != nil {
+		if errors.Is(err, gormlib.ErrRecordNotFound) {
+			// Record doesn't exist - call WillCreate hook before saving
+			if d.WillCreate != nil {
+				if err := d.WillCreate(ctx, obj); err != nil {
+					return err
+				}
 			}
+		} else {
+			// Other error
+			return err
 		}
-		return db.Create(obj).Error
 	}
-	return result.Error
+
+	// Save (create or update)
+	return db.Save(obj).Error
 }
 
 // Get retrieves a gorm.GameGORM record by primary key.
@@ -327,7 +354,7 @@ func (d *GameStateGORMDAL) Update(ctx context.Context, db *gormlib.DB, obj *gorm
 }
 
 // Save creates or updates a gorm.GameStateGORM record (upsert).
-// If the record doesn't exist (RowsAffected == 0), it will call WillCreate hook and then create the record.
+// If the record doesn't exist, it will call WillCreate hook before saving.
 // For conditional updates (optimistic locking), pass a db with WHERE conditions:
 //
 //	dal.Save(ctx, db.Where("version = ?", oldVersion), obj)
@@ -337,17 +364,26 @@ func (d *GameStateGORMDAL) Save(ctx context.Context, db *gormlib.DB, obj *gorm.G
 		return errors.New("primary key 'GameId' cannot be empty")
 	}
 
-	result := db.Save(obj)
-	if result.Error == nil && result.RowsAffected == 0 {
-		// Record doesn't exist - about to create
-		if d.WillCreate != nil {
-			if err := d.WillCreate(ctx, obj); err != nil {
-				return err
+	// Check if record exists by trying to fetch it
+	var existing gorm.GameStateGORM
+	err := db.First(&existing, "game_id = ?", obj.GameId).Error
+
+	if err != nil {
+		if errors.Is(err, gormlib.ErrRecordNotFound) {
+			// Record doesn't exist - call WillCreate hook before saving
+			if d.WillCreate != nil {
+				if err := d.WillCreate(ctx, obj); err != nil {
+					return err
+				}
 			}
+		} else {
+			// Other error
+			return err
 		}
-		return db.Create(obj).Error
 	}
-	return result.Error
+
+	// Save (create or update)
+	return db.Save(obj).Error
 }
 
 // Get retrieves a gorm.GameStateGORM record by primary key.
@@ -429,7 +465,7 @@ func (d *GameMoveGORMDAL) Update(ctx context.Context, db *gormlib.DB, obj *gorm.
 }
 
 // Save creates or updates a gorm.GameMoveGORM record (upsert).
-// If the record doesn't exist (RowsAffected == 0), it will call WillCreate hook and then create the record.
+// If the record doesn't exist, it will call WillCreate hook before saving.
 // For conditional updates (optimistic locking), pass a db with WHERE conditions:
 //
 //	dal.Save(ctx, db.Where("version = ?", oldVersion), obj)
@@ -445,17 +481,26 @@ func (d *GameMoveGORMDAL) Save(ctx context.Context, db *gormlib.DB, obj *gorm.Ga
 		return errors.New("primary key 'MoveNumber' cannot be empty")
 	}
 
-	result := db.Save(obj)
-	if result.Error == nil && result.RowsAffected == 0 {
-		// Record doesn't exist - about to create
-		if d.WillCreate != nil {
-			if err := d.WillCreate(ctx, obj); err != nil {
-				return err
+	// Check if record exists by trying to fetch it
+	var existing gorm.GameMoveGORM
+	err := db.First(&existing, "game_id = ?", "group_number = ?", "move_number = ?", obj.GameId, obj.GroupNumber, obj.MoveNumber).Error
+
+	if err != nil {
+		if errors.Is(err, gormlib.ErrRecordNotFound) {
+			// Record doesn't exist - call WillCreate hook before saving
+			if d.WillCreate != nil {
+				if err := d.WillCreate(ctx, obj); err != nil {
+					return err
+				}
 			}
+		} else {
+			// Other error
+			return err
 		}
-		return db.Create(obj).Error
 	}
-	return result.Error
+
+	// Save (create or update)
+	return db.Save(obj).Error
 }
 
 // Get retrieves a gorm.GameMoveGORM record by primary keys.
