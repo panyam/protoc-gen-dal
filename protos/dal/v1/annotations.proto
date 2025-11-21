@@ -289,6 +289,11 @@ message GormOptions {
 
   // Embedded field names (for GORM embedded structs)
   repeated string embedded = 3;
+
+  // Generate driver.Valuer and sql.Scanner implementations for JSON serialization
+  // When true, generates Value() and Scan() methods that serialize the struct to/from JSON
+  // Useful for embedded types that need to be stored as JSON in the database
+  bool implement_scanner = 4;
 }
 
 // PostgreSQL target options (raw SQL)

@@ -186,8 +186,11 @@ func generateFileCodeWithoutEmbedded(messages []*collector.MessageInfo, registry
 	var structs []StructData
 	importsMap := make(common.ImportMap)
 
-	// Always add time package (for time.Time fields)
+	// Always add required packages
 	importsMap.Add(common.ImportSpec{Path: "time"})
+	importsMap.Add(common.ImportSpec{Path: "database/sql/driver"})
+	importsMap.Add(common.ImportSpec{Path: "encoding/json"})
+	importsMap.Add(common.ImportSpec{Path: "fmt"})
 
 	for _, msg := range messages {
 		structData, err := buildStructData(msg, registry)
@@ -248,10 +251,16 @@ func generateEmbeddedTypesFile(embeddedTypes map[string]*protogen.Message, sampl
 		})
 	}
 
-	// Build template data
+	// Build template data with required imports
+	importsMap := make(common.ImportMap)
+	importsMap.Add(common.ImportSpec{Path: "time"})
+	importsMap.Add(common.ImportSpec{Path: "database/sql/driver"})
+	importsMap.Add(common.ImportSpec{Path: "encoding/json"})
+	importsMap.Add(common.ImportSpec{Path: "fmt"})
+
 	data := TemplateData{
 		PackageName: packageName,
-		Imports:     []common.ImportSpec{{Path: "time"}}, // time package needed for time.Time fields
+		Imports:     importsMap.ToSlice(),
 		Structs:     structs,
 	}
 
@@ -373,10 +382,11 @@ func buildStructData(msg *collector.MessageInfo, registry *common.MessageRegistr
 	}
 
 	return StructData{
-		Name:       structName,
-		SourceName: msg.SourceName,
-		TableName:  msg.TableName,
-		Fields:     fields,
+		Name:             structName,
+		SourceName:       msg.SourceName,
+		TableName:        msg.TableName,
+		Fields:           fields,
+		ImplementScanner: msg.ImplementScanner,
 	}, nil
 }
 
@@ -497,7 +507,7 @@ func buildFieldsWithValidation(protoFields []*protogen.Field, sourcePkgName stri
 	for _, field := range protoFields {
 		// Validate serializer tags if message name is provided
 		if msgName != "" {
-			validateSerializerTags(field, msgName)
+			validateSerializerTags(field, msgName, registry)
 		}
 
 		fieldData, err := buildField(field, sourcePkgName, registry)
@@ -577,9 +587,29 @@ func isEmbeddedField(field *protogen.Field) bool {
 	return false
 }
 
+// hasImplementScanner checks if a message has implement_scanner option set.
+func hasImplementScanner(msg *protogen.Message) bool {
+	opts := msg.Desc.Options()
+	if opts == nil {
+		return false
+	}
+
+	v := proto.GetExtension(opts, dalv1.E_Gorm)
+	if v == nil {
+		return false
+	}
+
+	gormOpts, ok := v.(*dalv1.GormOptions)
+	if !ok || gormOpts == nil {
+		return false
+	}
+
+	return gormOpts.ImplementScanner
+}
+
 // validateSerializerTags checks if complex types have appropriate serializer tags for cross-DB compatibility.
 // Logs warnings for repeated fields, maps, and repeated message types without serializer:json tags.
-func validateSerializerTags(field *protogen.Field, msgName string) {
+func validateSerializerTags(field *protogen.Field, msgName string, registry *common.MessageRegistry) {
 	// Skip embedded fields - they don't need serialization
 	if isEmbeddedField(field) {
 		return
@@ -603,6 +633,30 @@ func validateSerializerTags(field *protogen.Field, msgName string) {
 
 	if !needsSerialization {
 		return
+	}
+
+	// If this is a repeated/map of messages, check if the GORM target type has implement_scanner
+	if field.Desc.Kind().String() == "message" && field.Message != nil {
+		// Look up the GORM target message for this source message
+		targetMsg := registry.LookupTargetMessage(field.Message)
+		if targetMsg != nil && hasImplementScanner(targetMsg) {
+			// Target type implements Valuer/Scanner, so GORM will use those methods
+			return
+		}
+	}
+
+	// For maps, check if the value type's GORM target has implement_scanner
+	if field.Desc.IsMap() && field.Message != nil {
+		// Map field.Message is the map entry message (has key and value fields)
+		// Check the value field's message type
+		for _, f := range field.Message.Fields {
+			if f.Desc.Name() == "value" && f.Desc.Kind().String() == "message" && f.Message != nil {
+				targetMsg := registry.LookupTargetMessage(f.Message)
+				if targetMsg != nil && hasImplementScanner(targetMsg) {
+					return
+				}
+			}
+		}
 	}
 
 	// Check if serializer:json tag is present

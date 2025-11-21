@@ -574,13 +574,38 @@ From `tests/protos/datastore/user.proto`:
   - ✅ Added `generate_dal`, `dal_filename_suffix`, `dal_filename_prefix`, `dal_output_dir` options
   - ✅ Primary key detection (gorm_tags or fallback to "id")
   - ✅ Composite key support (multiple PK parameters + key struct for BatchGet)
-  - ✅ Generated methods: Save (with WillCreate hook), Get, Delete, List, BatchGet
+  - ✅ Generated methods: Create, Update, Save (with WillCreate hook), Get, Delete, List, BatchGet
+  - ✅ Optimistic locking support via conditional WHERE clauses on Update/Save
+  - ✅ Create/Update methods without hooks (caller-level control)
+  - ✅ Fixed Save() to check record existence BEFORE calling WillCreate hook
+  - ✅ Added snakeCase template function for column name conversion
   - ✅ Shared utilities: GetColumnOptions(), GetColumnName(), ToSnakeCase()
   - ✅ Skips messages without primary keys gracefully
   - ✅ Optional subdirectory output (`dal_output_dir`)
-  - ✅ Comprehensive unit tests (11 tests)
+  - ✅ Comprehensive unit tests including optimistic locking scenarios
   - ✅ Templates for single and composite keys
   - ✅ Hook-based lifecycle customization
+  - ✅ SQLite integration tests verifying AutoMigrate and CRUD operations
+
+- ✅ **Cross-DB Compatibility** (Phase 2.7) - COMPLETE
+  - ✅ Updated proto files with `serializer:json` tags for cross-DB compatibility
+  - ✅ Added validation warnings for complex types missing serializer tags
+  - ✅ Validation in pkg/gorm/generator.go (validateSerializerTags function)
+  - ✅ Skips warnings for embedded fields and types with implement_scanner
+  - ✅ MessageRegistry.LookupTargetMessage() resolves source to GORM target types
+  - ✅ Smart detection handles repeated fields, maps, and nested messages
+  - ✅ Clear warning format: `[WARN] Field 'X.Y' (type): missing serializer:json tag`
+
+- ✅ **Optional Valuer/Scanner Generation** (Phase 2.8) - COMPLETE
+  - ✅ Added `implement_scanner` boolean option to GormOptions annotation
+  - ✅ Opt-in driver.Valuer and sql.Scanner implementation using encoding/json
+  - ✅ Template scanner_valuer.go.tmpl conditionally included
+  - ✅ Value() marshals struct to JSON
+  - ✅ Scan() unmarshals from JSON or string with nil handling
+  - ✅ Validation smart suppression when target type has implement_scanner
+  - ✅ Registry lookup ensures warnings respect Valuer/Scanner implementations
+  - ✅ Works for both repeated fields and map value types
+  - ✅ Benefits: Cleaner protos, automatic JSON serialization, no tag duplication
 
 **Next:**
 1. **Phase 3.2**: postgres-raw (Go + database/sql)

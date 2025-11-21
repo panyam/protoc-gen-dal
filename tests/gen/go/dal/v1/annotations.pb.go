@@ -522,9 +522,13 @@ type GormOptions struct {
 	// Table name
 	Table string `protobuf:"bytes,2,opt,name=table,proto3" json:"table,omitempty"`
 	// Embedded field names (for GORM embedded structs)
-	Embedded      []string `protobuf:"bytes,3,rep,name=embedded,proto3" json:"embedded,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Embedded []string `protobuf:"bytes,3,rep,name=embedded,proto3" json:"embedded,omitempty"`
+	// Generate driver.Valuer and sql.Scanner implementations for JSON serialization
+	// When true, generates Value() and Scan() methods that serialize the struct to/from JSON
+	// Useful for embedded types that need to be stored as JSON in the database
+	ImplementScanner bool `protobuf:"varint,4,opt,name=implement_scanner,json=implementScanner,proto3" json:"implement_scanner,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *GormOptions) Reset() {
@@ -576,6 +580,13 @@ func (x *GormOptions) GetEmbedded() []string {
 		return x.Embedded
 	}
 	return nil
+}
+
+func (x *GormOptions) GetImplementScanner() bool {
+	if x != nil {
+		return x.ImplementScanner
+	}
+	return false
 }
 
 // PostgreSQL target options (raw SQL)
@@ -1009,11 +1020,12 @@ const file_dal_v1_annotations_proto_rawDesc = "" +
 	"references\x126\n" +
 	"\ton_delete\x18\x02 \x01(\x0e2\x19.dal.v1.ReferentialActionR\bonDelete\x126\n" +
 	"\ton_update\x18\x03 \x01(\x0e2\x19.dal.v1.ReferentialActionR\bonUpdate\x12'\n" +
-	"\x0fconstraint_name\x18\x04 \x01(\tR\x0econstraintName\"W\n" +
+	"\x0fconstraint_name\x18\x04 \x01(\tR\x0econstraintName\"\x84\x01\n" +
 	"\vGormOptions\x12\x16\n" +
 	"\x06source\x18\x01 \x01(\tR\x06source\x12\x14\n" +
 	"\x05table\x18\x02 \x01(\tR\x05table\x12\x1a\n" +
-	"\bembedded\x18\x03 \x03(\tR\bembedded\"W\n" +
+	"\bembedded\x18\x03 \x03(\tR\bembedded\x12+\n" +
+	"\x11implement_scanner\x18\x04 \x01(\bR\x10implementScanner\"W\n" +
 	"\x0fPostgresOptions\x12\x16\n" +
 	"\x06source\x18\x01 \x01(\tR\x06source\x12\x14\n" +
 	"\x05table\x18\x02 \x01(\tR\x05table\x12\x16\n" +

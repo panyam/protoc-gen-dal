@@ -1,0 +1,25 @@
+{{ define "scanner_valuer" -}}
+// Value implements driver.Valuer for {{ .Name }}
+func (m {{ .Name }}) Value() (driver.Value, error) {
+	return json.Marshal(m)
+}
+
+// Scan implements sql.Scanner for {{ .Name }}
+func (m *{{ .Name }}) Scan(value interface{}) error {
+	if value == nil {
+		return nil
+	}
+
+	var bytes []byte
+	switch v := value.(type) {
+	case []byte:
+		bytes = v
+	case string:
+		bytes = []byte(v)
+	default:
+		return fmt.Errorf("failed to scan {{ .Name }}: unsupported type %T", value)
+	}
+
+	return json.Unmarshal(bytes, m)
+}
+{{- end }}

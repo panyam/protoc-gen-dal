@@ -56,6 +56,9 @@ type MessageInfo struct {
 
 	// SchemaName is the database schema/namespace (optional)
 	SchemaName string
+
+	// ImplementScanner indicates whether to generate driver.Valuer/sql.Scanner methods
+	ImplementScanner bool
 }
 
 // CollectMessages finds all messages for a target across all proto files.
@@ -209,11 +212,12 @@ func extractGormInfo(msg *protogen.Message, opts proto.Message, index map[string
 	}
 
 	return &MessageInfo{
-		SourceMessage: sourceMsg,
-		TargetMessage: msg,
-		SourceName:    gormOpts.Source,
-		TableName:     gormOpts.Table,
-		SchemaName:    "", // GORM doesn't use schema
+		SourceMessage:    sourceMsg,
+		TargetMessage:    msg,
+		SourceName:       gormOpts.Source,
+		TableName:        gormOpts.Table,
+		SchemaName:       "", // GORM doesn't use schema
+		ImplementScanner: gormOpts.ImplementScanner,
 	}, nil
 }
 

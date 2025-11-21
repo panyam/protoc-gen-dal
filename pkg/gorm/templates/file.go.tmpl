@@ -14,4 +14,8 @@ import (
 
 {{ template "table_name" . }}
 {{ end }}
+{{ if .ImplementScanner }}
+
+{{ template "scanner_valuer" . }}
+{{ end }}
 {{ end }}

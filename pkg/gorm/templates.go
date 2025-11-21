@@ -36,10 +36,11 @@ type TemplateData struct {
 
 // StructData contains data for generating a GORM struct.
 type StructData struct {
-	Name       string      // GORM struct name (e.g., "BookGORM")
-	SourceName string      // Source API message name (e.g., "library.v1.Book")
-	TableName  string      // Database table name (e.g., "books")
-	Fields     []FieldData // Struct fields
+	Name             string      // GORM struct name (e.g., "BookGORM")
+	SourceName       string      // Source API message name (e.g., "library.v1.Book")
+	TableName        string      // Database table name (e.g., "books")
+	Fields           []FieldData // Struct fields
+	ImplementScanner bool        // Generate driver.Valuer/sql.Scanner methods
 }
 
 type FieldData = types.FieldData
