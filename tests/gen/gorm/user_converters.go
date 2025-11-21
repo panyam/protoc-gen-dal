@@ -393,7 +393,7 @@ func UserToUserWithDefaults(
 	}
 
 	if src.CreatedAt != nil {
-		out.CreatedAt = converters.TimestampToInt64(src.CreatedAt)
+		out.CreatedAt = converters.TimestampToTime(src.CreatedAt)
 	}
 
 	if src.UpdatedAt != nil {
@@ -433,7 +433,7 @@ func UserFromUserWithDefaults(
 		Birthday:     converters.TimeToTimestamp(src.Birthday),
 		MemberNumber: src.MemberNumber,
 		ActivatedAt:  converters.TimeToTimestamp(src.ActivatedAt),
-		CreatedAt:    converters.Int64ToTimestamp(src.CreatedAt),
+		CreatedAt:    converters.TimeToTimestamp(src.CreatedAt),
 		UpdatedAt:    converters.TimeToTimestamp(src.UpdatedAt),
 	}
 	out = dest

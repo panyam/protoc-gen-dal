@@ -9,7 +9,7 @@ buf: ensureenv clean
 	cd gen/gorm && go build -o /dev/null .
 	cd gen/gorm/dal && go build -o /dev/null .
 	cd gen/datastore && go build -o /dev/null .
-	go test ./... -v
+	go test ./...
 
 ensureenv:
 	@test -f buf.yaml && echo "buf.yaml does not exist.  Run 'make setupdev' or 'make setupprod' to setup your environment..."

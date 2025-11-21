@@ -16,6 +16,7 @@ package gorm
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/panyam/protoc-gen-dal/pkg/collector"

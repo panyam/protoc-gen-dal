@@ -177,7 +177,7 @@ message UserWithDefaults {
     gorm_tags: ["default:true"]
   }];
 
-  int64 created_at = 4 [(dal.v1.column) = {
+  google.protobuf.Timestamp created_at = 4 [(dal.v1.column) = {
     gorm_tags: ["default:CURRENT_TIMESTAMP"]
   }];
 }
@@ -240,24 +240,24 @@ message ProductGorm {
     gorm_tags: ["type:varchar(255)", "not null"]
   }];
 
-  // Repeated string as JSONB (PostgreSQL-specific)
+  // Repeated string as JSON (works with SQLite and PostgreSQL)
   repeated string tags = 3 [(dal.v1.column) = {
-    gorm_tags: ["type:jsonb"]
+    gorm_tags: ["serializer:json"]
   }];
 
-  // Repeated string as PostgreSQL TEXT[] array
+  // Repeated string as JSON (for cross-DB compatibility)
   repeated string categories = 4 [(dal.v1.column) = {
-    gorm_tags: ["type:text[]"]
+    gorm_tags: ["serializer:json"]
   }];
 
-  // Map as JSONB
+  // Map as JSON (works with SQLite and PostgreSQL)
   map<string, string> metadata = 5 [(dal.v1.column) = {
-    gorm_tags: ["type:jsonb"]
+    gorm_tags: ["serializer:json"]
   }];
 
-  // Repeated int as JSONB
+  // Repeated int as JSON (works with SQLite and PostgreSQL)
   repeated int32 ratings = 6 [(dal.v1.column) = {
-    gorm_tags: ["type:jsonb"]
+    gorm_tags: ["serializer:json"]
   }];
 }
 
@@ -276,9 +276,9 @@ message LibraryGorm {
     gorm_tags: ["type:varchar(255)", "not null"]
   }];
 
-  // Repeated message type as JSONB
+  // Repeated message type as JSON (works with SQLite and PostgreSQL)
   repeated AuthorGorm contributors = 3 [(dal.v1.column) = {
-    gorm_tags: ["type:jsonb"]
+    gorm_tags: ["serializer:json"]
   }];
 }
 
@@ -297,8 +297,8 @@ message OrganizationGorm {
     gorm_tags: ["type:varchar(255)", "not null"]
   }];
 
-  // Map with message value type as JSONB
+  // Map with message value type as JSON (works with SQLite and PostgreSQL)
   map<string, AuthorGorm> departments = 3 [(dal.v1.column) = {
-    gorm_tags: ["type:jsonb"]
+    gorm_tags: ["serializer:json"]
   }];
 }

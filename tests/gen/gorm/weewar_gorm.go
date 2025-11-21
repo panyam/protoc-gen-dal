@@ -37,7 +37,7 @@ type UnitGORM struct {
 	LastActedTurn           int32
 	LastToppedupTurn        int32
 	AttacksReceivedThisTurn int32
-	AttackHistory           []AttackRecordGORM
+	AttackHistory           []AttackRecordGORM `gorm:"serializer:json"`
 	ProgressionStep         int32
 	ChosenAlternative       string
 }
@@ -58,11 +58,11 @@ type WorldGORM struct {
 	CreatorId           string
 	Name                string
 	Description         string
-	Tags                []string
+	Tags                []string `gorm:"serializer:json"`
 	ImageUrl            string
 	Difficulty          string
 	WorldData           WorldDataGORM
-	PreviewUrls         []string
+	PreviewUrls         []string `gorm:"serializer:json"`
 	DefaultGameConfig   GameConfigurationGORM
 	ScreenshotIndexInfo IndexInfoGORM
 	SearchIndexInfo     IndexInfoGORM
@@ -75,9 +75,9 @@ func (*WorldGORM) TableName() string {
 
 // WorldDataGORM is the GORM model for weewar.v1.WorldData
 type WorldDataGORM struct {
-	Tiles   []TileGORM
-	WorldId string `gorm:"primaryKey"`
-	Units   []UnitGORM
+	Tiles   []TileGORM `gorm:"serializer:json"`
+	Units   []UnitGORM `gorm:"serializer:json"`
+	WorldId string     `gorm:"primaryKey"`
 }
 
 // TableName returns the table name for WorldDataGORM
@@ -94,11 +94,11 @@ type GameGORM struct {
 	WorldId             string
 	Name                string
 	Description         string
-	Tags                []string
+	Tags                []string `gorm:"serializer:json"`
 	ImageUrl            string
 	Difficulty          string
 	Config              GameConfigurationGORM
-	PreviewUrls         []string
+	PreviewUrls         []string `gorm:"serializer:json"`
 	ScreenshotIndexInfo IndexInfoGORM
 	SearchIndexInfo     IndexInfoGORM
 }
@@ -110,8 +110,8 @@ func (*GameGORM) TableName() string {
 
 // GameConfigurationGORM is the GORM model for weewar.v1.GameConfiguration
 type GameConfigurationGORM struct {
-	Players       []GamePlayerGORM
-	Teams         []GameTeamGORM
+	Players       []GamePlayerGORM `gorm:"serializer:json"`
+	Teams         []GameTeamGORM   `gorm:"serializer:json"`
 	IncomeConfigs IncomeConfigGORM
 	Settings      GameSettingsGORM
 }
@@ -149,7 +149,7 @@ type GameTeamGORM struct {
 
 // GameSettingsGORM is the GORM model for weewar.v1.GameSettings
 type GameSettingsGORM struct {
-	AllowedUnits  []int32
+	AllowedUnits  []int32 `gorm:"serializer:json"`
 	TurnTimeLimit int32
 	TeamMode      string
 	MaxTurns      int32
@@ -173,25 +173,25 @@ type GameStateGORM struct {
 // GameMoveHistoryGORM is the GORM model for weewar.v1.GameMoveHistory
 type GameMoveHistoryGORM struct {
 	GameId string
-	Groups []GameMoveGroupGORM
+	Groups []GameMoveGroupGORM `gorm:"serializer:json"`
 }
 
 // GameMoveGroupGORM is the GORM model for weewar.v1.GameMoveGroup
 type GameMoveGroupGORM struct {
 	StartedAt time.Time
 	EndedAt   time.Time
-	Moves     []GameMoveGORM
+	Moves     []GameMoveGORM `gorm:"serializer:json"`
 }
 
 // GameMoveGORM is the GORM model for weewar.v1.GameMove
 type GameMoveGORM struct {
-	Player      int32
 	GameId      string `gorm:"primaryKey"`
-	Timestamp   time.Time
+	Player      int32
 	GroupNumber string `gorm:"primaryKey"`
+	Timestamp   time.Time
 	MoveNumber  int32  `gorm:"primaryKey"`
-	MoveType    []byte
+	MoveType    []byte `gorm:"serializer:json"`
 	SequenceNum int64
 	IsPermanent bool
-	Changes     [][]byte
+	Changes     [][]byte `gorm:"serializer:json"`
 }

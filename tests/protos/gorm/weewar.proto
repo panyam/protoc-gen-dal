@@ -19,6 +19,9 @@ message TileGORM {
 
 message UnitGORM {
   option (dal.v1.gorm) = { source: "weewar.v1.Unit" };
+  repeated AttackRecordGORM attack_history = 10 [(dal.v1.column) = {
+    gorm_tags: ["serializer:json"]
+  }];
 }
 
 message AttackRecordGORM {
@@ -30,12 +33,28 @@ message WorldGORM {
   string id = 1 [(dal.v1.column) = {
     gorm_tags: ["primaryKey"]
   }];
+  // Tags as JSON for cross-DB compatibility
+  repeated string tags = 7 [(dal.v1.column) = {
+    gorm_tags: ["serializer:json"]
+  }];
+  // PreviewUrls as JSON for cross-DB compatibility
+  repeated string preview_urls = 11 [(dal.v1.column) = {
+    gorm_tags: ["serializer:json"]
+  }];
 }
 
 message WorldDataGORM {
   option (dal.v1.gorm) = { source: "weewar.v1.WorldData", table: "world_data" };
-  string world_id = 1 [(dal.v1.column) = {
+  // Tiles as JSON for cross-DB compatibility
+  repeated TileGORM tiles = 1 [(dal.v1.column) = {
+    gorm_tags: ["serializer:json"]
+  }];
+  string world_id = 2 [(dal.v1.column) = {
     gorm_tags: ["primaryKey"]
+  }];
+  // Units as JSON for cross-DB compatibility
+  repeated UnitGORM units = 3 [(dal.v1.column) = {
+    gorm_tags: ["serializer:json"]
   }];
 }
 
@@ -48,10 +67,26 @@ message GameGORM {
   string id = 1 [(dal.v1.column) = {
     gorm_tags: ["primaryKey"]
   }];
+  // Tags as JSON for cross-DB compatibility
+  repeated string tags = 7 [(dal.v1.column) = {
+    gorm_tags: ["serializer:json"]
+  }];
+  // PreviewUrls as JSON for cross-DB compatibility
+  repeated string preview_urls = 11 [(dal.v1.column) = {
+    gorm_tags: ["serializer:json"]
+  }];
 }
 
 message GameConfigurationGORM {
   option (dal.v1.gorm) = { source: "weewar.v1.GameConfiguration" };
+  // Players as JSON for cross-DB compatibility
+  repeated GamePlayerGORM players = 1 [(dal.v1.column) = {
+    gorm_tags: ["serializer:json"]
+  }];
+  // Teams as JSON for cross-DB compatibility
+  repeated GameTeamGORM teams = 2 [(dal.v1.column) = {
+    gorm_tags: ["serializer:json"]
+  }];
 }
 
 message IncomeConfigGORM {
@@ -68,6 +103,10 @@ message GameTeamGORM {
 
 message GameSettingsGORM {
   option (dal.v1.gorm) = { source: "weewar.v1.GameSettings" };
+  // AllowedUnits as JSON for cross-DB compatibility
+  repeated int32 allowed_units = 1 [(dal.v1.column) = {
+    gorm_tags: ["serializer:json"]
+  }];
 }
 
 // Holds the game's Active/Current state (eg world state)
@@ -81,11 +120,19 @@ message GameStateGORM {
 // Holds the game's move history (can be used as a replay log)
 message GameMoveHistoryGORM {
   option (dal.v1.gorm) = { source: "weewar.v1.GameMoveHistory" };
+  // Groups as JSON for cross-DB compatibility
+  repeated GameMoveGroupGORM groups = 2 [(dal.v1.column) = {
+    gorm_tags: ["serializer:json"]
+  }];
 }
 
 // A move group - we can allow X moves in one "tick"
 message GameMoveGroupGORM {
   option (dal.v1.gorm) = { source: "weewar.v1.GameMoveGroup" };
+  // Moves as JSON for cross-DB compatibility
+  repeated GameMoveGORM moves = 3 [(dal.v1.column) = {
+    gorm_tags: ["serializer:json"]
+  }];
 }
 
 /**
@@ -100,7 +147,11 @@ message GameMoveGORM {
 
   // Field named "move_type" matches the oneof name in source
   // This automatically skips all oneof members (move_unit, attack_unit, end_turn, build_unit)
-  google.protobuf.Any move_type = 4;
+  google.protobuf.Any move_type = 4 [(dal.v1.column) = {
+    gorm_tags: ["serializer:json"]
+  }];
 
-  repeated google.protobuf.Any changes = 5;
+  repeated google.protobuf.Any changes = 5 [(dal.v1.column) = {
+    gorm_tags: ["serializer:json"]
+  }];
 }

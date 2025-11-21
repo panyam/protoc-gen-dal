@@ -407,7 +407,7 @@ type UserWithDefaults struct {
 	Id            uint32                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	Active        bool                   `protobuf:"varint,3,opt,name=active,proto3" json:"active,omitempty"`
-	CreatedAt     int64                  `protobuf:"varint,4,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -463,11 +463,11 @@ func (x *UserWithDefaults) GetActive() bool {
 	return false
 }
 
-func (x *UserWithDefaults) GetCreatedAt() int64 {
+func (x *UserWithDefaults) GetCreatedAt() *timestamppb.Timestamp {
 	if x != nil {
 		return x.CreatedAt
 	}
-	return 0
+	return nil
 }
 
 // AuthorGorm for embedded struct (no table - just embedded in Blog)
@@ -635,13 +635,13 @@ type ProductGorm struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Id    uint32                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	Name  string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	// Repeated string as JSONB (PostgreSQL-specific)
+	// Repeated string as JSON (works with SQLite and PostgreSQL)
 	Tags []string `protobuf:"bytes,3,rep,name=tags,proto3" json:"tags,omitempty"`
-	// Repeated string as PostgreSQL TEXT[] array
+	// Repeated string as JSON (for cross-DB compatibility)
 	Categories []string `protobuf:"bytes,4,rep,name=categories,proto3" json:"categories,omitempty"`
-	// Map as JSONB
+	// Map as JSON (works with SQLite and PostgreSQL)
 	Metadata map[string]string `protobuf:"bytes,5,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	// Repeated int as JSONB
+	// Repeated int as JSON (works with SQLite and PostgreSQL)
 	Ratings       []int32 `protobuf:"varint,6,rep,packed,name=ratings,proto3" json:"ratings,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -724,7 +724,7 @@ type LibraryGorm struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Id    uint32                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	Name  string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	// Repeated message type as JSONB
+	// Repeated message type as JSON (works with SQLite and PostgreSQL)
 	Contributors  []*AuthorGorm `protobuf:"bytes,3,rep,name=contributors,proto3" json:"contributors,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -786,7 +786,7 @@ type OrganizationGorm struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Id    uint32                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	Name  string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	// Map with message value type as JSONB
+	// Map with message value type as JSON (works with SQLite and PostgreSQL)
 	Departments   map[string]*AuthorGorm `protobuf:"bytes,3,rep,name=departments,proto3" json:"departments,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -894,14 +894,14 @@ const file_gorm_user_proto_rawDesc = "" +
 	"\n" +
 	"first_name\x18\x05 \x01(\tB\x14\x92\xa6\x1d\x10R\x0eindex:idx_nameR\tfirstName\x121\n" +
 	"\tlast_name\x18\x06 \x01(\tB\x14\x92\xa6\x1d\x10R\x0eindex:idx_nameR\blastName:\x1dʦ\x1d\x19\n" +
-	"\bapi.User\x12\rusers_indexed\"\xe9\x01\n" +
+	"\bapi.User\x12\rusers_indexed\"\x85\x02\n" +
 	"\x10UserWithDefaults\x12 \n" +
 	"\x02id\x18\x01 \x01(\rB\x10\x92\xa6\x1d\fR\n" +
 	"primaryKeyR\x02id\x12'\n" +
 	"\x04name\x18\x02 \x01(\tB\x13\x92\xa6\x1d\x0fR\rdefault:guestR\x04name\x12*\n" +
-	"\x06active\x18\x03 \x01(\bB\x12\x92\xa6\x1d\x0eR\fdefault:trueR\x06active\x12>\n" +
+	"\x06active\x18\x03 \x01(\bB\x12\x92\xa6\x1d\x0eR\fdefault:trueR\x06active\x12Z\n" +
 	"\n" +
-	"created_at\x18\x04 \x01(\x03B\x1f\x92\xa6\x1d\x1bR\x19default:CURRENT_TIMESTAMPR\tcreatedAt:\x1eʦ\x1d\x1a\n" +
+	"created_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampB\x1f\x92\xa6\x1d\x1bR\x19default:CURRENT_TIMESTAMPR\tcreatedAt:\x1eʦ\x1d\x1a\n" +
 	"\bapi.User\x12\x0eusers_defaults\"H\n" +
 	"\n" +
 	"AuthorGorm\x12\x12\n" +
@@ -917,37 +917,32 @@ const file_gorm_user_proto_rawDesc = "" +
 	"\x06author\x18\x02 \x01(\v2\x10.gorm.AuthorGormB&\x92\xa6\x1d\"R\bembeddedR\x16embeddedPrefix:author_R\x06author\x12)\n" +
 	"\aupvotes\x18\x03 \x01(\x05B\x0f\x92\xa6\x1d\vR\tdefault:0R\aupvotes\x127\n" +
 	"\x05title\x18\x04 \x01(\tB!\x92\xa6\x1d\x1dR\x11type:varchar(255)R\bnot nullR\x05title:\x15ʦ\x1d\x11\n" +
-	"\bapi.Blog\x12\x05blogs\"\xa3\x03\n" +
+	"\bapi.Blog\x12\x05blogs\"\xb6\x03\n" +
 	"\vProductGorm\x12/\n" +
 	"\x02id\x18\x01 \x01(\rB\x1f\x92\xa6\x1d\x1bR\n" +
 	"primaryKeyR\rautoIncrementR\x02id\x125\n" +
-	"\x04name\x18\x02 \x01(\tB!\x92\xa6\x1d\x1dR\x11type:varchar(255)R\bnot nullR\x04name\x12$\n" +
-	"\x04tags\x18\x03 \x03(\tB\x10\x92\xa6\x1d\fR\n" +
-	"type:jsonbR\x04tags\x121\n" +
+	"\x04name\x18\x02 \x01(\tB!\x92\xa6\x1d\x1dR\x11type:varchar(255)R\bnot nullR\x04name\x12)\n" +
+	"\x04tags\x18\x03 \x03(\tB\x15\x92\xa6\x1d\x11R\x0fserializer:jsonR\x04tags\x125\n" +
 	"\n" +
-	"categories\x18\x04 \x03(\tB\x11\x92\xa6\x1d\rR\vtype:text[]R\n" +
-	"categories\x12M\n" +
-	"\bmetadata\x18\x05 \x03(\v2\x1f.gorm.ProductGorm.MetadataEntryB\x10\x92\xa6\x1d\fR\n" +
-	"type:jsonbR\bmetadata\x12*\n" +
-	"\aratings\x18\x06 \x03(\x05B\x10\x92\xa6\x1d\fR\n" +
-	"type:jsonbR\aratings\x1a;\n" +
+	"categories\x18\x04 \x03(\tB\x15\x92\xa6\x1d\x11R\x0fserializer:jsonR\n" +
+	"categories\x12R\n" +
+	"\bmetadata\x18\x05 \x03(\v2\x1f.gorm.ProductGorm.MetadataEntryB\x15\x92\xa6\x1d\x11R\x0fserializer:jsonR\bmetadata\x12/\n" +
+	"\aratings\x18\x06 \x03(\x05B\x15\x92\xa6\x1d\x11R\x0fserializer:jsonR\aratings\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01:\x1bʦ\x1d\x17\n" +
-	"\vapi.Product\x12\bproducts\"\xdb\x01\n" +
+	"\vapi.Product\x12\bproducts\"\xe0\x01\n" +
 	"\vLibraryGorm\x12/\n" +
 	"\x02id\x18\x01 \x01(\rB\x1f\x92\xa6\x1d\x1bR\n" +
 	"primaryKeyR\rautoIncrementR\x02id\x125\n" +
-	"\x04name\x18\x02 \x01(\tB!\x92\xa6\x1d\x1dR\x11type:varchar(255)R\bnot nullR\x04name\x12F\n" +
-	"\fcontributors\x18\x03 \x03(\v2\x10.gorm.AuthorGormB\x10\x92\xa6\x1d\fR\n" +
-	"type:jsonbR\fcontributors:\x1cʦ\x1d\x18\n" +
-	"\vapi.Library\x12\tlibraries\"\xd0\x02\n" +
+	"\x04name\x18\x02 \x01(\tB!\x92\xa6\x1d\x1dR\x11type:varchar(255)R\bnot nullR\x04name\x12K\n" +
+	"\fcontributors\x18\x03 \x03(\v2\x10.gorm.AuthorGormB\x15\x92\xa6\x1d\x11R\x0fserializer:jsonR\fcontributors:\x1cʦ\x1d\x18\n" +
+	"\vapi.Library\x12\tlibraries\"\xd5\x02\n" +
 	"\x10OrganizationGorm\x12/\n" +
 	"\x02id\x18\x01 \x01(\rB\x1f\x92\xa6\x1d\x1bR\n" +
 	"primaryKeyR\rautoIncrementR\x02id\x125\n" +
-	"\x04name\x18\x02 \x01(\tB!\x92\xa6\x1d\x1dR\x11type:varchar(255)R\bnot nullR\x04name\x12[\n" +
-	"\vdepartments\x18\x03 \x03(\v2'.gorm.OrganizationGorm.DepartmentsEntryB\x10\x92\xa6\x1d\fR\n" +
-	"type:jsonbR\vdepartments\x1aP\n" +
+	"\x04name\x18\x02 \x01(\tB!\x92\xa6\x1d\x1dR\x11type:varchar(255)R\bnot nullR\x04name\x12`\n" +
+	"\vdepartments\x18\x03 \x03(\v2'.gorm.OrganizationGorm.DepartmentsEntryB\x15\x92\xa6\x1d\x11R\x0fserializer:jsonR\vdepartments\x1aP\n" +
 	"\x10DepartmentsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12&\n" +
 	"\x05value\x18\x02 \x01(\v2\x10.gorm.AuthorGormR\x05value:\x028\x01:%ʦ\x1d!\n" +
@@ -991,16 +986,17 @@ var file_gorm_user_proto_depIdxs = []int32{
 	13, // 4: gorm.UserGorm.deleted_at:type_name -> google.protobuf.Timestamp
 	13, // 5: gorm.UserWithPermissions.created_at:type_name -> google.protobuf.Timestamp
 	13, // 6: gorm.UserWithPermissions.updated_at:type_name -> google.protobuf.Timestamp
-	5,  // 7: gorm.BlogGorm.author:type_name -> gorm.AuthorGorm
-	11, // 8: gorm.ProductGorm.metadata:type_name -> gorm.ProductGorm.MetadataEntry
-	5,  // 9: gorm.LibraryGorm.contributors:type_name -> gorm.AuthorGorm
-	12, // 10: gorm.OrganizationGorm.departments:type_name -> gorm.OrganizationGorm.DepartmentsEntry
-	5,  // 11: gorm.OrganizationGorm.DepartmentsEntry.value:type_name -> gorm.AuthorGorm
-	12, // [12:12] is the sub-list for method output_type
-	12, // [12:12] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	13, // 7: gorm.UserWithDefaults.created_at:type_name -> google.protobuf.Timestamp
+	5,  // 8: gorm.BlogGorm.author:type_name -> gorm.AuthorGorm
+	11, // 9: gorm.ProductGorm.metadata:type_name -> gorm.ProductGorm.MetadataEntry
+	5,  // 10: gorm.LibraryGorm.contributors:type_name -> gorm.AuthorGorm
+	12, // 11: gorm.OrganizationGorm.departments:type_name -> gorm.OrganizationGorm.DepartmentsEntry
+	5,  // 12: gorm.OrganizationGorm.DepartmentsEntry.value:type_name -> gorm.AuthorGorm
+	13, // [13:13] is the sub-list for method output_type
+	13, // [13:13] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_gorm_user_proto_init() }

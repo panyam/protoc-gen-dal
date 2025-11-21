@@ -47,8 +47,8 @@ type UserWithCustomTimestamps struct {
 	Id           uint32 `gorm:"primaryKey"`
 	Name         string
 	Email        string
-	UpdatedMilli int64 `gorm:"autoUpdateTime:milli"`
 	Age          uint32
+	UpdatedMilli int64 `gorm:"autoUpdateTime:milli"`
 	Birthday     time.Time
 	UpdatedNano  int64 `gorm:"autoUpdateTime:nano"`
 	MemberNumber string
@@ -71,8 +71,8 @@ type UserWithIndexes struct {
 	Age          uint32
 	FirstName    string `gorm:"index:idx_name"`
 	Birthday     time.Time
-	MemberNumber string
 	LastName     string `gorm:"index:idx_name"`
+	MemberNumber string
 	ActivatedAt  time.Time
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
@@ -93,7 +93,7 @@ type UserWithDefaults struct {
 	Birthday     time.Time
 	MemberNumber string
 	ActivatedAt  time.Time
-	CreatedAt    int64 `gorm:"default:CURRENT_TIMESTAMP"`
+	CreatedAt    time.Time `gorm:"default:CURRENT_TIMESTAMP"`
 	UpdatedAt    time.Time
 }
 
@@ -138,10 +138,10 @@ func (*BlogGORM) TableName() string {
 type ProductGORM struct {
 	Id         uint32            `gorm:"primaryKey;autoIncrement"`
 	Name       string            `gorm:"type:varchar(255);not null"`
-	Tags       []string          `gorm:"type:jsonb"`
-	Categories []string          `gorm:"type:text[]"`
-	Metadata   map[string]string `gorm:"type:jsonb"`
-	Ratings    []int32           `gorm:"type:jsonb"`
+	Tags       []string          `gorm:"serializer:json"`
+	Categories []string          `gorm:"serializer:json"`
+	Metadata   map[string]string `gorm:"serializer:json"`
+	Ratings    []int32           `gorm:"serializer:json"`
 }
 
 // TableName returns the table name for ProductGORM
@@ -153,7 +153,7 @@ func (*ProductGORM) TableName() string {
 type LibraryGORM struct {
 	Id           uint32       `gorm:"primaryKey;autoIncrement"`
 	Name         string       `gorm:"type:varchar(255);not null"`
-	Contributors []AuthorGORM `gorm:"type:jsonb"`
+	Contributors []AuthorGORM `gorm:"serializer:json"`
 }
 
 // TableName returns the table name for LibraryGORM
@@ -165,7 +165,7 @@ func (*LibraryGORM) TableName() string {
 type OrganizationGORM struct {
 	Id          uint32                `gorm:"primaryKey;autoIncrement"`
 	Name        string                `gorm:"type:varchar(255);not null"`
-	Departments map[string]AuthorGORM `gorm:"type:jsonb"`
+	Departments map[string]AuthorGORM `gorm:"serializer:json"`
 }
 
 // TableName returns the table name for OrganizationGORM
