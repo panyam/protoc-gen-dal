@@ -37,9 +37,25 @@ message WorldGORM {
   repeated string tags = 7 [(dal.v1.column) = {
     gorm_tags: ["serializer:json"]
   }];
+  // WorldData has-one relationship via foreign key
+  WorldDataGORM world_data = 9 [(dal.v1.column) = {
+    gorm_tags: ["foreignKey:WorldId"]
+  }];
   // PreviewUrls as JSON for cross-DB compatibility
   repeated string preview_urls = 11 [(dal.v1.column) = {
     gorm_tags: ["serializer:json"]
+  }];
+  // DefaultGameConfig as JSON for cross-DB compatibility
+  GameConfigurationGORM default_game_config = 12 [(dal.v1.column) = {
+    gorm_tags: ["serializer:json"]
+  }];
+  // ScreenshotIndexInfo embedded
+  IndexInfoGORM screenshot_index_info = 13 [(dal.v1.column) = {
+    gorm_tags: ["embedded", "embeddedPrefix:screenshot_index_"]
+  }];
+  // SearchIndexInfo embedded
+  IndexInfoGORM search_index_info = 14 [(dal.v1.column) = {
+    gorm_tags: ["embedded", "embeddedPrefix:search_index_"]
   }];
 }
 
@@ -71,9 +87,21 @@ message GameGORM {
   repeated string tags = 7 [(dal.v1.column) = {
     gorm_tags: ["serializer:json"]
   }];
+  // Config as JSON for cross-DB compatibility
+  GameConfigurationGORM config = 10 [(dal.v1.column) = {
+    gorm_tags: ["serializer:json"]
+  }];
   // PreviewUrls as JSON for cross-DB compatibility
   repeated string preview_urls = 11 [(dal.v1.column) = {
     gorm_tags: ["serializer:json"]
+  }];
+  // ScreenshotIndexInfo embedded
+  IndexInfoGORM screenshot_index_info = 12 [(dal.v1.column) = {
+    gorm_tags: ["embedded", "embeddedPrefix:screenshot_index_"]
+  }];
+  // SearchIndexInfo embedded
+  IndexInfoGORM search_index_info = 13 [(dal.v1.column) = {
+    gorm_tags: ["embedded", "embeddedPrefix:search_index_"]
   }];
 }
 
@@ -87,6 +115,12 @@ message GameConfigurationGORM {
   repeated GameTeamGORM teams = 2 [(dal.v1.column) = {
     gorm_tags: ["serializer:json"]
   }];
+  // IncomeConfigs embedded
+  IncomeConfigGORM income_configs = 3 [(dal.v1.column) = {
+    gorm_tags: ["embedded"]
+  }];
+  // Settings as foreign key relationship
+  GameSettingsGORM settings = 4;
 }
 
 message IncomeConfigGORM {
@@ -114,6 +148,10 @@ message GameStateGORM {
   option (dal.v1.gorm) = { source: "weewar.v1.GameState" };
   string game_id = 1 [(dal.v1.column) = {
     gorm_tags: ["primaryKey"]
+  }];
+  // WorldData as JSON for cross-DB compatibility
+  WorldDataGORM world_data = 4 [(dal.v1.column) = {
+    gorm_tags: ["serializer:json"]
   }];
 }
 

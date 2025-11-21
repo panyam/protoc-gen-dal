@@ -15,7 +15,7 @@ type DocumentGormEmpty struct {
 	UpdatedAt time.Time
 	Published bool
 	ViewCount int32
-	Tags      []string
+	Tags      []string `gorm:"serializer:json"`
 }
 
 // TableName returns the table name for DocumentGormEmpty
@@ -33,7 +33,7 @@ type DocumentGormPartial struct {
 	UpdatedAt time.Time
 	Published bool
 	ViewCount int32
-	Tags      []string
+	Tags      []string `gorm:"serializer:json"`
 }
 
 // TableName returns the table name for DocumentGormPartial
@@ -50,7 +50,7 @@ type DocumentGormSkip struct {
 	UpdatedAt time.Time
 	Published bool
 	ViewCount int32
-	Tags      []string
+	Tags      []string `gorm:"serializer:json"`
 }
 
 // TableName returns the table name for DocumentGormSkip
@@ -68,7 +68,7 @@ type DocumentGormExtra struct {
 	UpdatedAt time.Time
 	Published bool
 	ViewCount int32
-	Tags      []string
+	Tags      []string  `gorm:"serializer:json"`
 	DeletedAt time.Time `gorm:"index"`
 	Version   int32     `gorm:"default:1"`
 }

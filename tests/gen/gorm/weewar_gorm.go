@@ -61,11 +61,11 @@ type WorldGORM struct {
 	Tags                []string `gorm:"serializer:json"`
 	ImageUrl            string
 	Difficulty          string
-	WorldData           WorldDataGORM
-	PreviewUrls         []string `gorm:"serializer:json"`
-	DefaultGameConfig   GameConfigurationGORM
-	ScreenshotIndexInfo IndexInfoGORM
-	SearchIndexInfo     IndexInfoGORM
+	WorldData           WorldDataGORM         `gorm:"foreignKey:WorldId"`
+	PreviewUrls         []string              `gorm:"serializer:json"`
+	DefaultGameConfig   GameConfigurationGORM `gorm:"serializer:json"`
+	ScreenshotIndexInfo IndexInfoGORM         `gorm:"embedded;embeddedPrefix:screenshot_index_"`
+	SearchIndexInfo     IndexInfoGORM         `gorm:"embedded;embeddedPrefix:search_index_"`
 }
 
 // TableName returns the table name for WorldGORM
@@ -97,10 +97,10 @@ type GameGORM struct {
 	Tags                []string `gorm:"serializer:json"`
 	ImageUrl            string
 	Difficulty          string
-	Config              GameConfigurationGORM
-	PreviewUrls         []string `gorm:"serializer:json"`
-	ScreenshotIndexInfo IndexInfoGORM
-	SearchIndexInfo     IndexInfoGORM
+	Config              GameConfigurationGORM `gorm:"serializer:json"`
+	PreviewUrls         []string              `gorm:"serializer:json"`
+	ScreenshotIndexInfo IndexInfoGORM         `gorm:"embedded;embeddedPrefix:screenshot_index_"`
+	SearchIndexInfo     IndexInfoGORM         `gorm:"embedded;embeddedPrefix:search_index_"`
 }
 
 // TableName returns the table name for GameGORM
@@ -112,7 +112,7 @@ func (*GameGORM) TableName() string {
 type GameConfigurationGORM struct {
 	Players       []GamePlayerGORM `gorm:"serializer:json"`
 	Teams         []GameTeamGORM   `gorm:"serializer:json"`
-	IncomeConfigs IncomeConfigGORM
+	IncomeConfigs IncomeConfigGORM `gorm:"embedded"`
 	Settings      GameSettingsGORM
 }
 
@@ -161,7 +161,7 @@ type GameStateGORM struct {
 	GameId        string `gorm:"primaryKey"`
 	TurnCounter   int32
 	CurrentPlayer int32
-	WorldData     WorldDataGORM
+	WorldData     WorldDataGORM `gorm:"serializer:json"`
 	StateHash     string
 	Version       int64
 	Status        v1.GameStatus
@@ -185,10 +185,10 @@ type GameMoveGroupGORM struct {
 
 // GameMoveGORM is the GORM model for weewar.v1.GameMove
 type GameMoveGORM struct {
-	GameId      string `gorm:"primaryKey"`
 	Player      int32
-	GroupNumber string `gorm:"primaryKey"`
+	GameId      string `gorm:"primaryKey"`
 	Timestamp   time.Time
+	GroupNumber string `gorm:"primaryKey"`
 	MoveNumber  int32  `gorm:"primaryKey"`
 	MoveType    []byte `gorm:"serializer:json"`
 	SequenceNum int64

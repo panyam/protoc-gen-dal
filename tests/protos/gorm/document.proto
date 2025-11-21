@@ -14,7 +14,11 @@ message DocumentGormEmpty {
     source: "api.Document"
     table: "documents_empty"
   };
-  // No fields declared - should auto-merge all fields from api.Document
+  // Override tags field with serializer:json for cross-DB compatibility
+  repeated string tags = 9 [(dal.v1.column) = {
+    gorm_tags: ["serializer:json"]
+  }];
+  // All other fields auto-merged from api.Document
 }
 
 // DocumentGormPartial tests field override: explicitly declared fields override source
@@ -34,7 +38,12 @@ message DocumentGormPartial {
     gorm_tags: ["type:varchar(255)", "not null"]
   }];
 
-  // All other fields (content, author, created_at, updated_at, published, view_count, tags)
+  // Override tags field with serializer:json for cross-DB compatibility
+  repeated string tags = 9 [(dal.v1.column) = {
+    gorm_tags: ["serializer:json"]
+  }];
+
+  // All other fields (content, author, created_at, updated_at, published, view_count)
   // should be auto-merged from source
 }
 
@@ -53,6 +62,11 @@ message DocumentGormSkip {
   // Skip the 'content' field from source - sensitive data
   string content = 3 [(dal.v1.skip_field) = true];
 
+  // Override tags field with serializer:json for cross-DB compatibility
+  repeated string tags = 9 [(dal.v1.column) = {
+    gorm_tags: ["serializer:json"]
+  }];
+
   // All other fields should be auto-merged from source
 }
 
@@ -64,6 +78,11 @@ message DocumentGormExtra {
   };
 
   // Auto-merge all fields from source, PLUS:
+
+  // Override tags field with serializer:json for cross-DB compatibility
+  repeated string tags = 9 [(dal.v1.column) = {
+    gorm_tags: ["serializer:json"]
+  }];
 
   // Add extra database-specific field not in API
   google.protobuf.Timestamp deleted_at = 100 [(dal.v1.column) = {

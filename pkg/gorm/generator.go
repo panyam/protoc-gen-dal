@@ -366,8 +366,8 @@ func buildStructData(msg *collector.MessageInfo, registry *common.MessageRegistr
 		sourcePkgAlias = pkgInfo.Alias
 	}
 
-	// Build fields from merged list
-	fields, err := buildFields(mergedFields, sourcePkgAlias, registry)
+	// Build fields from merged list with validation
+	fields, err := buildFieldsWithValidation(mergedFields, sourcePkgAlias, registry, structName)
 	if err != nil {
 		return StructData{}, err
 	}
@@ -487,9 +487,19 @@ func buildStructName(msg *protogen.Message) string {
 
 // buildFields extracts field information from a list of proto fields.
 func buildFields(protoFields []*protogen.Field, sourcePkgName string, registry *common.MessageRegistry) ([]FieldData, error) {
+	return buildFieldsWithValidation(protoFields, sourcePkgName, registry, "")
+}
+
+// buildFieldsWithValidation extracts field information from a list of proto fields with optional validation.
+func buildFieldsWithValidation(protoFields []*protogen.Field, sourcePkgName string, registry *common.MessageRegistry, msgName string) ([]FieldData, error) {
 	var fields []FieldData
 
 	for _, field := range protoFields {
+		// Validate serializer tags if message name is provided
+		if msgName != "" {
+			validateSerializerTags(field, msgName)
+		}
+
 		fieldData, err := buildField(field, sourcePkgName, registry)
 		if err != nil {
 			return nil, err
@@ -565,4 +575,65 @@ func isEmbeddedField(field *protogen.Field) bool {
 	}
 
 	return false
+}
+
+// validateSerializerTags checks if complex types have appropriate serializer tags for cross-DB compatibility.
+// Logs warnings for repeated fields, maps, and repeated message types without serializer:json tags.
+func validateSerializerTags(field *protogen.Field, msgName string) {
+	// Skip embedded fields - they don't need serialization
+	if isEmbeddedField(field) {
+		return
+	}
+
+	// Check if field needs serialization (repeated or map)
+	needsSerialization := false
+	fieldTypeDesc := ""
+
+	if field.Desc.IsList() {
+		needsSerialization = true
+		if field.Desc.Kind().String() == "message" {
+			fieldTypeDesc = "repeated message"
+		} else {
+			fieldTypeDesc = "repeated primitive"
+		}
+	} else if field.Desc.IsMap() {
+		needsSerialization = true
+		fieldTypeDesc = "map"
+	}
+
+	if !needsSerialization {
+		return
+	}
+
+	// Check if serializer:json tag is present
+	opts := field.Desc.Options()
+	if opts == nil {
+		log.Printf("[WARN] Field '%s.%s' (%s): missing serializer:json tag for cross-DB compatibility (SQLite/PostgreSQL)", msgName, field.GoName, fieldTypeDesc)
+		return
+	}
+
+	v := proto.GetExtension(opts, dalv1.E_Column)
+	if v == nil {
+		log.Printf("[WARN] Field '%s.%s' (%s): missing serializer:json tag for cross-DB compatibility (SQLite/PostgreSQL)", msgName, field.GoName, fieldTypeDesc)
+		return
+	}
+
+	colOpts, ok := v.(*dalv1.ColumnOptions)
+	if !ok || colOpts == nil {
+		log.Printf("[WARN] Field '%s.%s' (%s): missing serializer:json tag for cross-DB compatibility (SQLite/PostgreSQL)", msgName, field.GoName, fieldTypeDesc)
+		return
+	}
+
+	// Check if serializer:json is in the tags
+	hasSerializer := false
+	for _, tag := range colOpts.GormTags {
+		if strings.HasPrefix(tag, "serializer:json") || tag == "serializer:json" {
+			hasSerializer = true
+			break
+		}
+	}
+
+	if !hasSerializer {
+		log.Printf("[WARN] Field '%s.%s' (%s): missing serializer:json tag for cross-DB compatibility (SQLite/PostgreSQL)", msgName, field.GoName, fieldTypeDesc)
+	}
 }

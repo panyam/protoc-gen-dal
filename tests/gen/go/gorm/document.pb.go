@@ -27,7 +27,9 @@ const (
 
 // DocumentGormEmpty tests field auto-merge: empty target should get all source fields
 type DocumentGormEmpty struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Override tags field with serializer:json for cross-DB compatibility
+	Tags          []string `protobuf:"bytes,9,rep,name=tags,proto3" json:"tags,omitempty"` // All other fields auto-merged from api.Document
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -62,13 +64,22 @@ func (*DocumentGormEmpty) Descriptor() ([]byte, []int) {
 	return file_gorm_document_proto_rawDescGZIP(), []int{0}
 }
 
+func (x *DocumentGormEmpty) GetTags() []string {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
 // DocumentGormPartial tests field override: explicitly declared fields override source
 type DocumentGormPartial struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Override id field with GORM tags
 	Id uint32 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	// Override title with custom tags
-	Title         string `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
+	Title string `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
+	// Override tags field with serializer:json for cross-DB compatibility
+	Tags          []string `protobuf:"bytes,9,rep,name=tags,proto3" json:"tags,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -117,13 +128,22 @@ func (x *DocumentGormPartial) GetTitle() string {
 	return ""
 }
 
+func (x *DocumentGormPartial) GetTags() []string {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
 // DocumentGormSkip tests skip_field: exclude specific fields from source
 type DocumentGormSkip struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Include id with customization
 	Id uint32 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	// Skip the 'content' field from source - sensitive data
-	Content       string `protobuf:"bytes,3,opt,name=content,proto3" json:"content,omitempty"`
+	Content string `protobuf:"bytes,3,opt,name=content,proto3" json:"content,omitempty"`
+	// Override tags field with serializer:json for cross-DB compatibility
+	Tags          []string `protobuf:"bytes,9,rep,name=tags,proto3" json:"tags,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -172,9 +192,18 @@ func (x *DocumentGormSkip) GetContent() string {
 	return ""
 }
 
+func (x *DocumentGormSkip) GetTags() []string {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
 // DocumentGormExtra tests adding extra fields not in source
 type DocumentGormExtra struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
+	// Override tags field with serializer:json for cross-DB compatibility
+	Tags []string `protobuf:"bytes,9,rep,name=tags,proto3" json:"tags,omitempty"`
 	// Add extra database-specific field not in API
 	DeletedAt *timestamppb.Timestamp `protobuf:"bytes,100,opt,name=deleted_at,json=deletedAt,proto3" json:"deleted_at,omitempty"`
 	// Add row version for optimistic locking
@@ -213,6 +242,13 @@ func (*DocumentGormExtra) Descriptor() ([]byte, []int) {
 	return file_gorm_document_proto_rawDescGZIP(), []int{3}
 }
 
+func (x *DocumentGormExtra) GetTags() []string {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
 func (x *DocumentGormExtra) GetDeletedAt() *timestamppb.Timestamp {
 	if x != nil {
 		return x.DeletedAt
@@ -231,20 +267,24 @@ var File_gorm_document_proto protoreflect.FileDescriptor
 
 const file_gorm_document_proto_rawDesc = "" +
 	"\n" +
-	"\x13gorm/document.proto\x12\x04gorm\x1a\x18dal/v1/annotations.proto\x1a\x12api/document.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"8\n" +
-	"\x11DocumentGormEmpty:#ʦ\x1d\x1f\n" +
-	"\fapi.Document\x12\x0fdocuments_empty\"\xa6\x01\n" +
+	"\x13gorm/document.proto\x12\x04gorm\x1a\x18dal/v1/annotations.proto\x1a\x12api/document.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"c\n" +
+	"\x11DocumentGormEmpty\x12)\n" +
+	"\x04tags\x18\t \x03(\tB\x15\x92\xa6\x1d\x11R\x0fserializer:jsonR\x04tags:#ʦ\x1d\x1f\n" +
+	"\fapi.Document\x12\x0fdocuments_empty\"\xd1\x01\n" +
 	"\x13DocumentGormPartial\x12/\n" +
 	"\x02id\x18\x01 \x01(\rB\x1f\x92\xa6\x1d\x1bR\n" +
 	"primaryKeyR\rautoIncrementR\x02id\x127\n" +
-	"\x05title\x18\x02 \x01(\tB!\x92\xa6\x1d\x1dR\x11type:varchar(255)R\bnot nullR\x05title:%ʦ\x1d!\n" +
-	"\fapi.Document\x12\x11documents_partial\"x\n" +
+	"\x05title\x18\x02 \x01(\tB!\x92\xa6\x1d\x1dR\x11type:varchar(255)R\bnot nullR\x05title\x12)\n" +
+	"\x04tags\x18\t \x03(\tB\x15\x92\xa6\x1d\x11R\x0fserializer:jsonR\x04tags:%ʦ\x1d!\n" +
+	"\fapi.Document\x12\x11documents_partial\"\xa3\x01\n" +
 	"\x10DocumentGormSkip\x12 \n" +
 	"\x02id\x18\x01 \x01(\rB\x10\x92\xa6\x1d\fR\n" +
 	"primaryKeyR\x02id\x12\x1e\n" +
-	"\acontent\x18\x03 \x01(\tB\x04\xb8\xa6\x1d\x01R\acontent:\"ʦ\x1d\x1e\n" +
-	"\fapi.Document\x12\x0edocuments_skip\"\xab\x01\n" +
-	"\x11DocumentGormExtra\x12F\n" +
+	"\acontent\x18\x03 \x01(\tB\x04\xb8\xa6\x1d\x01R\acontent\x12)\n" +
+	"\x04tags\x18\t \x03(\tB\x15\x92\xa6\x1d\x11R\x0fserializer:jsonR\x04tags:\"ʦ\x1d\x1e\n" +
+	"\fapi.Document\x12\x0edocuments_skip\"\xd6\x01\n" +
+	"\x11DocumentGormExtra\x12)\n" +
+	"\x04tags\x18\t \x03(\tB\x15\x92\xa6\x1d\x11R\x0fserializer:jsonR\x04tags\x12F\n" +
 	"\n" +
 	"deleted_at\x18d \x01(\v2\x1a.google.protobuf.TimestampB\v\x92\xa6\x1d\aR\x05indexR\tdeletedAt\x12)\n" +
 	"\aversion\x18e \x01(\x05B\x0f\x92\xa6\x1d\vR\tdefault:1R\aversion:#ʦ\x1d\x1f\n" +
