@@ -21,15 +21,36 @@ type {{ .PKStructName }} struct {
 
 // {{ .DALTypeName }} provides database access helper methods for {{ $.EntityPrefix }}{{ .StructName }}.
 type {{ .DALTypeName }} struct {
+	// TableName overrides the table for all operations.
+	// If empty, uses the struct's TableName() method (if any) or GORM's default.
+	TableName string
+
 	// WillCreate hook is called when Save detects the record doesn't exist and will create it.
 	// Return an error to prevent creation.
 	WillCreate func(context.Context, *{{ $.EntityPrefix }}{{ .StructName }}) error
 }
 
+// New{{ .DALTypeName }} creates a new {{ .DALTypeName }} instance.
+// If tableName is empty, operations will use the struct's TableName() method
+// or GORM's default table naming convention.
+func New{{ .DALTypeName }}(tableName string) *{{ .DALTypeName }} {
+	return &{{ .DALTypeName }}{TableName: tableName}
+}
+
+// db returns a *gorm.DB scoped to the correct table.
+// If TableName is set, uses db.Table(); otherwise returns db unchanged
+// to let GORM resolve the table name from the struct's TableName() method.
+func (d *{{ .DALTypeName }}) db(db *{{ $.GormAlias }}.DB) *{{ $.GormAlias }}.DB {
+	if d.TableName != "" {
+		return db.Table(d.TableName)
+	}
+	return db
+}
+
 // Create creates a new {{ $.EntityPrefix }}{{ .StructName }} record.
 // Returns an error if the record already exists.
 func (d *{{ .DALTypeName }}) Create(ctx context.Context, db *{{ $.GormAlias }}.DB, obj *{{ $.EntityPrefix }}{{ .StructName }}) error {
-	return db.Create(obj).Error
+	return d.db(db).Create(obj).Error
 }
 
 // Update updates an existing {{ $.EntityPrefix }}{{ .StructName }} record.
@@ -37,7 +58,7 @@ func (d *{{ .DALTypeName }}) Create(ctx context.Context, db *{{ $.GormAlias }}.D
 // For conditional updates (optimistic locking), pass a db with WHERE conditions:
 //   dal.Update(ctx, db.Where("version = ?", oldVersion), obj)
 func (d *{{ .DALTypeName }}) Update(ctx context.Context, db *{{ $.GormAlias }}.DB, obj *{{ $.EntityPrefix }}{{ .StructName }}) error {
-	result := db.Updates(obj)
+	result := d.db(db).Updates(obj)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -64,7 +85,7 @@ func (d *{{ .DALTypeName }}) Save(ctx context.Context, db *{{ $.GormAlias }}.DB,
 
 	// Check if record exists by trying to fetch it
 	var existing {{ $.EntityPrefix }}{{ .StructName }}
-	err := db.First(&existing, {{ range $i, $pk := .PrimaryKeys }}{{if $i}}, {{end}}"{{ snakeCase $pk.Name }} = ?"{{ end }}{{ range .PrimaryKeys }}, obj.{{ .Name }}{{ end }}).Error
+	err := d.db(db).First(&existing, {{ range $i, $pk := .PrimaryKeys }}{{if $i}}, {{end}}"{{ snakeCase $pk.Name }} = ?"{{ end }}{{ range .PrimaryKeys }}, obj.{{ .Name }}{{ end }}).Error
 
 	if err != nil {
 		if errors.Is(err, {{ $.GormAlias }}.ErrRecordNotFound) {
@@ -81,15 +102,15 @@ func (d *{{ .DALTypeName }}) Save(ctx context.Context, db *{{ $.GormAlias }}.DB,
 	}
 
 	// Save (create or update)
-	return db.Save(obj).Error
+	return d.db(db).Save(obj).Error
 }
 
 // Get retrieves a {{ $.EntityPrefix }}{{ .StructName }} record by primary key{{ if .HasCompositePK }}s{{ end }}.
 // Returns (nil, nil) if the record is not found (not an error).
 func (d *{{ .DALTypeName }}) Get(ctx context.Context, db *{{ $.GormAlias }}.DB{{ range .PrimaryKeys }}, {{ toLower .Name }} {{ .Type }}{{ end }}) (*{{ $.EntityPrefix }}{{ .StructName }}, error) {
 	var out {{ $.EntityPrefix }}{{ .StructName }}
-{{ if .HasCompositePK }}	err := db.First(&out, {{ buildWhereClause .PrimaryKeys }}).Error
-{{ else }}	err := db.First(&out, "{{ (index .PrimaryKeys 0).ColumnName }} = ?", {{ toLower (index .PrimaryKeys 0).Name }}).Error
+{{ if .HasCompositePK }}	err := d.db(db).First(&out, {{ buildWhereClause .PrimaryKeys }}).Error
+{{ else }}	err := d.db(db).First(&out, "{{ (index .PrimaryKeys 0).ColumnName }} = ?", {{ toLower (index .PrimaryKeys 0).Name }}).Error
 {{ end }}	if err != nil {
 		if errors.Is(err, {{ $.GormAlias }}.ErrRecordNotFound) {
 			return nil, nil
@@ -101,15 +122,15 @@ func (d *{{ .DALTypeName }}) Get(ctx context.Context, db *{{ $.GormAlias }}.DB{{
 
 // Delete removes a {{ $.EntityPrefix }}{{ .StructName }} record by primary key{{ if .HasCompositePK }}s{{ end }}.
 func (d *{{ .DALTypeName }}) Delete(ctx context.Context, db *{{ $.GormAlias }}.DB{{ range .PrimaryKeys }}, {{ toLower .Name }} {{ .Type }}{{ end }}) error {
-{{ if .HasCompositePK }}	return db.Where({{ buildWhereClause .PrimaryKeys }}).Delete(&{{ $.EntityPrefix }}{{ .StructName }}{}).Error
-{{ else }}	return db.Where("{{ (index .PrimaryKeys 0).ColumnName }} = ?", {{ toLower (index .PrimaryKeys 0).Name }}).Delete(&{{ $.EntityPrefix }}{{ .StructName }}{}).Error
+{{ if .HasCompositePK }}	return d.db(db).Where({{ buildWhereClause .PrimaryKeys }}).Delete(&{{ $.EntityPrefix }}{{ .StructName }}{}).Error
+{{ else }}	return d.db(db).Where("{{ (index .PrimaryKeys 0).ColumnName }} = ?", {{ toLower (index .PrimaryKeys 0).Name }}).Delete(&{{ $.EntityPrefix }}{{ .StructName }}{}).Error
 {{ end }}}
 
 // List retrieves multiple {{ $.EntityPrefix }}{{ .StructName }} records using the provided query.
 // The caller is responsible for adding filters, ordering, and pagination to the query.
 func (d *{{ .DALTypeName }}) List(ctx context.Context, query *{{ $.GormAlias }}.DB) ([]*{{ $.EntityPrefix }}{{ .StructName }}, error) {
 	var out []*{{ $.EntityPrefix }}{{ .StructName }}
-	err := query.Find(&out).Error
+	err := d.db(query).Find(&out).Error
 	return out, err
 }
 
@@ -121,7 +142,7 @@ func (d *{{ .DALTypeName }}) List(ctx context.Context, query *{{ $.GormAlias }}.
 	}
 
 	// Build OR query for each key combination
-	query := db.Where("1 = 0") // Start with false condition
+	query := d.db(db).Where("1 = 0") // Start with false condition
 	for _, key := range keys {
 		query = query.Or({{ buildWhereClauseFromStruct .PrimaryKeys "key" }})
 	}
@@ -136,7 +157,7 @@ func (d *{{ .DALTypeName }}) List(ctx context.Context, query *{{ $.GormAlias }}.
 	}
 
 	var out []*{{ $.EntityPrefix }}{{ .StructName }}
-	err := db.Where("{{ (index .PrimaryKeys 0).ColumnName }} IN ?", {{ toLower (index .PrimaryKeys 0).Name }}s).Find(&out).Error
+	err := d.db(db).Where("{{ (index .PrimaryKeys 0).ColumnName }} IN ?", {{ toLower (index .PrimaryKeys 0).Name }}s).Find(&out).Error
 	return out, err
 }
 {{ end }}

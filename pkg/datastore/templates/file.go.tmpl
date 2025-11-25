@@ -16,10 +16,11 @@ type {{ .Name }} struct {
 	{{ .Name }} {{ .Type }} {{ .Tags }}
 {{ end }}
 }
+{{ if .Kind }}
 
 // Kind returns the Datastore kind name for {{ .Name }}.
 func (*{{ .Name }}) Kind() string {
 	return "{{ .Kind }}"
 }
-
+{{ end }}
 {{ end }}

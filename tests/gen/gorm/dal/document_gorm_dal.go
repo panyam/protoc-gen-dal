@@ -11,15 +11,36 @@ import (
 
 // DocumentGormPartialDAL provides database access helper methods for gorm.DocumentGormPartial.
 type DocumentGormPartialDAL struct {
+	// TableName overrides the table for all operations.
+	// If empty, uses the struct's TableName() method (if any) or GORM's default.
+	TableName string
+
 	// WillCreate hook is called when Save detects the record doesn't exist and will create it.
 	// Return an error to prevent creation.
 	WillCreate func(context.Context, *gorm.DocumentGormPartial) error
 }
 
+// NewDocumentGormPartialDAL creates a new DocumentGormPartialDAL instance.
+// If tableName is empty, operations will use the struct's TableName() method
+// or GORM's default table naming convention.
+func NewDocumentGormPartialDAL(tableName string) *DocumentGormPartialDAL {
+	return &DocumentGormPartialDAL{TableName: tableName}
+}
+
+// db returns a *gorm.DB scoped to the correct table.
+// If TableName is set, uses db.Table(); otherwise returns db unchanged
+// to let GORM resolve the table name from the struct's TableName() method.
+func (d *DocumentGormPartialDAL) db(db *gormlib.DB) *gormlib.DB {
+	if d.TableName != "" {
+		return db.Table(d.TableName)
+	}
+	return db
+}
+
 // Create creates a new gorm.DocumentGormPartial record.
 // Returns an error if the record already exists.
 func (d *DocumentGormPartialDAL) Create(ctx context.Context, db *gormlib.DB, obj *gorm.DocumentGormPartial) error {
-	return db.Create(obj).Error
+	return d.db(db).Create(obj).Error
 }
 
 // Update updates an existing gorm.DocumentGormPartial record.
@@ -28,7 +49,7 @@ func (d *DocumentGormPartialDAL) Create(ctx context.Context, db *gormlib.DB, obj
 //
 //	dal.Update(ctx, db.Where("version = ?", oldVersion), obj)
 func (d *DocumentGormPartialDAL) Update(ctx context.Context, db *gormlib.DB, obj *gorm.DocumentGormPartial) error {
-	result := db.Updates(obj)
+	result := d.db(db).Updates(obj)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -54,7 +75,7 @@ func (d *DocumentGormPartialDAL) Save(ctx context.Context, db *gormlib.DB, obj *
 
 	// Check if record exists by trying to fetch it
 	var existing gorm.DocumentGormPartial
-	err := db.First(&existing, "id = ?", obj.Id).Error
+	err := d.db(db).First(&existing, "id = ?", obj.Id).Error
 
 	if err != nil {
 		if errors.Is(err, gormlib.ErrRecordNotFound) {
@@ -71,14 +92,14 @@ func (d *DocumentGormPartialDAL) Save(ctx context.Context, db *gormlib.DB, obj *
 	}
 
 	// Save (create or update)
-	return db.Save(obj).Error
+	return d.db(db).Save(obj).Error
 }
 
 // Get retrieves a gorm.DocumentGormPartial record by primary key.
 // Returns (nil, nil) if the record is not found (not an error).
 func (d *DocumentGormPartialDAL) Get(ctx context.Context, db *gormlib.DB, id uint32) (*gorm.DocumentGormPartial, error) {
 	var out gorm.DocumentGormPartial
-	err := db.First(&out, "id = ?", id).Error
+	err := d.db(db).First(&out, "id = ?", id).Error
 	if err != nil {
 		if errors.Is(err, gormlib.ErrRecordNotFound) {
 			return nil, nil
@@ -90,14 +111,14 @@ func (d *DocumentGormPartialDAL) Get(ctx context.Context, db *gormlib.DB, id uin
 
 // Delete removes a gorm.DocumentGormPartial record by primary key.
 func (d *DocumentGormPartialDAL) Delete(ctx context.Context, db *gormlib.DB, id uint32) error {
-	return db.Where("id = ?", id).Delete(&gorm.DocumentGormPartial{}).Error
+	return d.db(db).Where("id = ?", id).Delete(&gorm.DocumentGormPartial{}).Error
 }
 
 // List retrieves multiple gorm.DocumentGormPartial records using the provided query.
 // The caller is responsible for adding filters, ordering, and pagination to the query.
 func (d *DocumentGormPartialDAL) List(ctx context.Context, query *gormlib.DB) ([]*gorm.DocumentGormPartial, error) {
 	var out []*gorm.DocumentGormPartial
-	err := query.Find(&out).Error
+	err := d.db(query).Find(&out).Error
 	return out, err
 }
 
@@ -109,21 +130,42 @@ func (d *DocumentGormPartialDAL) BatchGet(ctx context.Context, db *gormlib.DB, i
 	}
 
 	var out []*gorm.DocumentGormPartial
-	err := db.Where("id IN ?", ids).Find(&out).Error
+	err := d.db(db).Where("id IN ?", ids).Find(&out).Error
 	return out, err
 }
 
 // DocumentGormSkipDAL provides database access helper methods for gorm.DocumentGormSkip.
 type DocumentGormSkipDAL struct {
+	// TableName overrides the table for all operations.
+	// If empty, uses the struct's TableName() method (if any) or GORM's default.
+	TableName string
+
 	// WillCreate hook is called when Save detects the record doesn't exist and will create it.
 	// Return an error to prevent creation.
 	WillCreate func(context.Context, *gorm.DocumentGormSkip) error
 }
 
+// NewDocumentGormSkipDAL creates a new DocumentGormSkipDAL instance.
+// If tableName is empty, operations will use the struct's TableName() method
+// or GORM's default table naming convention.
+func NewDocumentGormSkipDAL(tableName string) *DocumentGormSkipDAL {
+	return &DocumentGormSkipDAL{TableName: tableName}
+}
+
+// db returns a *gorm.DB scoped to the correct table.
+// If TableName is set, uses db.Table(); otherwise returns db unchanged
+// to let GORM resolve the table name from the struct's TableName() method.
+func (d *DocumentGormSkipDAL) db(db *gormlib.DB) *gormlib.DB {
+	if d.TableName != "" {
+		return db.Table(d.TableName)
+	}
+	return db
+}
+
 // Create creates a new gorm.DocumentGormSkip record.
 // Returns an error if the record already exists.
 func (d *DocumentGormSkipDAL) Create(ctx context.Context, db *gormlib.DB, obj *gorm.DocumentGormSkip) error {
-	return db.Create(obj).Error
+	return d.db(db).Create(obj).Error
 }
 
 // Update updates an existing gorm.DocumentGormSkip record.
@@ -132,7 +174,7 @@ func (d *DocumentGormSkipDAL) Create(ctx context.Context, db *gormlib.DB, obj *g
 //
 //	dal.Update(ctx, db.Where("version = ?", oldVersion), obj)
 func (d *DocumentGormSkipDAL) Update(ctx context.Context, db *gormlib.DB, obj *gorm.DocumentGormSkip) error {
-	result := db.Updates(obj)
+	result := d.db(db).Updates(obj)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -158,7 +200,7 @@ func (d *DocumentGormSkipDAL) Save(ctx context.Context, db *gormlib.DB, obj *gor
 
 	// Check if record exists by trying to fetch it
 	var existing gorm.DocumentGormSkip
-	err := db.First(&existing, "id = ?", obj.Id).Error
+	err := d.db(db).First(&existing, "id = ?", obj.Id).Error
 
 	if err != nil {
 		if errors.Is(err, gormlib.ErrRecordNotFound) {
@@ -175,14 +217,14 @@ func (d *DocumentGormSkipDAL) Save(ctx context.Context, db *gormlib.DB, obj *gor
 	}
 
 	// Save (create or update)
-	return db.Save(obj).Error
+	return d.db(db).Save(obj).Error
 }
 
 // Get retrieves a gorm.DocumentGormSkip record by primary key.
 // Returns (nil, nil) if the record is not found (not an error).
 func (d *DocumentGormSkipDAL) Get(ctx context.Context, db *gormlib.DB, id uint32) (*gorm.DocumentGormSkip, error) {
 	var out gorm.DocumentGormSkip
-	err := db.First(&out, "id = ?", id).Error
+	err := d.db(db).First(&out, "id = ?", id).Error
 	if err != nil {
 		if errors.Is(err, gormlib.ErrRecordNotFound) {
 			return nil, nil
@@ -194,14 +236,14 @@ func (d *DocumentGormSkipDAL) Get(ctx context.Context, db *gormlib.DB, id uint32
 
 // Delete removes a gorm.DocumentGormSkip record by primary key.
 func (d *DocumentGormSkipDAL) Delete(ctx context.Context, db *gormlib.DB, id uint32) error {
-	return db.Where("id = ?", id).Delete(&gorm.DocumentGormSkip{}).Error
+	return d.db(db).Where("id = ?", id).Delete(&gorm.DocumentGormSkip{}).Error
 }
 
 // List retrieves multiple gorm.DocumentGormSkip records using the provided query.
 // The caller is responsible for adding filters, ordering, and pagination to the query.
 func (d *DocumentGormSkipDAL) List(ctx context.Context, query *gormlib.DB) ([]*gorm.DocumentGormSkip, error) {
 	var out []*gorm.DocumentGormSkip
-	err := query.Find(&out).Error
+	err := d.db(query).Find(&out).Error
 	return out, err
 }
 
@@ -213,6 +255,6 @@ func (d *DocumentGormSkipDAL) BatchGet(ctx context.Context, db *gormlib.DB, ids 
 	}
 
 	var out []*gorm.DocumentGormSkip
-	err := db.Where("id IN ?", ids).Find(&out).Error
+	err := d.db(db).Where("id IN ?", ids).Find(&out).Error
 	return out, err
 }

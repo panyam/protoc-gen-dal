@@ -59,6 +59,11 @@ type MessageInfo struct {
 
 	// ImplementScanner indicates whether to generate driver.Valuer/sql.Scanner methods
 	ImplementScanner bool
+
+	// GenerateDAL indicates whether to generate DAL (Data Access Layer) helpers.
+	// Defaults to true if TableName is specified, false otherwise.
+	// Can be explicitly overridden via the 'dal' option in proto annotations.
+	GenerateDAL bool
 }
 
 // CollectMessages finds all messages for a target across all proto files.
@@ -186,9 +191,15 @@ func extractMessageInfo(msg *protogen.Message, target Target, index map[string]*
 //	message BookGorm {
 //	  option (dal.v1.gorm) = {
 //	    source: "library.v1.Book"    // API message to convert from
-//	    table: "books"                // Table name
+//	    table: "books"                // Table name (optional for late-binding)
+//	    dal: true                     // Generate DAL helpers (optional)
 //	  };
 //	}
+//
+// The 'dal' option controls DAL generation:
+//   - If not set: defaults to true when table is specified, false otherwise
+//   - If explicitly true: generate DAL even without table (for late-binding)
+//   - If explicitly false: skip DAL generation even with table
 //
 // Returns error if source message is not found.
 func extractGormInfo(msg *protogen.Message, opts proto.Message, index map[string]*protogen.Message) (*MessageInfo, error) {
@@ -211,6 +222,14 @@ func extractGormInfo(msg *protogen.Message, opts proto.Message, index map[string
 			msg.Desc.FullName(), gormOpts.Source)
 	}
 
+	// Determine if DAL should be generated:
+	// - If dal is explicitly set, use that value
+	// - Otherwise, default to (table != "")
+	generateDAL := gormOpts.Table != "" // default: generate DAL if table is specified
+	if gormOpts.Dal != nil {            // explicitly set via optional bool
+		generateDAL = *gormOpts.Dal
+	}
+
 	return &MessageInfo{
 		SourceMessage:    sourceMsg,
 		TargetMessage:    msg,
@@ -218,6 +237,7 @@ func extractGormInfo(msg *protogen.Message, opts proto.Message, index map[string
 		TableName:        gormOpts.Table,
 		SchemaName:       "", // GORM doesn't use schema
 		ImplementScanner: gormOpts.ImplementScanner,
+		GenerateDAL:      generateDAL,
 	}, nil
 }
 
@@ -341,13 +361,20 @@ func extractMongoDBInfo(msg *protogen.Message, opts proto.Message, index map[str
 //	message UserDatastore {
 //	  option (dal.v1.datastore_options) = {
 //	    source: "api.v1.User"    // API message to convert from
-//	    kind: "User"              // Datastore kind name
+//	    kind: "User"              // Datastore kind name (optional for late-binding)
 //	    namespace: "prod"         // Datastore namespace (optional)
+//	    dal: true                 // Generate DAL helpers (optional, reserved for future)
 //	  };
 //	}
 //
 // Note: TableName is used for "kind" name and SchemaName for "namespace"
 // to keep MessageInfo generic across all targets.
+//
+// The 'dal' option controls DAL generation (reserved for future Datastore DAL):
+//   - If not set: defaults to true when kind is specified, false otherwise
+//   - If explicitly true: generate DAL even without kind (for late-binding)
+//   - If explicitly false: skip DAL generation even with kind
+//
 // Returns error if source message is not found.
 func extractDatastoreInfo(msg *protogen.Message, opts proto.Message, index map[string]*protogen.Message) (*MessageInfo, error) {
 	// Check if message has datastore_options annotation
@@ -361,12 +388,21 @@ func extractDatastoreInfo(msg *protogen.Message, opts proto.Message, index map[s
 					msg.Desc.FullName(), dsOpts.Source)
 			}
 
+			// Determine if DAL should be generated:
+			// - If dal is explicitly set, use that value
+			// - Otherwise, default to (kind != "")
+			generateDAL := dsOpts.Kind != "" // default: generate DAL if kind is specified
+			if dsOpts.Dal != nil {           // explicitly set via optional bool
+				generateDAL = *dsOpts.Dal
+			}
+
 			return &MessageInfo{
 				SourceMessage: sourceMsg,
 				TargetMessage: msg,
 				SourceName:    dsOpts.Source,
 				TableName:     dsOpts.Kind,      // Datastore uses "kind" instead of "table"
 				SchemaName:    dsOpts.Namespace, // SchemaName repurposed for "namespace"
+				GenerateDAL:   generateDAL,
 			}, nil
 		}
 	}

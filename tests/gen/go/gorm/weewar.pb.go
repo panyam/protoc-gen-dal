@@ -177,7 +177,8 @@ type WorldGORM struct {
 	// WorldData has-one relationship via foreign key
 	WorldData *WorldDataGORM `protobuf:"bytes,9,opt,name=world_data,json=worldData,proto3" json:"world_data,omitempty"`
 	// PreviewUrls as JSON for cross-DB compatibility
-	PreviewUrls []string `protobuf:"bytes,11,rep,name=preview_urls,json=previewUrls,proto3" json:"preview_urls,omitempty"` // DefaultGameConfig as JSON for cross-DB compatibility
+	PreviewUrls []string `protobuf:"bytes,11,rep,name=preview_urls,json=previewUrls,proto3" json:"preview_urls,omitempty"`
+	// DefaultGameConfig as JSON for cross-DB compatibility
 	// ScreenshotIndexInfo embedded
 	ScreenshotIndexInfo *IndexInfoGORM `protobuf:"bytes,13,opt,name=screenshot_index_info,json=screenshotIndexInfo,proto3" json:"screenshot_index_info,omitempty"`
 	// SearchIndexInfo embedded
@@ -325,7 +326,7 @@ type GameGORM struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// Tags as JSON for cross-DB compatibility
-	Tags []string `protobuf:"bytes,7,rep,name=tags,proto3" json:"tags,omitempty"` // Config as JSON for cross-DB compatibility
+	Tags []string `protobuf:"bytes,7,rep,name=tags,proto3" json:"tags,omitempty"`
 	// PreviewUrls as JSON for cross-DB compatibility
 	PreviewUrls []string `protobuf:"bytes,11,rep,name=preview_urls,json=previewUrls,proto3" json:"preview_urls,omitempty"`
 	// ScreenshotIndexInfo embedded
@@ -611,7 +612,7 @@ func (x *GameSettingsGORM) GetAllowedUnits() []int32 {
 // Holds the game's Active/Current state (eg world state)
 type GameStateGORM struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	GameId        string                 `protobuf:"bytes,1,opt,name=game_id,json=gameId,proto3" json:"game_id,omitempty"` // WorldData as JSON for cross-DB compatibility
+	GameId        string                 `protobuf:"bytes,1,opt,name=game_id,json=gameId,proto3" json:"game_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

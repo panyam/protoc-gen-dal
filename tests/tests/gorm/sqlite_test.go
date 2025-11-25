@@ -491,3 +491,128 @@ func TestWillCreateHookError(t *testing.T) {
 		t.Error("Record was created despite WillCreate error")
 	}
 }
+
+// TestDALLateBinding tests the DAL's TableName override functionality.
+// This demonstrates using the same struct with different tables at runtime.
+func TestDALLateBinding(t *testing.T) {
+	db := setupTestDB(t)
+
+	// Create two separate tables for the same struct
+	err := db.Exec("CREATE TABLE user_addresses (id INTEGER PRIMARY KEY, name TEXT, email TEXT, age INTEGER, birthday DATETIME, member_number TEXT, activated_at DATETIME, created_at DATETIME, updated_at DATETIME, deleted_at DATETIME)").Error
+	if err != nil {
+		t.Fatalf("Failed to create user_addresses table: %v", err)
+	}
+
+	err = db.Exec("CREATE TABLE company_addresses (id INTEGER PRIMARY KEY, name TEXT, email TEXT, age INTEGER, birthday DATETIME, member_number TEXT, activated_at DATETIME, created_at DATETIME, updated_at DATETIME, deleted_at DATETIME)").Error
+	if err != nil {
+		t.Fatalf("Failed to create company_addresses table: %v", err)
+	}
+
+	ctx := context.Background()
+
+	// Create two DAL instances pointing to different tables
+	userAddrDAL := dal.NewUserGORMDAL("user_addresses")
+	companyAddrDAL := dal.NewUserGORMDAL("company_addresses")
+
+	// Create records in both tables using the same struct type
+	userAddr := &gormgen.UserGORM{
+		Id:    1,
+		Name:  "Home Address",
+		Email: "home@example.com",
+		Age:   1,
+	}
+
+	companyAddr := &gormgen.UserGORM{
+		Id:    1, // Same ID but different table
+		Name:  "Office Address",
+		Email: "office@example.com",
+		Age:   2,
+	}
+
+	// Create in user_addresses
+	if err := userAddrDAL.Create(ctx, db, userAddr); err != nil {
+		t.Fatalf("Failed to create in user_addresses: %v", err)
+	}
+
+	// Create in company_addresses
+	if err := companyAddrDAL.Create(ctx, db, companyAddr); err != nil {
+		t.Fatalf("Failed to create in company_addresses: %v", err)
+	}
+
+	// Retrieve from both tables and verify isolation
+	retrieved, err := userAddrDAL.Get(ctx, db, 1)
+	if err != nil {
+		t.Fatalf("Failed to get from user_addresses: %v", err)
+	}
+	if retrieved.Name != "Home Address" {
+		t.Errorf("Wrong record from user_addresses: got %s, want 'Home Address'", retrieved.Name)
+	}
+
+	retrieved, err = companyAddrDAL.Get(ctx, db, 1)
+	if err != nil {
+		t.Fatalf("Failed to get from company_addresses: %v", err)
+	}
+	if retrieved.Name != "Office Address" {
+		t.Errorf("Wrong record from company_addresses: got %s, want 'Office Address'", retrieved.Name)
+	}
+
+	// Update in one table shouldn't affect the other
+	userAddr.Name = "Updated Home"
+	if err := userAddrDAL.Save(ctx, db, userAddr); err != nil {
+		t.Fatalf("Failed to update user_addresses: %v", err)
+	}
+
+	// Verify company_addresses unchanged
+	retrieved, _ = companyAddrDAL.Get(ctx, db, 1)
+	if retrieved.Name != "Office Address" {
+		t.Errorf("Company address was changed unexpectedly: got %s", retrieved.Name)
+	}
+
+	// Delete from one table
+	if err := userAddrDAL.Delete(ctx, db, 1); err != nil {
+		t.Fatalf("Failed to delete from user_addresses: %v", err)
+	}
+
+	// Verify user_addresses is empty but company_addresses still has the record
+	retrieved, _ = userAddrDAL.Get(ctx, db, 1)
+	if retrieved != nil {
+		t.Error("Record should be deleted from user_addresses")
+	}
+
+	retrieved, _ = companyAddrDAL.Get(ctx, db, 1)
+	if retrieved == nil {
+		t.Error("Record should still exist in company_addresses")
+	}
+}
+
+// TestDALTableNameEmpty tests that empty TableName uses the struct's TableName() method
+func TestDALTableNameEmpty(t *testing.T) {
+	db := setupTestDB(t)
+	if err := db.AutoMigrate(&gormgen.UserGORM{}); err != nil {
+		t.Fatalf("Failed to migrate: %v", err)
+	}
+
+	ctx := context.Background()
+
+	// Create DAL with empty TableName (uses struct's TableName() method)
+	userDAL := dal.NewUserGORMDAL("")
+
+	// Create user using the default table
+	user := &gormgen.UserGORM{
+		Id:    1,
+		Name:  "Default Table User",
+		Email: "default@example.com",
+		Age:   25,
+	}
+
+	if err := userDAL.Create(ctx, db, user); err != nil {
+		t.Fatalf("Failed to create with empty TableName: %v", err)
+	}
+
+	// Verify record exists in the default table ("users" via TableName() method)
+	var count int64
+	db.Table("users").Count(&count)
+	if count != 1 {
+		t.Errorf("Expected 1 record in 'users' table, got %d", count)
+	}
+}

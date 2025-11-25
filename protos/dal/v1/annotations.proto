@@ -284,7 +284,10 @@ message GormOptions {
   // Source message fully qualified name (e.g., "library.v1.Book")
   string source = 1;
 
-  // Table name
+  // Table name (optional)
+  // If specified, generates a TableName() method returning this value.
+  // If omitted, no TableName() method is generated, allowing late-binding
+  // via db.Table() or the DAL's TableName field.
   string table = 2;
 
   // Embedded field names (for GORM embedded structs)
@@ -294,6 +297,12 @@ message GormOptions {
   // When true, generates Value() and Scan() methods that serialize the struct to/from JSON
   // Useful for embedded types that need to be stored as JSON in the database
   bool implement_scanner = 4;
+
+  // Generate DAL (Data Access Layer) helpers (optional)
+  // If not set: defaults to true when table is specified, false otherwise
+  // If explicitly true: generate DAL even without table (for late-binding)
+  // If explicitly false: skip DAL generation even with table
+  optional bool dal = 5;
 }
 
 // PostgreSQL target options (raw SQL)
@@ -310,7 +319,9 @@ message PostgresOptions {
 
 // Google Cloud Datastore options
 message DatastoreOptions {
-  // Datastore kind name
+  // Datastore kind name (optional)
+  // If specified, generates a Kind() method returning this value.
+  // If omitted, no Kind() method is generated, allowing late-binding.
   string kind = 1;
 
   // Datastore namespace
@@ -324,6 +335,11 @@ message DatastoreOptions {
 
   // Source message fully qualified name (e.g., "library.v1.Book")
   string source = 5;
+
+  // Generate DAL (Data Access Layer) helpers (optional)
+  // Reserved for future Datastore DAL implementation.
+  // If not set: defaults to true when kind is specified, false otherwise
+  optional bool dal = 6;
 }
 
 // Firestore target options

@@ -437,8 +437,8 @@ func TestGenerateDALFileCode_SkipsMessagesWithoutPK(t *testing.T) {
 	})
 
 	messages := []*collector.MessageInfo{
-		{TargetMessage: plugin.Files[0].Messages[0]},
-		{TargetMessage: plugin.Files[0].Messages[1]},
+		{TargetMessage: plugin.Files[0].Messages[0], GenerateDAL: true},
+		{TargetMessage: plugin.Files[0].Messages[1], GenerateDAL: true},
 	}
 
 	// Generate DAL code
@@ -481,7 +481,7 @@ func TestGenerateDALFileCode_EmptyWhenAllMessagesLackPK(t *testing.T) {
 	})
 
 	messages := []*collector.MessageInfo{
-		{TargetMessage: plugin.Files[0].Messages[0]},
+		{TargetMessage: plugin.Files[0].Messages[0], GenerateDAL: true},
 	}
 
 	// Generate DAL code
@@ -528,7 +528,7 @@ func TestGenerateDALFileCode_BasicStructure(t *testing.T) {
 	})
 
 	messages := []*collector.MessageInfo{
-		{TargetMessage: plugin.Files[0].Messages[0]},
+		{TargetMessage: plugin.Files[0].Messages[0], GenerateDAL: true},
 	}
 
 	// Generate DAL code
@@ -588,7 +588,7 @@ func TestGenerateDALFileCode_CreateUpdateMethods(t *testing.T) {
 	})
 
 	messages := []*collector.MessageInfo{
-		{TargetMessage: plugin.Files[0].Messages[0]},
+		{TargetMessage: plugin.Files[0].Messages[0], GenerateDAL: true},
 	}
 
 	// Generate DAL code
@@ -608,8 +608,8 @@ func TestGenerateDALFileCode_CreateUpdateMethods(t *testing.T) {
 	}
 
 	// Verify Create returns error on duplicate
-	if !strings.Contains(content, "db.Create(obj).Error") {
-		t.Error("Expected Create method to call db.Create")
+	if !strings.Contains(content, "d.db(db).Create(obj).Error") {
+		t.Error("Expected Create method to call d.db(db).Create")
 	}
 
 	// Verify Update checks RowsAffected
@@ -655,7 +655,7 @@ func TestGenerateDALFileCode_WithSubdirectory(t *testing.T) {
 	})
 
 	messages := []*collector.MessageInfo{
-		{TargetMessage: plugin.Files[0].Messages[0]},
+		{TargetMessage: plugin.Files[0].Messages[0], GenerateDAL: true},
 	}
 
 	// Generate DAL code with subdirectory

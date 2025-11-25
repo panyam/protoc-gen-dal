@@ -19,11 +19,6 @@ type IndexInfoDatastore struct {
 	NeedsIndexing bool `datastore:"needs_indexing"`
 }
 
-// Kind returns the Datastore kind name for IndexInfoDatastore.
-func (*IndexInfoDatastore) Kind() string {
-	return ""
-}
-
 // TileDatastore is the Datastore entity for the source message.
 type TileDatastore struct {
 	Key *datastore.Key `datastore:"-"`
@@ -41,11 +36,6 @@ type TileDatastore struct {
 	LastActedTurn int32 `datastore:"last_acted_turn"`
 
 	LastToppedupTurn int32 `datastore:"last_toppedup_turn"`
-}
-
-// Kind returns the Datastore kind name for TileDatastore.
-func (*TileDatastore) Kind() string {
-	return ""
 }
 
 // UnitDatastore is the Datastore entity for the source message.
@@ -79,11 +69,6 @@ type UnitDatastore struct {
 	ChosenAlternative string `datastore:"chosen_alternative"`
 }
 
-// Kind returns the Datastore kind name for UnitDatastore.
-func (*UnitDatastore) Kind() string {
-	return ""
-}
-
 // AttackRecordDatastore is the Datastore entity for the source message.
 type AttackRecordDatastore struct {
 	Key *datastore.Key `datastore:"-"`
@@ -95,11 +80,6 @@ type AttackRecordDatastore struct {
 	IsRanged bool `datastore:"is_ranged"`
 
 	TurnNumber int32 `datastore:"turn_number"`
-}
-
-// Kind returns the Datastore kind name for AttackRecordDatastore.
-func (*AttackRecordDatastore) Kind() string {
-	return ""
 }
 
 // WorldDatastore is the Datastore entity for the source message.
@@ -205,11 +185,6 @@ type GameConfigurationDatastore struct {
 	Settings GameSettingsDatastore `datastore:"settings"`
 }
 
-// Kind returns the Datastore kind name for GameConfigurationDatastore.
-func (*GameConfigurationDatastore) Kind() string {
-	return ""
-}
-
 // IncomeConfigDatastore is the Datastore entity for the source message.
 type IncomeConfigDatastore struct {
 	Key *datastore.Key `datastore:"-"`
@@ -227,11 +202,6 @@ type IncomeConfigDatastore struct {
 	MissilesiloIncome int32 `datastore:"missilesilo_income"`
 
 	MinesIncome int32 `datastore:"mines_income"`
-}
-
-// Kind returns the Datastore kind name for IncomeConfigDatastore.
-func (*IncomeConfigDatastore) Kind() string {
-	return ""
 }
 
 // GamePlayerDatastore is the Datastore entity for the source message.
@@ -255,11 +225,6 @@ type GamePlayerDatastore struct {
 	Coins int32 `datastore:"coins"`
 }
 
-// Kind returns the Datastore kind name for GamePlayerDatastore.
-func (*GamePlayerDatastore) Kind() string {
-	return ""
-}
-
 // GameTeamDatastore is the Datastore entity for the source message.
 type GameTeamDatastore struct {
 	Key *datastore.Key `datastore:"-"`
@@ -273,11 +238,6 @@ type GameTeamDatastore struct {
 	IsActive bool `datastore:"is_active"`
 }
 
-// Kind returns the Datastore kind name for GameTeamDatastore.
-func (*GameTeamDatastore) Kind() string {
-	return ""
-}
-
 // GameSettingsDatastore is the Datastore entity for the source message.
 type GameSettingsDatastore struct {
 	Key *datastore.Key `datastore:"-"`
@@ -289,11 +249,6 @@ type GameSettingsDatastore struct {
 	TeamMode string `datastore:"team_mode"`
 
 	MaxTurns int32 `datastore:"max_turns"`
-}
-
-// Kind returns the Datastore kind name for GameSettingsDatastore.
-func (*GameSettingsDatastore) Kind() string {
-	return ""
 }
 
 // GameStateDatastore is the Datastore entity for the source message.
@@ -323,11 +278,6 @@ type GameStateDatastore struct {
 	WinningTeam int32 `datastore:"winning_team"`
 }
 
-// Kind returns the Datastore kind name for GameStateDatastore.
-func (*GameStateDatastore) Kind() string {
-	return ""
-}
-
 // GameMoveHistoryDatastore is the Datastore entity for the source message.
 type GameMoveHistoryDatastore struct {
 	Key *datastore.Key `datastore:"-"`
@@ -335,11 +285,6 @@ type GameMoveHistoryDatastore struct {
 	GameId string `datastore:"game_id"`
 
 	Groups []GameMoveGroupDatastore `datastore:"groups"`
-}
-
-// Kind returns the Datastore kind name for GameMoveHistoryDatastore.
-func (*GameMoveHistoryDatastore) Kind() string {
-	return ""
 }
 
 // GameMoveGroupDatastore is the Datastore entity for the source message.
@@ -351,11 +296,6 @@ type GameMoveGroupDatastore struct {
 	EndedAt time.Time `datastore:"ended_at"`
 
 	Moves []GameMoveDatastore `datastore:"moves"`
-}
-
-// Kind returns the Datastore kind name for GameMoveGroupDatastore.
-func (*GameMoveGroupDatastore) Kind() string {
-	return ""
 }
 
 // MoveUnitActionDatastore is the Datastore entity for the source message.
@@ -375,11 +315,6 @@ type MoveUnitActionDatastore struct {
 	ReconstructedPath []byte `datastore:"reconstructed_path"`
 }
 
-// Kind returns the Datastore kind name for MoveUnitActionDatastore.
-func (*MoveUnitActionDatastore) Kind() string {
-	return ""
-}
-
 // GameMoveDatastore is the Datastore entity for the source message.
 type GameMoveDatastore struct {
 	Key *datastore.Key `datastore:"-"`
@@ -395,9 +330,4 @@ type GameMoveDatastore struct {
 	IsPermanent bool `datastore:"is_permanent"`
 
 	Changes [][]byte `datastore:"changes"`
-}
-
-// Kind returns the Datastore kind name for GameMoveDatastore.
-func (*GameMoveDatastore) Kind() string {
-	return ""
 }

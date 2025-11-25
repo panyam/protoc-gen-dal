@@ -519,7 +519,10 @@ type GormOptions struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Source message fully qualified name (e.g., "library.v1.Book")
 	Source string `protobuf:"bytes,1,opt,name=source,proto3" json:"source,omitempty"`
-	// Table name
+	// Table name (optional)
+	// If specified, generates a TableName() method returning this value.
+	// If omitted, no TableName() method is generated, allowing late-binding
+	// via db.Table() or the DAL's TableName field.
 	Table string `protobuf:"bytes,2,opt,name=table,proto3" json:"table,omitempty"`
 	// Embedded field names (for GORM embedded structs)
 	Embedded []string `protobuf:"bytes,3,rep,name=embedded,proto3" json:"embedded,omitempty"`
@@ -527,8 +530,13 @@ type GormOptions struct {
 	// When true, generates Value() and Scan() methods that serialize the struct to/from JSON
 	// Useful for embedded types that need to be stored as JSON in the database
 	ImplementScanner bool `protobuf:"varint,4,opt,name=implement_scanner,json=implementScanner,proto3" json:"implement_scanner,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	// Generate DAL (Data Access Layer) helpers (optional)
+	// If not set: defaults to true when table is specified, false otherwise
+	// If explicitly true: generate DAL even without table (for late-binding)
+	// If explicitly false: skip DAL generation even with table
+	Dal           *bool `protobuf:"varint,5,opt,name=dal,proto3,oneof" json:"dal,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GormOptions) Reset() {
@@ -585,6 +593,13 @@ func (x *GormOptions) GetEmbedded() []string {
 func (x *GormOptions) GetImplementScanner() bool {
 	if x != nil {
 		return x.ImplementScanner
+	}
+	return false
+}
+
+func (x *GormOptions) GetDal() bool {
+	if x != nil && x.Dal != nil {
+		return *x.Dal
 	}
 	return false
 }
@@ -656,7 +671,9 @@ func (x *PostgresOptions) GetSchema() string {
 // Google Cloud Datastore options
 type DatastoreOptions struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Datastore kind name
+	// Datastore kind name (optional)
+	// If specified, generates a Kind() method returning this value.
+	// If omitted, no Kind() method is generated, allowing late-binding.
 	Kind string `protobuf:"bytes,1,opt,name=kind,proto3" json:"kind,omitempty"`
 	// Datastore namespace
 	Namespace string `protobuf:"bytes,2,opt,name=namespace,proto3" json:"namespace,omitempty"`
@@ -665,7 +682,11 @@ type DatastoreOptions struct {
 	// Ancestor path
 	Ancestor string `protobuf:"bytes,4,opt,name=ancestor,proto3" json:"ancestor,omitempty"`
 	// Source message fully qualified name (e.g., "library.v1.Book")
-	Source        string `protobuf:"bytes,5,opt,name=source,proto3" json:"source,omitempty"`
+	Source string `protobuf:"bytes,5,opt,name=source,proto3" json:"source,omitempty"`
+	// Generate DAL (Data Access Layer) helpers (optional)
+	// Reserved for future Datastore DAL implementation.
+	// If not set: defaults to true when kind is specified, false otherwise
+	Dal           *bool `protobuf:"varint,6,opt,name=dal,proto3,oneof" json:"dal,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -733,6 +754,13 @@ func (x *DatastoreOptions) GetSource() string {
 		return x.Source
 	}
 	return ""
+}
+
+func (x *DatastoreOptions) GetDal() bool {
+	if x != nil && x.Dal != nil {
+		return *x.Dal
+	}
+	return false
 }
 
 // Firestore target options
@@ -1020,22 +1048,26 @@ const file_dal_v1_annotations_proto_rawDesc = "" +
 	"references\x126\n" +
 	"\ton_delete\x18\x02 \x01(\x0e2\x19.dal.v1.ReferentialActionR\bonDelete\x126\n" +
 	"\ton_update\x18\x03 \x01(\x0e2\x19.dal.v1.ReferentialActionR\bonUpdate\x12'\n" +
-	"\x0fconstraint_name\x18\x04 \x01(\tR\x0econstraintName\"\x84\x01\n" +
+	"\x0fconstraint_name\x18\x04 \x01(\tR\x0econstraintName\"\xa3\x01\n" +
 	"\vGormOptions\x12\x16\n" +
 	"\x06source\x18\x01 \x01(\tR\x06source\x12\x14\n" +
 	"\x05table\x18\x02 \x01(\tR\x05table\x12\x1a\n" +
 	"\bembedded\x18\x03 \x03(\tR\bembedded\x12+\n" +
-	"\x11implement_scanner\x18\x04 \x01(\bR\x10implementScanner\"W\n" +
+	"\x11implement_scanner\x18\x04 \x01(\bR\x10implementScanner\x12\x15\n" +
+	"\x03dal\x18\x05 \x01(\bH\x00R\x03dal\x88\x01\x01B\x06\n" +
+	"\x04_dal\"W\n" +
 	"\x0fPostgresOptions\x12\x16\n" +
 	"\x06source\x18\x01 \x01(\tR\x06source\x12\x14\n" +
 	"\x05table\x18\x02 \x01(\tR\x05table\x12\x16\n" +
-	"\x06schema\x18\x03 \x01(\tR\x06schema\"\x9f\x01\n" +
+	"\x06schema\x18\x03 \x01(\tR\x06schema\"\xbe\x01\n" +
 	"\x10DatastoreOptions\x12\x12\n" +
 	"\x04kind\x18\x01 \x01(\tR\x04kind\x12\x1c\n" +
 	"\tnamespace\x18\x02 \x01(\tR\tnamespace\x12%\n" +
 	"\x0eincomplete_key\x18\x03 \x01(\bR\rincompleteKey\x12\x1a\n" +
 	"\bancestor\x18\x04 \x01(\tR\bancestor\x12\x16\n" +
-	"\x06source\x18\x05 \x01(\tR\x06source\"J\n" +
+	"\x06source\x18\x05 \x01(\tR\x06source\x12\x15\n" +
+	"\x03dal\x18\x06 \x01(\bH\x00R\x03dal\x88\x01\x01B\x06\n" +
+	"\x04_dal\"J\n" +
 	"\x10FirestoreOptions\x12\x16\n" +
 	"\x06source\x18\x01 \x01(\tR\x06source\x12\x1e\n" +
 	"\n" +
@@ -1139,6 +1171,8 @@ func file_dal_v1_annotations_proto_init() {
 	if File_dal_v1_annotations_proto != nil {
 		return
 	}
+	file_dal_v1_annotations_proto_msgTypes[5].OneofWrappers = []any{}
+	file_dal_v1_annotations_proto_msgTypes[7].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

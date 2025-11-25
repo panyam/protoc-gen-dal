@@ -607,6 +607,17 @@ From `tests/protos/datastore/user.proto`:
   - ✅ Works for both repeated fields and map value types
   - ✅ Benefits: Cleaner protos, automatic JSON serialization, no tag duplication
 
+- ✅ **Late-Binding Table/Kind Support** (Phase 2.9) - COMPLETE
+  - ✅ Added `optional bool dal` field to GormOptions and DatastoreOptions
+  - ✅ DAL generation now conditional based on GenerateDAL flag
+  - ✅ DAL struct has TableName field for runtime table override
+  - ✅ Constructor pattern: `NewUserGORMDAL("custom_table")`
+  - ✅ db() helper returns `db.Table(tableName)` when set, otherwise unchanged
+  - ✅ Datastore Kind() method now conditional (only when kind specified)
+  - ✅ Full backward compatibility - existing protos work unchanged
+  - ✅ Tests: TestDALLateBinding, TestDALTableNameEmpty verify late-binding behavior
+  - ✅ Use case: Same Address struct in user_addresses and company_addresses tables
+
 **Next:**
 1. **Phase 3.2**: postgres-raw (Go + database/sql)
 2. **Phase 3.3**: firestore (Go)

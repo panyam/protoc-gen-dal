@@ -149,9 +149,16 @@ func generateDALFileCodeWithOptions(messages []*collector.MessageInfo, entityPkg
 	// Extract package name from the first message's target
 	entityPackageName := common.ExtractPackageName(messages[0].TargetMessage)
 
-	// Build DAL data for all messages (skip those without primary keys)
+	// Build DAL data for messages that:
+	// 1. Have GenerateDAL set to true
+	// 2. Have primary keys
 	var dals []DALData
 	for _, msg := range messages {
+		// Skip messages that don't want DAL generation
+		if !msg.GenerateDAL {
+			continue
+		}
+
 		dalData, err := buildDALData(msg)
 		if err != nil {
 			// Skip messages that don't have primary keys

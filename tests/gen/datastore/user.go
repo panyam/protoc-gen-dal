@@ -128,11 +128,6 @@ type AuthorDatastore struct {
 	Email string `datastore:"email"`
 }
 
-// Kind returns the Datastore kind name for AuthorDatastore.
-func (*AuthorDatastore) Kind() string {
-	return ""
-}
-
 // ProductDatastore is the Datastore entity for the source message.
 type ProductDatastore struct {
 	Key *datastore.Key `datastore:"-"`
