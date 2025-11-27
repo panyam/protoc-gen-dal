@@ -30,9 +30,9 @@ message UserGorm {
     gorm_tags: ["uniqueIndex", "type:varchar(100)"]
   }];
 
-  // Unsigned integer
+  // Unsigned integer (using smallint for cross-DB compatibility)
   uint32 age = 4 [(dal.v1.column) = {
-    gorm_tags: ["type:uint8"]
+    gorm_tags: ["type:smallint"]
   }];
 
   // Timestamp stored as time.Time (GORM and Datastore native support)

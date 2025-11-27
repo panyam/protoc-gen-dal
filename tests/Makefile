@@ -44,4 +44,64 @@ remove-symlink:
 		rm protos/dal ; \
 	fi
 
-.PHONY: run setupdev setupprod cleanall dev
+# PostgreSQL test database configuration
+PG_CONTAINER_NAME := protoc-gen-dal-test-pg
+PG_PORT := 5433
+PG_USER := postgres
+PG_PASSWORD := testpassword
+PG_DB := testdb
+
+# Start an ephemeral PostgreSQL instance using Docker for testing
+updb:
+	@echo "Starting PostgreSQL container..."
+	@docker run --rm -d \
+		--name $(PG_CONTAINER_NAME) \
+		-e POSTGRES_USER=$(PG_USER) \
+		-e POSTGRES_PASSWORD=$(PG_PASSWORD) \
+		-e POSTGRES_DB=$(PG_DB) \
+		-p $(PG_PORT):5432 \
+    arm64v8/postgres:18.1
+	@echo "Waiting for PostgreSQL to be ready..."
+	@sleep 3
+	@echo ""
+	@echo "PostgreSQL is running!"
+	@echo "To run tests with PostgreSQL, use:"
+	@echo "  export PROTOC_GEN_DAL_TEST_PGDB=$(PG_DB)"
+	@echo "  export PROTOC_GEN_DAL_TEST_PGPORT=$(PG_PORT)"
+	@echo "  export PROTOC_GEN_DAL_TEST_PGUSER=$(PG_USER)"
+	@echo "  export PROTOC_GEN_DAL_TEST_PGPASSWORD=$(PG_PASSWORD)"
+	@echo "  make buf"
+	@echo ""
+	@echo "Or run: make testpg"
+	@echo ""
+	@echo "To stop: make downdb"
+
+# Stop the PostgreSQL test container
+downdb:
+	@echo "Stopping PostgreSQL container..."
+	@docker stop $(PG_CONTAINER_NAME) 2>/dev/null || echo "Container not running"
+
+# Tail the logs of the running PostgreSQL container
+dblogs:
+	@docker logs -f $(PG_CONTAINER_NAME)
+
+# Run tests with PostgreSQL (starts container if not running)
+testpg:
+	@if ! docker ps --format '{{.Names}}' | grep -q '^$(PG_CONTAINER_NAME)$$'; then \
+		echo "Starting PostgreSQL container..."; \
+		docker run --rm -d \
+			--name $(PG_CONTAINER_NAME) \
+			-e POSTGRES_USER=$(PG_USER) \
+			-e POSTGRES_PASSWORD=$(PG_PASSWORD) \
+			-e POSTGRES_DB=$(PG_DB) \
+			-p $(PG_PORT):5432 \
+			postgres:15-alpine; \
+		sleep 3; \
+	fi
+	PROTOC_GEN_DAL_TEST_PGDB=$(PG_DB) \
+	PROTOC_GEN_DAL_TEST_PGPORT=$(PG_PORT) \
+	PROTOC_GEN_DAL_TEST_PGUSER=$(PG_USER) \
+	PROTOC_GEN_DAL_TEST_PGPASSWORD=$(PG_PASSWORD) \
+	go test ./...
+
+.PHONY: run setupdev setupprod cleanall dev updb downdb dblogs testpg

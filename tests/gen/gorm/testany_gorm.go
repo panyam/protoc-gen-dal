@@ -9,9 +9,11 @@ import (
 
 // TestRecord1GORM is the GORM model for api.TestRecord1
 type TestRecord1GORM struct {
-	TimeField time.Time
-	ExtraData []byte
-	AnEnum    api.SampleEnum
+	TimeField       time.Time
+	ExtraData       []byte
+	AnEnum          api.SampleEnum
+	ListOfEnums     []api.SampleEnum          `gorm:"serializer:json"`
+	MapStringToEnum map[string]api.SampleEnum `gorm:"serializer:json"`
 }
 
 // TableName returns the table name for TestRecord1GORM

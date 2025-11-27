@@ -11,7 +11,7 @@ import (
 	sync "sync"
 	unsafe "unsafe"
 
-	_ "github.com/panyam/protoc-gen-dal/tests/gen/go/api"
+	api "github.com/panyam/protoc-gen-dal/tests/gen/go/api"
 	_ "github.com/panyam/protoc-gen-dal/tests/gen/go/dal/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -24,11 +24,16 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// UserGorm demonstrates comprehensive GORM features from https://gorm.io/docs/models.html
+// TestRecord1Gorm demonstrates GORM features for complex types including enums.
+// Tests: plain enums, repeated enums, and map<string, enum>.
 type TestRecord1Gorm struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Override the list_of_enums field to add serializer:json for SQLite compatibility
+	ListOfEnums []api.SampleEnum `protobuf:"varint,4,rep,packed,name=list_of_enums,json=listOfEnums,proto3,enum=api.SampleEnum" json:"list_of_enums,omitempty"`
+	// Override the map_string_to_enum field to add serializer:json for SQLite compatibility
+	MapStringToEnum map[string]api.SampleEnum `protobuf:"bytes,5,rep,name=map_string_to_enum,json=mapStringToEnum,proto3" json:"map_string_to_enum,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value,enum=api.SampleEnum"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *TestRecord1Gorm) Reset() {
@@ -61,12 +66,31 @@ func (*TestRecord1Gorm) Descriptor() ([]byte, []int) {
 	return file_gorm_testany_proto_rawDescGZIP(), []int{0}
 }
 
+func (x *TestRecord1Gorm) GetListOfEnums() []api.SampleEnum {
+	if x != nil {
+		return x.ListOfEnums
+	}
+	return nil
+}
+
+func (x *TestRecord1Gorm) GetMapStringToEnum() map[string]api.SampleEnum {
+	if x != nil {
+		return x.MapStringToEnum
+	}
+	return nil
+}
+
 var File_gorm_testany_proto protoreflect.FileDescriptor
 
 const file_gorm_testany_proto_rawDesc = "" +
 	"\n" +
-	"\x12gorm/testany.proto\x12\x04gorm\x1a\x18dal/v1/annotations.proto\x1a\x11api/testany.proto\"6\n" +
-	"\x0fTestRecord1Gorm:#ʦ\x1d\x1f\n" +
+	"\x12gorm/testany.proto\x12\x04gorm\x1a\x18dal/v1/annotations.proto\x1a\x11api/testany.proto\"\xc7\x02\n" +
+	"\x0fTestRecord1Gorm\x12J\n" +
+	"\rlist_of_enums\x18\x04 \x03(\x0e2\x0f.api.SampleEnumB\x15\x92\xa6\x1d\x11R\x0fserializer:jsonR\vlistOfEnums\x12n\n" +
+	"\x12map_string_to_enum\x18\x05 \x03(\v2*.gorm.TestRecord1Gorm.MapStringToEnumEntryB\x15\x92\xa6\x1d\x11R\x0fserializer:jsonR\x0fmapStringToEnum\x1aS\n" +
+	"\x14MapStringToEnumEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12%\n" +
+	"\x05value\x18\x02 \x01(\x0e2\x0f.api.SampleEnumR\x05value:\x028\x01:#ʦ\x1d\x1f\n" +
 	"\x0fapi.TestRecord1\x12\ftest_recordsB|\n" +
 	"\bcom.gormB\fTestanyProtoP\x01Z2github.com/panyam/protoc-gen-dal/tests/gen/go/gorm\xa2\x02\x03GXX\xaa\x02\x04Gorm\xca\x02\x04Gorm\xe2\x02\x10Gorm\\GPBMetadata\xea\x02\x04Gormb\x06proto3"
 
@@ -82,16 +106,21 @@ func file_gorm_testany_proto_rawDescGZIP() []byte {
 	return file_gorm_testany_proto_rawDescData
 }
 
-var file_gorm_testany_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_gorm_testany_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_gorm_testany_proto_goTypes = []any{
 	(*TestRecord1Gorm)(nil), // 0: gorm.TestRecord1Gorm
+	nil,                     // 1: gorm.TestRecord1Gorm.MapStringToEnumEntry
+	(api.SampleEnum)(0),     // 2: api.SampleEnum
 }
 var file_gorm_testany_proto_depIdxs = []int32{
-	0, // [0:0] is the sub-list for method output_type
-	0, // [0:0] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	2, // 0: gorm.TestRecord1Gorm.list_of_enums:type_name -> api.SampleEnum
+	1, // 1: gorm.TestRecord1Gorm.map_string_to_enum:type_name -> gorm.TestRecord1Gorm.MapStringToEnumEntry
+	2, // 2: gorm.TestRecord1Gorm.MapStringToEnumEntry.value:type_name -> api.SampleEnum
+	3, // [3:3] is the sub-list for method output_type
+	3, // [3:3] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_gorm_testany_proto_init() }
@@ -105,7 +134,7 @@ func file_gorm_testany_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_gorm_testany_proto_rawDesc), len(file_gorm_testany_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   1,
+			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

@@ -161,14 +161,24 @@ func ProtoFieldToGoType(field *protogen.Field, structNameFunc StructNameFunc, so
 
 		keyType := ProtoScalarToGo(keyField.Desc.Kind().String())
 
-		// Check if value is a message type or scalar
+		// Determine the value type based on its kind
 		var valueType string
-		if valueField.Desc.Kind().String() == "message" {
+		valueKind := valueField.Desc.Kind().String()
+
+		switch {
+		case valueKind == "message":
 			// Map value is a message type - use the target struct name
 			valueType = getMessageTypeName(valueField.Message)
-		} else {
+		case valueKind == "enum" && valueField.Enum != nil:
+			// Map value is an enum type - use the fully qualified enum type
+			enumTypeName := string(valueField.Enum.GoIdent.GoName)
+			if sourcePkgName != "" {
+				enumTypeName = sourcePkgName + "." + enumTypeName
+			}
+			valueType = enumTypeName
+		default:
 			// Map value is a scalar type
-			valueType = ProtoScalarToGo(valueField.Desc.Kind().String())
+			valueType = ProtoScalarToGo(valueKind)
 		}
 
 		return fmt.Sprintf("map[%s]%s", keyType, valueType)

@@ -20,4 +20,6 @@ message TestRecord1 {
   google.protobuf.Timestamp time_field = 1;
   google.protobuf.Any extra_data = 2;
   SampleEnum an_enum = 3;
+  repeated SampleEnum list_of_enums = 4;
+  map<string, SampleEnum> map_string_to_enum = 5;
 }

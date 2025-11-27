@@ -3,20 +3,41 @@ package gorm
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
+	"github.com/panyam/protoc-gen-dal/tests/gen/go/api"
 	gormgen "github.com/panyam/protoc-gen-dal/tests/gen/gorm"
 	"github.com/panyam/protoc-gen-dal/tests/gen/gorm/dal"
+	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
 
-// setupTestDB creates a temporary SQLite database for testing
+// setupTestDB creates a database connection for testing.
+// If PROTOC_GEN_DAL_TEST_PGDB environment variable is set, it connects to PostgreSQL.
+// Otherwise, it creates a temporary SQLite database.
+//
+// PostgreSQL environment variables:
+//   - PROTOC_GEN_DAL_TEST_PGDB: Database name (required to use PostgreSQL)
+//   - PROTOC_GEN_DAL_TEST_PGHOST: Host (default: localhost)
+//   - PROTOC_GEN_DAL_TEST_PGPORT: Port (default: 5432)
+//   - PROTOC_GEN_DAL_TEST_PGUSER: Username (default: postgres)
+//   - PROTOC_GEN_DAL_TEST_PGPASSWORD: Password (default: empty)
 func setupTestDB(t *testing.T) *gorm.DB {
+	pgDB := os.Getenv("PROTOC_GEN_DAL_TEST_PGDB")
+	if pgDB != "" {
+		return setupPostgresDB(t, pgDB)
+	}
+	return setupSQLiteDB(t)
+}
+
+// setupSQLiteDB creates a temporary SQLite database for testing
+func setupSQLiteDB(t *testing.T) *gorm.DB {
 	// Create temp file in /tmp
 	tmpFile := filepath.Join(os.TempDir(), "test_protoc_gen_dal_"+t.Name()+"_*.db")
 	f, err := os.CreateTemp(os.TempDir(), "test_protoc_gen_dal_"+t.Name()+"_*.db")
@@ -36,10 +57,84 @@ func setupTestDB(t *testing.T) *gorm.DB {
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
 	if err != nil {
-		t.Fatalf("Failed to open database: %v", err)
+		t.Fatalf("Failed to open SQLite database: %v", err)
 	}
 
 	return db
+}
+
+// setupPostgresDB connects to a PostgreSQL database for testing.
+// It creates a test schema for isolation and drops it on cleanup.
+func setupPostgresDB(t *testing.T, dbName string) *gorm.DB {
+	host := os.Getenv("PROTOC_GEN_DAL_TEST_PGHOST")
+	if host == "" {
+		host = "localhost"
+	}
+	port := os.Getenv("PROTOC_GEN_DAL_TEST_PGPORT")
+	if port == "" {
+		port = "5432"
+	}
+	user := os.Getenv("PROTOC_GEN_DAL_TEST_PGUSER")
+	if user == "" {
+		user = "postgres"
+	}
+	password := os.Getenv("PROTOC_GEN_DAL_TEST_PGPASSWORD")
+
+	dsn := fmt.Sprintf("host=%s port=%s user=%s dbname=%s sslmode=disable",
+		host, port, user, dbName)
+	if password != "" {
+		dsn += " password=" + password
+	}
+
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Silent),
+	})
+	if err != nil {
+		t.Fatalf("Failed to connect to PostgreSQL: %v", err)
+	}
+
+	// Create a unique test schema for isolation
+	// Using test name (sanitized) to allow parallel tests
+	schemaName := "test_" + sanitizeSchemaName(t.Name())
+
+	// Create schema
+	if err := db.Exec(fmt.Sprintf("CREATE SCHEMA IF NOT EXISTS %s", schemaName)).Error; err != nil {
+		t.Fatalf("Failed to create test schema: %v", err)
+	}
+
+	// Set search path to use the test schema
+	if err := db.Exec(fmt.Sprintf("SET search_path TO %s", schemaName)).Error; err != nil {
+		t.Fatalf("Failed to set search_path: %v", err)
+	}
+
+	// Clean up schema on test completion
+	t.Cleanup(func() {
+		db.Exec(fmt.Sprintf("DROP SCHEMA IF EXISTS %s CASCADE", schemaName))
+	})
+
+	return db
+}
+
+// sanitizeSchemaName converts a test name to a valid PostgreSQL schema name
+func sanitizeSchemaName(name string) string {
+	result := make([]byte, 0, len(name))
+	for i := 0; i < len(name); i++ {
+		c := name[i]
+		if (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') {
+			result = append(result, c)
+		} else {
+			result = append(result, '_')
+		}
+	}
+	// Ensure it doesn't start with a number
+	if len(result) > 0 && result[0] >= '0' && result[0] <= '9' {
+		result = append([]byte("s_"), result...)
+	}
+	// Limit length (PostgreSQL max identifier is 63 chars)
+	if len(result) > 60 {
+		result = result[:60]
+	}
+	return string(result)
 }
 
 // TestAutoMigrate tests that all generated models can be auto-migrated
@@ -497,14 +592,13 @@ func TestWillCreateHookError(t *testing.T) {
 func TestDALLateBinding(t *testing.T) {
 	db := setupTestDB(t)
 
-	// Create two separate tables for the same struct
-	err := db.Exec("CREATE TABLE user_addresses (id INTEGER PRIMARY KEY, name TEXT, email TEXT, age INTEGER, birthday DATETIME, member_number TEXT, activated_at DATETIME, created_at DATETIME, updated_at DATETIME, deleted_at DATETIME)").Error
-	if err != nil {
+	// Create two separate tables using AutoMigrate with custom table names
+	// This ensures cross-database compatibility (SQLite and PostgreSQL)
+	if err := db.Table("user_addresses").AutoMigrate(&gormgen.UserGORM{}); err != nil {
 		t.Fatalf("Failed to create user_addresses table: %v", err)
 	}
 
-	err = db.Exec("CREATE TABLE company_addresses (id INTEGER PRIMARY KEY, name TEXT, email TEXT, age INTEGER, birthday DATETIME, member_number TEXT, activated_at DATETIME, created_at DATETIME, updated_at DATETIME, deleted_at DATETIME)").Error
-	if err != nil {
+	if err := db.Table("company_addresses").AutoMigrate(&gormgen.UserGORM{}); err != nil {
 		t.Fatalf("Failed to create company_addresses table: %v", err)
 	}
 
@@ -614,5 +708,134 @@ func TestDALTableNameEmpty(t *testing.T) {
 	db.Table("users").Count(&count)
 	if count != 1 {
 		t.Errorf("Expected 1 record in 'users' table, got %d", count)
+	}
+}
+
+// TestTestRecord1WithEnums tests AutoMigrate and CRUD operations for TestRecord1GORM
+// which contains enum, repeated enum, and map<string, enum> fields.
+func TestTestRecord1WithEnums(t *testing.T) {
+	db := setupTestDB(t)
+	if err := db.AutoMigrate(&gormgen.TestRecord1GORM{}); err != nil {
+		t.Fatalf("Failed to auto-migrate TestRecord1GORM: %v", err)
+	}
+
+	// Create a record with all enum field types
+	record := &gormgen.TestRecord1GORM{
+		TimeField:   time.Now().Truncate(time.Second),
+		ExtraData:   []byte("test data"),
+		AnEnum:      api.SampleEnum_SAMPLE_ENUM_B,
+		ListOfEnums: []api.SampleEnum{
+			api.SampleEnum_SAMPLE_ENUM_A,
+			api.SampleEnum_SAMPLE_ENUM_B,
+			api.SampleEnum_SAMPLE_ENUM_C,
+		},
+		MapStringToEnum: map[string]api.SampleEnum{
+			"key1": api.SampleEnum_SAMPLE_ENUM_A,
+			"key2": api.SampleEnum_SAMPLE_ENUM_B,
+			"key3": api.SampleEnum_SAMPLE_ENUM_C,
+		},
+	}
+
+	// Create
+	if err := db.Create(record).Error; err != nil {
+		t.Fatalf("Failed to create TestRecord1GORM: %v", err)
+	}
+
+	// Read back
+	var retrieved gormgen.TestRecord1GORM
+	if err := db.First(&retrieved).Error; err != nil {
+		t.Fatalf("Failed to retrieve TestRecord1GORM: %v", err)
+	}
+
+	// Verify enum field
+	if retrieved.AnEnum != record.AnEnum {
+		t.Errorf("AnEnum mismatch: got %v, want %v", retrieved.AnEnum, record.AnEnum)
+	}
+
+	// Verify repeated enum field
+	if len(retrieved.ListOfEnums) != len(record.ListOfEnums) {
+		t.Errorf("ListOfEnums length mismatch: got %d, want %d", len(retrieved.ListOfEnums), len(record.ListOfEnums))
+	} else {
+		for i, v := range retrieved.ListOfEnums {
+			if v != record.ListOfEnums[i] {
+				t.Errorf("ListOfEnums[%d] mismatch: got %v, want %v", i, v, record.ListOfEnums[i])
+			}
+		}
+	}
+
+	// Verify map<string, enum> field
+	if len(retrieved.MapStringToEnum) != len(record.MapStringToEnum) {
+		t.Errorf("MapStringToEnum length mismatch: got %d, want %d", len(retrieved.MapStringToEnum), len(record.MapStringToEnum))
+	} else {
+		for k, v := range record.MapStringToEnum {
+			if retrieved.MapStringToEnum[k] != v {
+				t.Errorf("MapStringToEnum[%s] mismatch: got %v, want %v", k, retrieved.MapStringToEnum[k], v)
+			}
+		}
+	}
+}
+
+// TestTestRecord1EnumRoundTrip tests conversion between API and GORM types with enum fields
+func TestTestRecord1EnumRoundTrip(t *testing.T) {
+	db := setupTestDB(t)
+	if err := db.AutoMigrate(&gormgen.TestRecord1GORM{}); err != nil {
+		t.Fatalf("Failed to auto-migrate TestRecord1GORM: %v", err)
+	}
+
+	// Create via API -> GORM conversion (using the test from testany_converters_test.go pattern)
+	// Note: This tests that the GORM struct can be stored and retrieved correctly
+	gormRecord := &gormgen.TestRecord1GORM{
+		TimeField:   time.Date(2024, 6, 15, 10, 30, 0, 0, time.UTC),
+		ExtraData:   []byte("test extra data"),
+		AnEnum:      api.SampleEnum_SAMPLE_ENUM_C,
+		ListOfEnums: []api.SampleEnum{
+			api.SampleEnum_SAMPLE_ENUM_UNSPECIFIED,
+			api.SampleEnum_SAMPLE_ENUM_A,
+			api.SampleEnum_SAMPLE_ENUM_B,
+			api.SampleEnum_SAMPLE_ENUM_C,
+		},
+		MapStringToEnum: map[string]api.SampleEnum{
+			"unspecified": api.SampleEnum_SAMPLE_ENUM_UNSPECIFIED,
+			"a":           api.SampleEnum_SAMPLE_ENUM_A,
+			"b":           api.SampleEnum_SAMPLE_ENUM_B,
+			"c":           api.SampleEnum_SAMPLE_ENUM_C,
+		},
+	}
+
+	// Store in database
+	if err := db.Create(gormRecord).Error; err != nil {
+		t.Fatalf("Failed to create: %v", err)
+	}
+
+	// Retrieve from database
+	var retrieved gormgen.TestRecord1GORM
+	if err := db.First(&retrieved).Error; err != nil {
+		t.Fatalf("Failed to retrieve: %v", err)
+	}
+
+	// Verify all fields
+	if !retrieved.TimeField.Equal(gormRecord.TimeField) {
+		t.Errorf("TimeField mismatch: got %v, want %v", retrieved.TimeField, gormRecord.TimeField)
+	}
+
+	if string(retrieved.ExtraData) != string(gormRecord.ExtraData) {
+		t.Errorf("ExtraData mismatch: got %s, want %s", retrieved.ExtraData, gormRecord.ExtraData)
+	}
+
+	if retrieved.AnEnum != gormRecord.AnEnum {
+		t.Errorf("AnEnum mismatch: got %v, want %v", retrieved.AnEnum, gormRecord.AnEnum)
+	}
+
+	// Check ListOfEnums
+	if len(retrieved.ListOfEnums) != 4 {
+		t.Errorf("ListOfEnums length: got %d, want 4", len(retrieved.ListOfEnums))
+	}
+
+	// Check MapStringToEnum
+	if len(retrieved.MapStringToEnum) != 4 {
+		t.Errorf("MapStringToEnum length: got %d, want 4", len(retrieved.MapStringToEnum))
+	}
+	if retrieved.MapStringToEnum["c"] != api.SampleEnum_SAMPLE_ENUM_C {
+		t.Errorf("MapStringToEnum['c']: got %v, want %v", retrieved.MapStringToEnum["c"], api.SampleEnum_SAMPLE_ENUM_C)
 	}
 }

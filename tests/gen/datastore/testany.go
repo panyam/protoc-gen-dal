@@ -17,6 +17,10 @@ type TestRecord1Datastore struct {
 	ExtraData []byte `datastore:"extra_data"`
 
 	AnEnum api.SampleEnum `datastore:"an_enum"`
+
+	ListOfEnums []api.SampleEnum `datastore:"list_of_enums"`
+
+	MapStringToEnum map[string]api.SampleEnum `datastore:"map_string_to_enum"`
 }
 
 // Kind returns the Datastore kind name for TestRecord1Datastore.

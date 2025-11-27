@@ -8,10 +8,21 @@ import "api/testany.proto";  // Import API protos so they're available for sourc
 
 option go_package = "github.com/panyam/protoc-gen-dal/tests/gen/dal;testdal";
 
-// UserGorm demonstrates comprehensive GORM features from https://gorm.io/docs/models.html
+// TestRecord1Gorm demonstrates GORM features for complex types including enums.
+// Tests: plain enums, repeated enums, and map<string, enum>.
 message TestRecord1Gorm {
   option (dal.v1.gorm) = {
     source: "api.TestRecord1"
     table: "test_records"
   };
+
+  // Override the list_of_enums field to add serializer:json for SQLite compatibility
+  repeated api.SampleEnum list_of_enums = 4 [(dal.v1.column) = {
+    gorm_tags: "serializer:json"
+  }];
+
+  // Override the map_string_to_enum field to add serializer:json for SQLite compatibility
+  map<string, api.SampleEnum> map_string_to_enum = 5 [(dal.v1.column) = {
+    gorm_tags: "serializer:json"
+  }];
 }

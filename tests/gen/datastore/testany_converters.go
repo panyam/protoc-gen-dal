@@ -35,7 +35,8 @@ func TestRecord1ToTestRecord1Datastore(
 
 	// Initialize struct with inline values
 	*dest = TestRecord1Datastore{
-		AnEnum: src.AnEnum,
+		AnEnum:      src.AnEnum,
+		ListOfEnums: src.ListOfEnums,
 	}
 	out = dest
 
@@ -48,6 +49,10 @@ func TestRecord1ToTestRecord1Datastore(
 		if err != nil {
 			return nil, fmt.Errorf("converting ExtraData: %w", err)
 		}
+	}
+
+	if src.MapStringToEnum != nil {
+		out.MapStringToEnum = src.MapStringToEnum
 	}
 
 	// Apply decorator if provided
@@ -86,8 +91,10 @@ func TestRecord1FromTestRecord1Datastore(
 
 	// Initialize struct with inline values
 	*dest = api.TestRecord1{
-		TimeField: converters.TimeToTimestamp(src.TimeField),
-		AnEnum:    src.AnEnum,
+		TimeField:       converters.TimeToTimestamp(src.TimeField),
+		AnEnum:          src.AnEnum,
+		ListOfEnums:     src.ListOfEnums,
+		MapStringToEnum: src.MapStringToEnum,
 	}
 	out = dest
 

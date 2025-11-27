@@ -34,7 +34,7 @@ type UserGorm struct {
 	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	// Nullable string (pointer in Go)
 	Email string `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
-	// Unsigned integer
+	// Unsigned integer (using smallint for cross-DB compatibility)
 	Age uint32 `protobuf:"varint,4,opt,name=age,proto3" json:"age,omitempty"`
 	// Timestamp stored as time.Time (GORM and Datastore native support)
 	Birthday *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=birthday,proto3" json:"birthday,omitempty"`
@@ -847,14 +847,13 @@ var File_gorm_user_proto protoreflect.FileDescriptor
 
 const file_gorm_user_proto_rawDesc = "" +
 	"\n" +
-	"\x0fgorm/user.proto\x12\x04gorm\x1a\x18dal/v1/annotations.proto\x1a\x0eapi/user.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x87\x05\n" +
+	"\x0fgorm/user.proto\x12\x04gorm\x1a\x18dal/v1/annotations.proto\x1a\x0eapi/user.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x8a\x05\n" +
 	"\bUserGorm\x12/\n" +
 	"\x02id\x18\x01 \x01(\rB\x1f\x92\xa6\x1d\x1bR\n" +
 	"primaryKeyR\rautoIncrementR\x02id\x125\n" +
 	"\x04name\x18\x02 \x01(\tB!\x92\xa6\x1d\x1dR\x11type:varchar(100)R\bnot nullR\x04name\x12:\n" +
-	"\x05email\x18\x03 \x01(\tB$\x92\xa6\x1d R\vuniqueIndexR\x11type:varchar(100)R\x05email\x12\"\n" +
-	"\x03age\x18\x04 \x01(\rB\x10\x92\xa6\x1d\fR\n" +
-	"type:uint8R\x03age\x126\n" +
+	"\x05email\x18\x03 \x01(\tB$\x92\xa6\x1d R\vuniqueIndexR\x11type:varchar(100)R\x05email\x12%\n" +
+	"\x03age\x18\x04 \x01(\rB\x13\x92\xa6\x1d\x0fR\rtype:smallintR\x03age\x126\n" +
 	"\bbirthday\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\bbirthday\x12;\n" +
 	"\rmember_number\x18\x06 \x01(\tB\x16\x92\xa6\x1d\x12R\x10type:varchar(50)R\fmemberNumber\x12=\n" +
 	"\factivated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\vactivatedAt\x12O\n" +
