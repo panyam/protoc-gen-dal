@@ -471,6 +471,22 @@ From `tests/protos/datastore/user.proto`:
      ```
 - Future enhancement: Message-level `skip_fields: ["field1", "field2"]` annotation
 
+- [x] **BUG FIX: Map Fields with Non-String Keys** (Issue #001) - COMPLETE
+  - [x] **Symptom**: Compilation error for maps with int32, int64, uint32, bool keys containing message values
+  - [x] **Root Cause**: Templates hardcode `map[string]` in converter generation
+    - Line 102 in pkg/gorm/templates/converters.go.tmpl: `make(map[string]{{ .TargetElementType }}, ...)`
+    - Line 212 in pkg/gorm/templates/converters.go.tmpl: `make(map[string]*{{ .SourcePkgName }}.{{ .SourceElementType }}, ...)`
+    - Same issue in pkg/datastore/templates/converters.go.tmpl lines 112, 232
+  - [x] **Fix Applied**:
+    1. Added `MapKeyType` field to FieldMapping struct in pkg/generator/converter/field_mapping.go
+    2. Extract map key type in BuildMapFieldMapping() using ProtoKindToGoType()
+    3. Updated GORM template (lines 102, 212) to use `{{ .MapKeyType }}`
+    4. Updated Datastore template (lines 112, 232) to use `{{ .MapKeyType }}`
+    5. Changed `%s` format specifier to `%v` in error messages for non-string keys
+  - [x] **Test Case**: tests/protos/api/testany.proto TestRecord2 with map<int32, MapValueMessage>, etc.
+  - [x] **Tests Added**: 7 new tests in testany_converters_test.go covering int32, int64, uint32, bool keys
+  - [x] **GitHub Issue**: https://github.com/panyam/protoc-gen-dal/issues/1
+
 - ✅ Phase 3.1i - Shared Test Utilities (COMPLETE)
   - ✅ Created pkg/generator/testutil package for test helper functions
   - ✅ Extracted duplicate test utilities from GORM and Datastore test files

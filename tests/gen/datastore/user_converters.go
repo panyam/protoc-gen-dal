@@ -756,7 +756,7 @@ func OrganizationToOrganizationDatastore(
 			var converted AuthorDatastore
 			_, err = AuthorToAuthorDatastore(value, &converted, nil)
 			if err != nil {
-				return nil, fmt.Errorf("converting Departments[%s]: %w", key, err)
+				return nil, fmt.Errorf("converting Departments[%v]: %w", key, err)
 			}
 			out.Departments[key] = converted
 		}
@@ -808,7 +808,7 @@ func OrganizationFromOrganizationDatastore(
 		for key, value := range src.Departments {
 			out.Departments[key], err = AuthorFromAuthorDatastore(nil, &value, nil)
 			if err != nil {
-				return nil, fmt.Errorf("converting Departments[%s]: %w", key, err)
+				return nil, fmt.Errorf("converting Departments[%v]: %w", key, err)
 			}
 		}
 	}

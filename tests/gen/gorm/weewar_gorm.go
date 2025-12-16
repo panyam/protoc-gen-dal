@@ -151,8 +151,8 @@ func (*WorldGORM) TableName() string {
 // WorldDataGORM is the GORM model for weewar.v1.WorldData
 type WorldDataGORM struct {
 	Tiles   []TileGORM `gorm:"serializer:json"`
-	WorldId string     `gorm:"primaryKey"`
 	Units   []UnitGORM `gorm:"serializer:json"`
+	WorldId string     `gorm:"primaryKey"`
 }
 
 // TableName returns the table name for WorldDataGORM

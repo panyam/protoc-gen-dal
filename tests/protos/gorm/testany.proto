@@ -26,3 +26,42 @@ message TestRecord1Gorm {
     gorm_tags: "serializer:json"
   }];
 }
+
+// MapValueMessageGorm is the GORM model for api.MapValueMessage
+message MapValueMessageGorm {
+  option (dal.v1.gorm) = {
+    source: "api.MapValueMessage"
+  };
+
+  string label = 1;
+  int32 count = 2;
+}
+
+// TestRecord2Gorm tests GORM handling of maps with non-string keys.
+// These maps contain proto message values with various key types.
+message TestRecord2Gorm {
+  option (dal.v1.gorm) = {
+    source: "api.TestRecord2"
+    table: "test_records2"
+  };
+
+  // Map with int32 keys containing message values
+  map<int32, MapValueMessageGorm> int32_to_message = 2 [(dal.v1.column) = {
+    gorm_tags: "serializer:json"
+  }];
+
+  // Map with int64 keys containing message values
+  map<int64, MapValueMessageGorm> int64_to_message = 3 [(dal.v1.column) = {
+    gorm_tags: "serializer:json"
+  }];
+
+  // Map with uint32 keys containing message values
+  map<uint32, MapValueMessageGorm> uint32_to_message = 4 [(dal.v1.column) = {
+    gorm_tags: "serializer:json"
+  }];
+
+  // Map with bool keys containing message values
+  map<bool, MapValueMessageGorm> bool_to_message = 5 [(dal.v1.column) = {
+    gorm_tags: "serializer:json"
+  }];
+}

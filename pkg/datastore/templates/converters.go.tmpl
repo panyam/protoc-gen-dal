@@ -109,13 +109,13 @@ func {{ .SourceType }}To{{ .TargetType }}(
 	}
 		{{- else if isLoopMap .ToTargetRenderStrategy }}
 	if src.{{ .SourceField }} != nil {
-		out.{{ .TargetField }} = make(map[string]{{ .TargetElementType }}, len(src.{{ .SourceField }}))
+		out.{{ .TargetField }} = make(map[{{ .MapKeyType }}]{{ .TargetElementType }}, len(src.{{ .SourceField }}))
 		for key, value := range src.{{ .SourceField }} {
 			var converted {{ .TargetElementType }}
 			_, err = {{ .ToTargetConverterFunc }}(value, &converted, nil)
 			{{- if needsErrorCheck .ToTargetConversionType }}
 			if err != nil {
-				return nil, fmt.Errorf("converting {{ .SourceField }}[%s]: %w", key, err)
+				return nil, fmt.Errorf("converting {{ .SourceField }}[%v]: %w", key, err)
 			}
 			{{- end }}
 			out.{{ .TargetField }}[key] = converted
@@ -229,12 +229,12 @@ func {{ .SourceType }}From{{ .TargetType }}(
 	}
 		{{- else if isLoopMap .FromTargetRenderStrategy }}
 	if src.{{ .TargetField }} != nil {
-		out.{{ .SourceField }} = make(map[string]*{{ .SourcePkgName }}.{{ .SourceElementType }}, len(src.{{ .TargetField }}))
+		out.{{ .SourceField }} = make(map[{{ .MapKeyType }}]*{{ .SourcePkgName }}.{{ .SourceElementType }}, len(src.{{ .TargetField }}))
 		for key, value := range src.{{ .TargetField }} {
 			out.{{ .SourceField }}[key], err = {{ .FromTargetConverterFunc }}(nil, &value, nil)
 			{{- if needsErrorCheck .FromTargetConversionType }}
 			if err != nil {
-				return nil, fmt.Errorf("converting {{ .TargetField }}[%s]: %w", key, err)
+				return nil, fmt.Errorf("converting {{ .TargetField }}[%v]: %w", key, err)
 			}
 			{{- end }}
 		}

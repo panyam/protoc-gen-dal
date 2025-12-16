@@ -55,6 +55,7 @@ type FieldMapping struct {
 	// Element types for repeated/map fields
 	TargetElementType string // For repeated/map: Go type of target element/value (e.g., "AuthorGORM")
 	SourceElementType string // For repeated/map: Go type of source element/value (e.g., "Author")
+	MapKeyType        string // For map fields: Go type of map key (e.g., "string", "int32", "bool")
 
 	// Package information
 	SourcePkgName string // Source package name (e.g., "api" or "testapi") - needed for type references
@@ -111,8 +112,12 @@ func BuildMapFieldMapping(params MapFieldMappingParams, mapping *FieldMapping) b
 
 	// Map fields: check the value type to determine conversion
 	mapEntry := params.SourceField.Message
+	keyField := mapEntry.Fields[0]   // key field is always index 0
 	valueField := mapEntry.Fields[1] // value field is always index 1
 	valueKind := valueField.Desc.Kind().String()
+
+	// Extract map key type (string, int32, int64, uint32, uint64, bool, etc.)
+	mapping.MapKeyType = common.ProtoKindToGoType(keyField.Desc.Kind().String())
 
 	if valueKind == "message" {
 		// map<K, MessageType> - needs loop-based converter for values

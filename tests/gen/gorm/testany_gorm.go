@@ -20,3 +20,23 @@ type TestRecord1GORM struct {
 func (*TestRecord1GORM) TableName() string {
 	return "test_records"
 }
+
+// MapValueMessageGORM is the GORM model for api.MapValueMessage
+type MapValueMessageGORM struct {
+	Label string
+	Count int32
+}
+
+// TestRecord2GORM is the GORM model for api.TestRecord2
+type TestRecord2GORM struct {
+	Name            string
+	Int32ToMessage  map[int32]MapValueMessageGORM  `gorm:"serializer:json"`
+	Int64ToMessage  map[int64]MapValueMessageGORM  `gorm:"serializer:json"`
+	Uint32ToMessage map[uint32]MapValueMessageGORM `gorm:"serializer:json"`
+	BoolToMessage   map[bool]MapValueMessageGORM   `gorm:"serializer:json"`
+}
+
+// TableName returns the table name for TestRecord2GORM
+func (*TestRecord2GORM) TableName() string {
+	return "test_records2"
+}
