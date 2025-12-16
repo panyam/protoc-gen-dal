@@ -9,10 +9,41 @@ import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/panyam/protoc-gen-dal/tests/gen/datastore;testdatastore";
 
-// UserDatastore demonstrates basic Datastore entity
+// TestRecord1Datastore demonstrates basic Datastore entity with enums and Any
 message TestRecord1Datastore {
   option (dal.v1.datastore_options) = {
     source: "api.TestRecord1"
     kind: "test_records"
   };
+}
+
+// MapValueMessageDatastore is the Datastore model for api.MapValueMessage
+message MapValueMessageDatastore {
+  option (dal.v1.datastore_options) = {
+    source: "api.MapValueMessage"
+  };
+
+  string label = 1;
+  int32 count = 2;
+}
+
+// TestRecord2Datastore tests Datastore handling of maps with non-string keys.
+// These maps contain proto message values with various key types.
+message TestRecord2Datastore {
+  option (dal.v1.datastore_options) = {
+    source: "api.TestRecord2"
+    kind: "test_records2"
+  };
+
+  // Map with int32 keys containing message values
+  map<int32, MapValueMessageDatastore> int32_to_message = 2;
+
+  // Map with int64 keys containing message values
+  map<int64, MapValueMessageDatastore> int64_to_message = 3;
+
+  // Map with uint32 keys containing message values
+  map<uint32, MapValueMessageDatastore> uint32_to_message = 4;
+
+  // Map with bool keys containing message values
+  map<bool, MapValueMessageDatastore> bool_to_message = 5;
 }

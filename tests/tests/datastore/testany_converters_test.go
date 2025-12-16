@@ -591,3 +591,300 @@ func TestRecord1Conversion_WithDecorator(t *testing.T) {
 		t.Errorf("AnEnum not modified by decorator: got %v, want %v", dsRecord.AnEnum, api.SampleEnum_SAMPLE_ENUM_C)
 	}
 }
+
+// =============================================================================
+// MapValueMessage Converter Tests
+// =============================================================================
+
+// TestMapValueMessageConversion_AllFields verifies basic field conversion.
+func TestMapValueMessageConversion_AllFields(t *testing.T) {
+	src := &api.MapValueMessage{
+		Label: "test-label",
+		Count: 42,
+	}
+
+	dsMsg, err := datastore.MapValueMessageToMapValueMessageDatastore(src, nil, nil)
+	if err != nil {
+		t.Fatalf("MapValueMessageToMapValueMessageDatastore failed: %v", err)
+	}
+
+	if dsMsg.Label != src.Label {
+		t.Errorf("Label mismatch: got %s, want %s", dsMsg.Label, src.Label)
+	}
+	if dsMsg.Count != src.Count {
+		t.Errorf("Count mismatch: got %d, want %d", dsMsg.Count, src.Count)
+	}
+
+	// Round-trip
+	apiMsg, err := datastore.MapValueMessageFromMapValueMessageDatastore(nil, dsMsg, nil)
+	if err != nil {
+		t.Fatalf("MapValueMessageFromMapValueMessageDatastore failed: %v", err)
+	}
+
+	if apiMsg.Label != src.Label {
+		t.Errorf("Round-trip Label mismatch: got %s, want %s", apiMsg.Label, src.Label)
+	}
+	if apiMsg.Count != src.Count {
+		t.Errorf("Round-trip Count mismatch: got %d, want %d", apiMsg.Count, src.Count)
+	}
+}
+
+// TestMapValueMessageConversion_NilSource verifies nil source handling.
+func TestMapValueMessageConversion_NilSource(t *testing.T) {
+	dsMsg, err := datastore.MapValueMessageToMapValueMessageDatastore(nil, nil, nil)
+	if err != nil {
+		t.Fatalf("MapValueMessageToMapValueMessageDatastore with nil failed: %v", err)
+	}
+	if dsMsg != nil {
+		t.Errorf("Expected nil result for nil source, got %v", dsMsg)
+	}
+
+	apiMsg, err := datastore.MapValueMessageFromMapValueMessageDatastore(nil, nil, nil)
+	if err != nil {
+		t.Fatalf("MapValueMessageFromMapValueMessageDatastore with nil failed: %v", err)
+	}
+	if apiMsg != nil {
+		t.Errorf("Expected nil result for nil source, got %v", apiMsg)
+	}
+}
+
+// =============================================================================
+// TestRecord2 Converter Tests (map with non-string keys)
+// =============================================================================
+
+// TestRecord2Conversion_Int32ToMessage verifies map<int32, Message> conversion.
+func TestRecord2Conversion_Int32ToMessage(t *testing.T) {
+	src := &api.TestRecord2{
+		Name: "test-record",
+		Int32ToMessage: map[int32]*api.MapValueMessage{
+			1:   {Label: "first", Count: 10},
+			42:  {Label: "answer", Count: 42},
+			-5:  {Label: "negative", Count: -5},
+		},
+	}
+
+	dsRecord, err := datastore.TestRecord2ToTestRecord2Datastore(src, nil, nil)
+	if err != nil {
+		t.Fatalf("TestRecord2ToTestRecord2Datastore failed: %v", err)
+	}
+
+	if dsRecord.Name != src.Name {
+		t.Errorf("Name mismatch: got %s, want %s", dsRecord.Name, src.Name)
+	}
+
+	if len(dsRecord.Int32ToMessage) != 3 {
+		t.Fatalf("Int32ToMessage length mismatch: got %d, want 3", len(dsRecord.Int32ToMessage))
+	}
+
+	if dsRecord.Int32ToMessage[1].Label != "first" {
+		t.Errorf("Int32ToMessage[1].Label mismatch: got %s, want 'first'", dsRecord.Int32ToMessage[1].Label)
+	}
+	if dsRecord.Int32ToMessage[42].Count != 42 {
+		t.Errorf("Int32ToMessage[42].Count mismatch: got %d, want 42", dsRecord.Int32ToMessage[42].Count)
+	}
+
+	// Round-trip
+	apiRecord, err := datastore.TestRecord2FromTestRecord2Datastore(nil, dsRecord, nil)
+	if err != nil {
+		t.Fatalf("TestRecord2FromTestRecord2Datastore failed: %v", err)
+	}
+
+	if len(apiRecord.Int32ToMessage) != 3 {
+		t.Fatalf("Round-trip Int32ToMessage length mismatch: got %d, want 3", len(apiRecord.Int32ToMessage))
+	}
+	if apiRecord.Int32ToMessage[-5].Label != "negative" {
+		t.Errorf("Round-trip Int32ToMessage[-5].Label mismatch")
+	}
+}
+
+// TestRecord2Conversion_Int64ToMessage verifies map<int64, Message> conversion.
+func TestRecord2Conversion_Int64ToMessage(t *testing.T) {
+	src := &api.TestRecord2{
+		Name: "int64-test",
+		Int64ToMessage: map[int64]*api.MapValueMessage{
+			9223372036854775807: {Label: "max-int64", Count: 1},
+			-9223372036854775808: {Label: "min-int64", Count: 2},
+		},
+	}
+
+	dsRecord, err := datastore.TestRecord2ToTestRecord2Datastore(src, nil, nil)
+	if err != nil {
+		t.Fatalf("TestRecord2ToTestRecord2Datastore failed: %v", err)
+	}
+
+	if len(dsRecord.Int64ToMessage) != 2 {
+		t.Fatalf("Int64ToMessage length mismatch: got %d, want 2", len(dsRecord.Int64ToMessage))
+	}
+
+	// Round-trip
+	apiRecord, err := datastore.TestRecord2FromTestRecord2Datastore(nil, dsRecord, nil)
+	if err != nil {
+		t.Fatalf("TestRecord2FromTestRecord2Datastore failed: %v", err)
+	}
+
+	if apiRecord.Int64ToMessage[9223372036854775807].Label != "max-int64" {
+		t.Errorf("Round-trip max int64 key mismatch")
+	}
+}
+
+// TestRecord2Conversion_Uint32ToMessage verifies map<uint32, Message> conversion.
+func TestRecord2Conversion_Uint32ToMessage(t *testing.T) {
+	src := &api.TestRecord2{
+		Name: "uint32-test",
+		Uint32ToMessage: map[uint32]*api.MapValueMessage{
+			0:          {Label: "zero", Count: 0},
+			4294967295: {Label: "max-uint32", Count: 100},
+		},
+	}
+
+	dsRecord, err := datastore.TestRecord2ToTestRecord2Datastore(src, nil, nil)
+	if err != nil {
+		t.Fatalf("TestRecord2ToTestRecord2Datastore failed: %v", err)
+	}
+
+	if len(dsRecord.Uint32ToMessage) != 2 {
+		t.Fatalf("Uint32ToMessage length mismatch: got %d, want 2", len(dsRecord.Uint32ToMessage))
+	}
+
+	// Round-trip
+	apiRecord, err := datastore.TestRecord2FromTestRecord2Datastore(nil, dsRecord, nil)
+	if err != nil {
+		t.Fatalf("TestRecord2FromTestRecord2Datastore failed: %v", err)
+	}
+
+	if apiRecord.Uint32ToMessage[4294967295].Label != "max-uint32" {
+		t.Errorf("Round-trip max uint32 key mismatch")
+	}
+}
+
+// TestRecord2Conversion_BoolToMessage verifies map<bool, Message> conversion.
+func TestRecord2Conversion_BoolToMessage(t *testing.T) {
+	src := &api.TestRecord2{
+		Name: "bool-test",
+		BoolToMessage: map[bool]*api.MapValueMessage{
+			true:  {Label: "yes", Count: 1},
+			false: {Label: "no", Count: 0},
+		},
+	}
+
+	dsRecord, err := datastore.TestRecord2ToTestRecord2Datastore(src, nil, nil)
+	if err != nil {
+		t.Fatalf("TestRecord2ToTestRecord2Datastore failed: %v", err)
+	}
+
+	if len(dsRecord.BoolToMessage) != 2 {
+		t.Fatalf("BoolToMessage length mismatch: got %d, want 2", len(dsRecord.BoolToMessage))
+	}
+
+	if dsRecord.BoolToMessage[true].Label != "yes" {
+		t.Errorf("BoolToMessage[true].Label mismatch: got %s, want 'yes'", dsRecord.BoolToMessage[true].Label)
+	}
+	if dsRecord.BoolToMessage[false].Label != "no" {
+		t.Errorf("BoolToMessage[false].Label mismatch: got %s, want 'no'", dsRecord.BoolToMessage[false].Label)
+	}
+
+	// Round-trip
+	apiRecord, err := datastore.TestRecord2FromTestRecord2Datastore(nil, dsRecord, nil)
+	if err != nil {
+		t.Fatalf("TestRecord2FromTestRecord2Datastore failed: %v", err)
+	}
+
+	if apiRecord.BoolToMessage[true].Count != 1 {
+		t.Errorf("Round-trip BoolToMessage[true].Count mismatch")
+	}
+	if apiRecord.BoolToMessage[false].Count != 0 {
+		t.Errorf("Round-trip BoolToMessage[false].Count mismatch")
+	}
+}
+
+// TestRecord2Conversion_AllMapTypes verifies all map types together.
+func TestRecord2Conversion_AllMapTypes(t *testing.T) {
+	src := &api.TestRecord2{
+		Name: "all-maps",
+		Int32ToMessage: map[int32]*api.MapValueMessage{
+			1: {Label: "int32", Count: 1},
+		},
+		Int64ToMessage: map[int64]*api.MapValueMessage{
+			2: {Label: "int64", Count: 2},
+		},
+		Uint32ToMessage: map[uint32]*api.MapValueMessage{
+			3: {Label: "uint32", Count: 3},
+		},
+		BoolToMessage: map[bool]*api.MapValueMessage{
+			true: {Label: "bool", Count: 4},
+		},
+	}
+
+	dsRecord, err := datastore.TestRecord2ToTestRecord2Datastore(src, nil, nil)
+	if err != nil {
+		t.Fatalf("TestRecord2ToTestRecord2Datastore failed: %v", err)
+	}
+
+	// Verify all maps present
+	if len(dsRecord.Int32ToMessage) != 1 {
+		t.Errorf("Int32ToMessage not converted")
+	}
+	if len(dsRecord.Int64ToMessage) != 1 {
+		t.Errorf("Int64ToMessage not converted")
+	}
+	if len(dsRecord.Uint32ToMessage) != 1 {
+		t.Errorf("Uint32ToMessage not converted")
+	}
+	if len(dsRecord.BoolToMessage) != 1 {
+		t.Errorf("BoolToMessage not converted")
+	}
+
+	// Round-trip
+	apiRecord, err := datastore.TestRecord2FromTestRecord2Datastore(nil, dsRecord, nil)
+	if err != nil {
+		t.Fatalf("TestRecord2FromTestRecord2Datastore failed: %v", err)
+	}
+
+	if apiRecord.Name != src.Name {
+		t.Errorf("Round-trip Name mismatch")
+	}
+}
+
+// TestRecord2Conversion_NilSource verifies nil source handling.
+func TestRecord2Conversion_NilSource(t *testing.T) {
+	dsRecord, err := datastore.TestRecord2ToTestRecord2Datastore(nil, nil, nil)
+	if err != nil {
+		t.Fatalf("TestRecord2ToTestRecord2Datastore with nil failed: %v", err)
+	}
+	if dsRecord != nil {
+		t.Errorf("Expected nil result for nil source, got %v", dsRecord)
+	}
+
+	apiRecord, err := datastore.TestRecord2FromTestRecord2Datastore(nil, nil, nil)
+	if err != nil {
+		t.Fatalf("TestRecord2FromTestRecord2Datastore with nil failed: %v", err)
+	}
+	if apiRecord != nil {
+		t.Errorf("Expected nil result for nil source, got %v", apiRecord)
+	}
+}
+
+// TestRecord2Conversion_EmptyMaps verifies empty map handling.
+func TestRecord2Conversion_EmptyMaps(t *testing.T) {
+	src := &api.TestRecord2{
+		Name:            "empty-maps",
+		Int32ToMessage:  map[int32]*api.MapValueMessage{},
+		Int64ToMessage:  map[int64]*api.MapValueMessage{},
+		Uint32ToMessage: map[uint32]*api.MapValueMessage{},
+		BoolToMessage:   map[bool]*api.MapValueMessage{},
+	}
+
+	dsRecord, err := datastore.TestRecord2ToTestRecord2Datastore(src, nil, nil)
+	if err != nil {
+		t.Fatalf("TestRecord2ToTestRecord2Datastore failed: %v", err)
+	}
+
+	if dsRecord.Name != src.Name {
+		t.Errorf("Name mismatch")
+	}
+
+	// Empty maps should result in empty (not nil) maps
+	if len(dsRecord.Int32ToMessage) != 0 {
+		t.Errorf("Int32ToMessage should be empty, got %d items", len(dsRecord.Int32ToMessage))
+	}
+}

@@ -8,11 +8,12 @@ import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/panyam/protoc-gen-dal/tests/gen/datastore;testdatastore";
 
-// UserDatastore demonstrates basic Datastore entity
+// UserDatastore demonstrates basic Datastore entity with DAL generation
 message UserDatastore {
   option (dal.v1.datastore_options) = {
     source: "api.User"
     kind: "User"
+    dal: true
   };
 
   // ID field - stored in Key, excluded from properties
@@ -84,12 +85,13 @@ message AuthorDatastore {
   string email = 2;
 }
 
-// ProductDatastore demonstrates repeated and map fields
+// ProductDatastore demonstrates repeated and map fields with DAL generation
 // Datastore natively supports repeated scalar values as array properties
 message ProductDatastore {
   option (dal.v1.datastore_options) = {
     source: "api.Product"
     kind: "Product"
+    dal: true
   };
 
   string id = 1;
