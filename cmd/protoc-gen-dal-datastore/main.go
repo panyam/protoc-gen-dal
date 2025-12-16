@@ -27,6 +27,11 @@ import (
 func main() {
 	// Parse flags (protogen requires this)
 	var flags flag.FlagSet
+	generateDAL := flags.Bool("generate_dal", false, "Generate DAL helper methods")
+	dalFilenameSuffix := flags.String("dal_filename_suffix", "_dal", "Suffix for DAL helper filename (e.g., '_dal' -> 'user_datastore_dal.go')")
+	dalFilenamePrefix := flags.String("dal_filename_prefix", "", "Prefix for DAL helper filename (e.g., 'dal_' -> 'dal_user_datastore.go')")
+	dalOutputDir := flags.String("dal_output_dir", "", "Subdirectory for DAL files relative to main output (e.g., 'dal' -> 'gen/datastore/dal/')")
+	entityImportPath := flags.String("entity_import_path", "", "Import path for entity package (auto-detected from proto go_package if not specified)")
 
 	// Run the plugin
 	protogen.Options{
@@ -55,6 +60,20 @@ func main() {
 			return fmt.Errorf("failed to generate converter code: %w", err)
 		}
 
+		// Phase 3.5: Generate DAL helper code (if enabled)
+		var dalResult *datastore.GenerateResult
+		if *generateDAL {
+			dalResult, err = datastore.GenerateDALHelpers(messages, &datastore.DALOptions{
+				FilenameSuffix:   *dalFilenameSuffix,
+				FilenamePrefix:   *dalFilenamePrefix,
+				OutputDir:        *dalOutputDir,
+				EntityImportPath: *entityImportPath,
+			})
+			if err != nil {
+				return fmt.Errorf("failed to generate DAL helper code: %w", err)
+			}
+		}
+
 		// Phase 4: Write generated files to plugin response
 		for _, genFile := range result.Files {
 			// Create a new file in the plugin response
@@ -69,6 +88,14 @@ func main() {
 		for _, genFile := range converterResult.Files {
 			f := plugin.NewGeneratedFile(genFile.Path, protogen.GoImportPath(genFile.Path))
 			f.P(genFile.Content)
+		}
+
+		// Write DAL helper files (if generated)
+		if dalResult != nil {
+			for _, genFile := range dalResult.Files {
+				f := plugin.NewGeneratedFile(genFile.Path, protogen.GoImportPath(genFile.Path))
+				f.P(genFile.Content)
+			}
 		}
 
 		return nil

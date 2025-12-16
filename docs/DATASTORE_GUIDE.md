@@ -528,6 +528,227 @@ Ensure namespace is set on keys:
 key.Namespace = "production"
 ```
 
+## DAL Helpers (Data Access Layer)
+
+The generator can optionally produce DAL helper structs that simplify common database operations. Enable DAL generation with the `dal=true` option:
+
+### Configuration
+
+```yaml
+version: v2
+plugins:
+  - local: protoc-gen-dal-datastore
+    out: gen/datastore
+    opt:
+      - paths=source_relative
+      - dal=true
+      - dal_out=gen/datastore/dal  # Optional: separate directory for DAL files
+```
+
+### Generated DAL Structure
+
+For each entity, a DAL struct is generated:
+
+```go
+type UserDatastoreDAL struct {
+    // Kind overrides the Datastore kind for all operations.
+    // If empty, uses the struct's Kind() method.
+    Kind string
+
+    // Namespace overrides the Datastore namespace for all operations.
+    Namespace string
+
+    // WillPut hook is called before Put operations.
+    // Return an error to prevent the put.
+    WillPut func(context.Context, *datastore.UserDatastore) error
+}
+
+func NewUserDatastoreDAL(kind string) *UserDatastoreDAL
+```
+
+### DAL Methods
+
+Each DAL provides these methods:
+
+| Method | Description |
+|--------|-------------|
+| `Put(ctx, client, obj)` | Save entity, returns key |
+| `Get(ctx, client, key)` | Get by key, returns (nil, nil) if not found |
+| `GetByID(ctx, client, id)` | Get by string ID |
+| `Delete(ctx, client, key)` | Delete by key |
+| `DeleteByID(ctx, client, id)` | Delete by string ID |
+| `PutMulti(ctx, client, objs)` | Batch save |
+| `GetMulti(ctx, client, keys)` | Batch get |
+| `GetMultiByIDs(ctx, client, ids)` | Batch get by IDs |
+| `DeleteMulti(ctx, client, keys)` | Batch delete |
+| `Query(ctx, client, q)` | Execute query |
+| `Count(ctx, client, q)` | Count query results |
+
+### Basic Usage
+
+```go
+import (
+    "context"
+    "cloud.google.com/go/datastore"
+
+    dsgen "yourproject/gen/datastore"
+    "yourproject/gen/datastore/dal"
+)
+
+func main() {
+    ctx := context.Background()
+    client, _ := datastore.NewClient(ctx, "project-id")
+
+    // Create DAL instance
+    userDAL := dal.NewUserDatastoreDAL("User")
+
+    // Create entity
+    user := &dsgen.UserDatastore{
+        Id:    "alice",
+        Name:  "Alice",
+        Email: "alice@example.com",
+    }
+
+    // Save - key is determined automatically from Id field
+    key, err := userDAL.Put(ctx, client, user)
+
+    // Get by ID
+    fetched, err := userDAL.GetByID(ctx, client, "alice")
+
+    // Delete by ID
+    err = userDAL.DeleteByID(ctx, client, "alice")
+}
+```
+
+### Key Determination
+
+The DAL determines keys in this order:
+1. If `entity.Key` is set, uses that key
+2. If `entity.Id` is set, creates a name key from the ID
+3. Otherwise, creates an incomplete key (auto-generated numeric ID)
+
+```go
+// Explicit key
+user.Key = datastore.NameKey("User", "alice", nil)
+userDAL.Put(ctx, client, user)
+
+// Key from Id field
+user.Id = "alice"
+userDAL.Put(ctx, client, user)  // Creates NameKey("User", "alice", nil)
+
+// Auto-generated key
+user.Id = ""
+user.Key = nil
+userDAL.Put(ctx, client, user)  // Creates IncompleteKey("User", nil)
+```
+
+### Namespace Override
+
+Set a namespace on the DAL to apply it to all operations:
+
+```go
+userDAL := dal.NewUserDatastoreDAL("User")
+userDAL.Namespace = "production"
+
+// All operations now use the "production" namespace
+key, _ := userDAL.Put(ctx, client, user)
+// key.Namespace == "production"
+```
+
+### WillPut Hook
+
+The WillPut hook allows pre-save validation or transformation:
+
+```go
+userDAL.WillPut = func(ctx context.Context, u *dsgen.UserDatastore) error {
+    // Validate
+    if u.Name == "" {
+        return errors.New("name is required")
+    }
+
+    // Transform
+    u.Email = strings.ToLower(u.Email)
+    u.UpdatedAt = time.Now().Unix()
+
+    return nil
+}
+
+// Hook is called before Put and PutMulti
+userDAL.Put(ctx, client, user)
+```
+
+### Batch Operations
+
+```go
+// Batch save
+users := []*dsgen.UserDatastore{
+    {Id: "user-1", Name: "Alice"},
+    {Id: "user-2", Name: "Bob"},
+    {Id: "user-3", Name: "Charlie"},
+}
+keys, err := userDAL.PutMulti(ctx, client, users)
+
+// Batch get by IDs
+ids := []string{"user-1", "user-2", "user-3"}
+fetched, err := userDAL.GetMultiByIDs(ctx, client, ids)
+// fetched[i] is nil if not found
+
+// Batch delete
+err = userDAL.DeleteMulti(ctx, client, keys)
+```
+
+### Query Support
+
+```go
+// Query all users
+q := datastore.NewQuery("User")
+users, err := userDAL.Query(ctx, client, q)
+
+// Query with filter
+q := datastore.NewQuery("User").FilterField("name", ">=", "B")
+users, err := userDAL.Query(ctx, client, q)
+
+// Count
+q := datastore.NewQuery("User")
+count, err := userDAL.Count(ctx, client, q)
+```
+
+### Handling Missing Entities
+
+`Get` and `GetByID` return `(nil, nil)` when an entity is not found:
+
+```go
+user, err := userDAL.GetByID(ctx, client, "does-not-exist")
+if err != nil {
+    // Handle actual error
+    return err
+}
+if user == nil {
+    // Entity not found
+    return ErrNotFound
+}
+```
+
+`GetMulti` and `GetMultiByIDs` return `nil` for missing entities at their index:
+
+```go
+ids := []string{"exists", "does-not-exist", "exists-2"}
+users, err := userDAL.GetMultiByIDs(ctx, client, ids)
+// users[0] != nil
+// users[1] == nil (not found)
+// users[2] != nil
+```
+
+## Type Limitations
+
+Datastore only supports these Go types:
+- Signed integers: `int`, `int8`, `int16`, `int32`, `int64`
+- `bool`, `string`, `float32`, `float64`
+- `[]byte`, `*datastore.Key`, `time.Time`
+- Structs and slices of the above
+
+**Unsigned integers (`uint32`, `uint64`) are NOT supported.** If your proto uses `uint32`, convert to `int32` or `string` in your Datastore sidecar proto.
+
 ## Examples
 
 See `tests/protos/datastore/user.proto` for comprehensive examples including:
@@ -536,3 +757,4 @@ See `tests/protos/datastore/user.proto` for comprehensive examples including:
 - Collections (repeated and map fields)
 - Custom namespaces
 - Large text fields with noindex
+- DAL helper integration
