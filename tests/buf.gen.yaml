@@ -28,4 +28,9 @@ plugins:
   # Local binary for Datastore testing
   - local: ../bin/protoc-gen-dal-datastore
     out: ./gen/datastore
-    opt: paths=source_relative
+    opt:
+      - paths=source_relative
+      - generate_dal=true
+      - dal_filename_suffix=_dal
+      - dal_output_dir=dal
+      - entity_import_path=github.com/panyam/protoc-gen-dal/tests/gen/datastore

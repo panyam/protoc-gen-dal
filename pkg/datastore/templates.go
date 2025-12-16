@@ -62,6 +62,9 @@ var fileTemplate string
 //go:embed templates/converters.go.tmpl
 var converterTemplate string
 
+//go:embed templates/dal.go.tmpl
+var dalTemplate string
+
 // executeTemplate executes the file template with the given data.
 func executeTemplate(data *TemplateData) (string, error) {
 	tmpl, err := template.New("file").Parse(fileTemplate)
@@ -126,6 +129,30 @@ func executeConverterTemplate(data *ConverterFileData) (string, error) {
 	var buf bytes.Buffer
 	if err := tmpl.Execute(&buf, data); err != nil {
 		return "", fmt.Errorf("failed to execute converter template: %w", err)
+	}
+
+	return buf.String(), nil
+}
+
+// renderTemplate renders a template by name with the given data.
+// This is used by the DAL generator to render the DAL template.
+func renderTemplate(name string, data interface{}) (string, error) {
+	var templateContent string
+	switch name {
+	case "dal.go.tmpl":
+		templateContent = dalTemplate
+	default:
+		return "", fmt.Errorf("unknown template: %s", name)
+	}
+
+	tmpl, err := template.New(name).Parse(templateContent)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse template %s: %w", name, err)
+	}
+
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, data); err != nil {
+		return "", fmt.Errorf("failed to execute template %s: %w", name, err)
 	}
 
 	return buf.String(), nil
