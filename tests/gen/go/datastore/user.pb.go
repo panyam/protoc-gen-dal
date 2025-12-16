@@ -25,7 +25,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// UserDatastore demonstrates basic Datastore entity
+// UserDatastore demonstrates basic Datastore entity with DAL generation
 type UserDatastore struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// ID field - stored in Key, excluded from properties
@@ -355,7 +355,7 @@ func (x *AuthorDatastore) GetEmail() string {
 	return ""
 }
 
-// ProductDatastore demonstrates repeated and map fields
+// ProductDatastore demonstrates repeated and map fields with DAL generation
 // Datastore natively supports repeated scalar values as array properties
 type ProductDatastore struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -573,7 +573,7 @@ var File_datastore_user_proto protoreflect.FileDescriptor
 
 const file_datastore_user_proto_rawDesc = "" +
 	"\n" +
-	"\x14datastore/user.proto\x12\tdatastore\x1a\x18dal/v1/annotations.proto\x1a\x0eapi/user.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x9f\x02\n" +
+	"\x14datastore/user.proto\x12\tdatastore\x1a\x18dal/v1/annotations.proto\x1a\x0eapi/user.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa1\x02\n" +
 	"\rUserDatastore\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x14\n" +
@@ -583,8 +583,8 @@ const file_datastore_user_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt:\x14Ҧ\x1d\x10\n" +
-	"\x04User*\bapi.User\"o\n" +
+	"updated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt:\x16Ҧ\x1d\x12\n" +
+	"\x04User*\bapi.User0\x01\"o\n" +
 	"\x11UserWithNamespace\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x14\n" +
@@ -605,7 +605,7 @@ const file_datastore_user_proto_rawDesc = "" +
 	"\x0fAuthorDatastore\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email:\x10Ҧ\x1d\f*\n" +
-	"api.Author\"\xa4\x02\n" +
+	"api.Author\"\xa6\x02\n" +
 	"\x10ProductDatastore\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x12\n" +
@@ -617,8 +617,8 @@ const file_datastore_user_proto_rawDesc = "" +
 	"\aratings\x18\x06 \x03(\x05R\aratings\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01:\x1aҦ\x1d\x16\n" +
-	"\aProduct*\vapi.Product\"\x92\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01:\x1cҦ\x1d\x18\n" +
+	"\aProduct*\vapi.Product0\x01\"\x92\x01\n" +
 	"\x10LibraryDatastore\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12>\n" +

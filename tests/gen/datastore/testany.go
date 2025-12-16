@@ -27,3 +27,32 @@ type TestRecord1Datastore struct {
 func (*TestRecord1Datastore) Kind() string {
 	return "test_records"
 }
+
+// MapValueMessageDatastore is the Datastore entity for the source message.
+type MapValueMessageDatastore struct {
+	Key *datastore.Key `datastore:"-"`
+
+	Label string `datastore:"label"`
+
+	Count int32 `datastore:"count"`
+}
+
+// TestRecord2Datastore is the Datastore entity for the source message.
+type TestRecord2Datastore struct {
+	Key *datastore.Key `datastore:"-"`
+
+	Name string `datastore:"name"`
+
+	Int32ToMessage map[int32]MapValueMessageDatastore `datastore:"int32_to_message"`
+
+	Int64ToMessage map[int64]MapValueMessageDatastore `datastore:"int64_to_message"`
+
+	Uint32ToMessage map[uint32]MapValueMessageDatastore `datastore:"uint32_to_message"`
+
+	BoolToMessage map[bool]MapValueMessageDatastore `datastore:"bool_to_message"`
+}
+
+// Kind returns the Datastore kind name for TestRecord2Datastore.
+func (*TestRecord2Datastore) Kind() string {
+	return "test_records2"
+}

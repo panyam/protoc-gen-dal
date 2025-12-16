@@ -2,9 +2,9 @@
 package datastore
 
 import (
-	"fmt"
-
 	api "github.com/panyam/protoc-gen-dal/tests/gen/go/api"
+
+	"fmt"
 
 	"github.com/panyam/protoc-gen-dal/pkg/converters"
 )
@@ -101,6 +101,250 @@ func TestRecord1FromTestRecord1Datastore(
 	out.ExtraData, err = converters.BytesToAny(src.ExtraData)
 	if err != nil {
 		return nil, fmt.Errorf("converting ExtraData: %w", err)
+	}
+
+	// Apply decorator if provided
+	if decorator != nil {
+		if err := decorator(dest, src); err != nil {
+			return nil, err
+		}
+	}
+
+	return dest, nil
+}
+
+// MapValueMessageToMapValueMessageDatastore converts a MapValueMessage to MapValueMessageDatastore.
+//
+// The optional decorator function allows custom field transformations after conversion.
+//
+// Parameters:
+//   - src: Source MapValueMessage message to convert from
+//   - dest: Destination MapValueMessageDatastore entity (if nil, a new one is created)
+//   - decorator: Optional function for custom transformations
+//
+// Returns:
+//   - Converted MapValueMessageDatastore entity
+//   - Error if conversion fails
+func MapValueMessageToMapValueMessageDatastore(
+	src *api.MapValueMessage,
+	dest *MapValueMessageDatastore,
+	decorator func(*api.MapValueMessage, *MapValueMessageDatastore) error,
+) (out *MapValueMessageDatastore, err error) {
+	if src == nil {
+		return nil, nil
+	}
+	if dest == nil {
+		dest = &MapValueMessageDatastore{}
+	}
+
+	// Initialize struct with inline values
+	*dest = MapValueMessageDatastore{
+		Label: src.Label,
+		Count: src.Count,
+	}
+	out = dest
+
+	// Apply decorator if provided
+	if decorator != nil {
+		if err := decorator(src, dest); err != nil {
+			return nil, err
+		}
+	}
+
+	return dest, nil
+}
+
+// MapValueMessageFromMapValueMessageDatastore converts a MapValueMessageDatastore back to MapValueMessage.
+//
+// The optional decorator function allows custom field transformations after conversion.
+//
+// Parameters:
+//   - dest: Destination MapValueMessage message (if nil, a new one is created)
+//   - src: Source MapValueMessageDatastore entity to convert from
+//   - decorator: Optional function for custom transformations
+//
+// Returns:
+//   - Converted MapValueMessage message
+//   - Error if conversion fails
+func MapValueMessageFromMapValueMessageDatastore(
+	dest *api.MapValueMessage,
+	src *MapValueMessageDatastore,
+	decorator func(*api.MapValueMessage, *MapValueMessageDatastore) error,
+) (out *api.MapValueMessage, err error) {
+	if src == nil {
+		return nil, nil
+	}
+	if dest == nil {
+		dest = &api.MapValueMessage{}
+	}
+
+	// Initialize struct with inline values
+	*dest = api.MapValueMessage{
+		Label: src.Label,
+		Count: src.Count,
+	}
+	out = dest
+
+	// Apply decorator if provided
+	if decorator != nil {
+		if err := decorator(dest, src); err != nil {
+			return nil, err
+		}
+	}
+
+	return dest, nil
+}
+
+// TestRecord2ToTestRecord2Datastore converts a TestRecord2 to TestRecord2Datastore.
+//
+// The optional decorator function allows custom field transformations after conversion.
+//
+// Parameters:
+//   - src: Source TestRecord2 message to convert from
+//   - dest: Destination TestRecord2Datastore entity (if nil, a new one is created)
+//   - decorator: Optional function for custom transformations
+//
+// Returns:
+//   - Converted TestRecord2Datastore entity
+//   - Error if conversion fails
+func TestRecord2ToTestRecord2Datastore(
+	src *api.TestRecord2,
+	dest *TestRecord2Datastore,
+	decorator func(*api.TestRecord2, *TestRecord2Datastore) error,
+) (out *TestRecord2Datastore, err error) {
+	if src == nil {
+		return nil, nil
+	}
+	if dest == nil {
+		dest = &TestRecord2Datastore{}
+	}
+
+	// Initialize struct with inline values
+	*dest = TestRecord2Datastore{
+		Name: src.Name,
+	}
+	out = dest
+
+	if src.Int32ToMessage != nil {
+		out.Int32ToMessage = make(map[int32]MapValueMessageDatastore, len(src.Int32ToMessage))
+		for key, value := range src.Int32ToMessage {
+			var converted MapValueMessageDatastore
+			_, err = MapValueMessageToMapValueMessageDatastore(value, &converted, nil)
+			if err != nil {
+				return nil, fmt.Errorf("converting Int32ToMessage[%v]: %w", key, err)
+			}
+			out.Int32ToMessage[key] = converted
+		}
+	}
+	if src.Int64ToMessage != nil {
+		out.Int64ToMessage = make(map[int64]MapValueMessageDatastore, len(src.Int64ToMessage))
+		for key, value := range src.Int64ToMessage {
+			var converted MapValueMessageDatastore
+			_, err = MapValueMessageToMapValueMessageDatastore(value, &converted, nil)
+			if err != nil {
+				return nil, fmt.Errorf("converting Int64ToMessage[%v]: %w", key, err)
+			}
+			out.Int64ToMessage[key] = converted
+		}
+	}
+	if src.Uint32ToMessage != nil {
+		out.Uint32ToMessage = make(map[uint32]MapValueMessageDatastore, len(src.Uint32ToMessage))
+		for key, value := range src.Uint32ToMessage {
+			var converted MapValueMessageDatastore
+			_, err = MapValueMessageToMapValueMessageDatastore(value, &converted, nil)
+			if err != nil {
+				return nil, fmt.Errorf("converting Uint32ToMessage[%v]: %w", key, err)
+			}
+			out.Uint32ToMessage[key] = converted
+		}
+	}
+	if src.BoolToMessage != nil {
+		out.BoolToMessage = make(map[bool]MapValueMessageDatastore, len(src.BoolToMessage))
+		for key, value := range src.BoolToMessage {
+			var converted MapValueMessageDatastore
+			_, err = MapValueMessageToMapValueMessageDatastore(value, &converted, nil)
+			if err != nil {
+				return nil, fmt.Errorf("converting BoolToMessage[%v]: %w", key, err)
+			}
+			out.BoolToMessage[key] = converted
+		}
+	}
+
+	// Apply decorator if provided
+	if decorator != nil {
+		if err := decorator(src, dest); err != nil {
+			return nil, err
+		}
+	}
+
+	return dest, nil
+}
+
+// TestRecord2FromTestRecord2Datastore converts a TestRecord2Datastore back to TestRecord2.
+//
+// The optional decorator function allows custom field transformations after conversion.
+//
+// Parameters:
+//   - dest: Destination TestRecord2 message (if nil, a new one is created)
+//   - src: Source TestRecord2Datastore entity to convert from
+//   - decorator: Optional function for custom transformations
+//
+// Returns:
+//   - Converted TestRecord2 message
+//   - Error if conversion fails
+func TestRecord2FromTestRecord2Datastore(
+	dest *api.TestRecord2,
+	src *TestRecord2Datastore,
+	decorator func(*api.TestRecord2, *TestRecord2Datastore) error,
+) (out *api.TestRecord2, err error) {
+	if src == nil {
+		return nil, nil
+	}
+	if dest == nil {
+		dest = &api.TestRecord2{}
+	}
+
+	// Initialize struct with inline values
+	*dest = api.TestRecord2{
+		Name: src.Name,
+	}
+	out = dest
+
+	if src.Int32ToMessage != nil {
+		out.Int32ToMessage = make(map[int32]*api.MapValueMessage, len(src.Int32ToMessage))
+		for key, value := range src.Int32ToMessage {
+			out.Int32ToMessage[key], err = MapValueMessageFromMapValueMessageDatastore(nil, &value, nil)
+			if err != nil {
+				return nil, fmt.Errorf("converting Int32ToMessage[%v]: %w", key, err)
+			}
+		}
+	}
+	if src.Int64ToMessage != nil {
+		out.Int64ToMessage = make(map[int64]*api.MapValueMessage, len(src.Int64ToMessage))
+		for key, value := range src.Int64ToMessage {
+			out.Int64ToMessage[key], err = MapValueMessageFromMapValueMessageDatastore(nil, &value, nil)
+			if err != nil {
+				return nil, fmt.Errorf("converting Int64ToMessage[%v]: %w", key, err)
+			}
+		}
+	}
+	if src.Uint32ToMessage != nil {
+		out.Uint32ToMessage = make(map[uint32]*api.MapValueMessage, len(src.Uint32ToMessage))
+		for key, value := range src.Uint32ToMessage {
+			out.Uint32ToMessage[key], err = MapValueMessageFromMapValueMessageDatastore(nil, &value, nil)
+			if err != nil {
+				return nil, fmt.Errorf("converting Uint32ToMessage[%v]: %w", key, err)
+			}
+		}
+	}
+	if src.BoolToMessage != nil {
+		out.BoolToMessage = make(map[bool]*api.MapValueMessage, len(src.BoolToMessage))
+		for key, value := range src.BoolToMessage {
+			out.BoolToMessage[key], err = MapValueMessageFromMapValueMessageDatastore(nil, &value, nil)
+			if err != nil {
+				return nil, fmt.Errorf("converting BoolToMessage[%v]: %w", key, err)
+			}
+		}
 	}
 
 	// Apply decorator if provided

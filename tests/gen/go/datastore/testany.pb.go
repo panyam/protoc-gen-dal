@@ -25,7 +25,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// UserDatastore demonstrates basic Datastore entity
+// TestRecord1Datastore demonstrates basic Datastore entity with enums and Any
 type TestRecord1Datastore struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -62,13 +62,161 @@ func (*TestRecord1Datastore) Descriptor() ([]byte, []int) {
 	return file_datastore_testany_proto_rawDescGZIP(), []int{0}
 }
 
+// MapValueMessageDatastore is the Datastore model for api.MapValueMessage
+type MapValueMessageDatastore struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Label         string                 `protobuf:"bytes,1,opt,name=label,proto3" json:"label,omitempty"`
+	Count         int32                  `protobuf:"varint,2,opt,name=count,proto3" json:"count,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MapValueMessageDatastore) Reset() {
+	*x = MapValueMessageDatastore{}
+	mi := &file_datastore_testany_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MapValueMessageDatastore) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MapValueMessageDatastore) ProtoMessage() {}
+
+func (x *MapValueMessageDatastore) ProtoReflect() protoreflect.Message {
+	mi := &file_datastore_testany_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MapValueMessageDatastore.ProtoReflect.Descriptor instead.
+func (*MapValueMessageDatastore) Descriptor() ([]byte, []int) {
+	return file_datastore_testany_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *MapValueMessageDatastore) GetLabel() string {
+	if x != nil {
+		return x.Label
+	}
+	return ""
+}
+
+func (x *MapValueMessageDatastore) GetCount() int32 {
+	if x != nil {
+		return x.Count
+	}
+	return 0
+}
+
+// TestRecord2Datastore tests Datastore handling of maps with non-string keys.
+// These maps contain proto message values with various key types.
+type TestRecord2Datastore struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Map with int32 keys containing message values
+	Int32ToMessage map[int32]*MapValueMessageDatastore `protobuf:"bytes,2,rep,name=int32_to_message,json=int32ToMessage,proto3" json:"int32_to_message,omitempty" protobuf_key:"varint,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// Map with int64 keys containing message values
+	Int64ToMessage map[int64]*MapValueMessageDatastore `protobuf:"bytes,3,rep,name=int64_to_message,json=int64ToMessage,proto3" json:"int64_to_message,omitempty" protobuf_key:"varint,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// Map with uint32 keys containing message values
+	Uint32ToMessage map[uint32]*MapValueMessageDatastore `protobuf:"bytes,4,rep,name=uint32_to_message,json=uint32ToMessage,proto3" json:"uint32_to_message,omitempty" protobuf_key:"varint,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// Map with bool keys containing message values
+	BoolToMessage map[bool]*MapValueMessageDatastore `protobuf:"bytes,5,rep,name=bool_to_message,json=boolToMessage,proto3" json:"bool_to_message,omitempty" protobuf_key:"varint,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TestRecord2Datastore) Reset() {
+	*x = TestRecord2Datastore{}
+	mi := &file_datastore_testany_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TestRecord2Datastore) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TestRecord2Datastore) ProtoMessage() {}
+
+func (x *TestRecord2Datastore) ProtoReflect() protoreflect.Message {
+	mi := &file_datastore_testany_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TestRecord2Datastore.ProtoReflect.Descriptor instead.
+func (*TestRecord2Datastore) Descriptor() ([]byte, []int) {
+	return file_datastore_testany_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *TestRecord2Datastore) GetInt32ToMessage() map[int32]*MapValueMessageDatastore {
+	if x != nil {
+		return x.Int32ToMessage
+	}
+	return nil
+}
+
+func (x *TestRecord2Datastore) GetInt64ToMessage() map[int64]*MapValueMessageDatastore {
+	if x != nil {
+		return x.Int64ToMessage
+	}
+	return nil
+}
+
+func (x *TestRecord2Datastore) GetUint32ToMessage() map[uint32]*MapValueMessageDatastore {
+	if x != nil {
+		return x.Uint32ToMessage
+	}
+	return nil
+}
+
+func (x *TestRecord2Datastore) GetBoolToMessage() map[bool]*MapValueMessageDatastore {
+	if x != nil {
+		return x.BoolToMessage
+	}
+	return nil
+}
+
 var File_datastore_testany_proto protoreflect.FileDescriptor
 
 const file_datastore_testany_proto_rawDesc = "" +
 	"\n" +
 	"\x17datastore/testany.proto\x12\tdatastore\x1a\x18dal/v1/annotations.proto\x1a\x11api/testany.proto\x1a\x1fgoogle/protobuf/timestamp.proto\";\n" +
 	"\x14TestRecord1Datastore:#Ҧ\x1d\x1f\n" +
-	"\ftest_records*\x0fapi.TestRecord1B\x9a\x01\n" +
+	"\ftest_records*\x0fapi.TestRecord1\"a\n" +
+	"\x18MapValueMessageDatastore\x12\x14\n" +
+	"\x05label\x18\x01 \x01(\tR\x05label\x12\x14\n" +
+	"\x05count\x18\x02 \x01(\x05R\x05count:\x19Ҧ\x1d\x15*\x13api.MapValueMessage\"\xd8\x06\n" +
+	"\x14TestRecord2Datastore\x12]\n" +
+	"\x10int32_to_message\x18\x02 \x03(\v23.datastore.TestRecord2Datastore.Int32ToMessageEntryR\x0eint32ToMessage\x12]\n" +
+	"\x10int64_to_message\x18\x03 \x03(\v23.datastore.TestRecord2Datastore.Int64ToMessageEntryR\x0eint64ToMessage\x12`\n" +
+	"\x11uint32_to_message\x18\x04 \x03(\v24.datastore.TestRecord2Datastore.Uint32ToMessageEntryR\x0fuint32ToMessage\x12Z\n" +
+	"\x0fbool_to_message\x18\x05 \x03(\v22.datastore.TestRecord2Datastore.BoolToMessageEntryR\rboolToMessage\x1af\n" +
+	"\x13Int32ToMessageEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\x05R\x03key\x129\n" +
+	"\x05value\x18\x02 \x01(\v2#.datastore.MapValueMessageDatastoreR\x05value:\x028\x01\x1af\n" +
+	"\x13Int64ToMessageEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\x03R\x03key\x129\n" +
+	"\x05value\x18\x02 \x01(\v2#.datastore.MapValueMessageDatastoreR\x05value:\x028\x01\x1ag\n" +
+	"\x14Uint32ToMessageEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\rR\x03key\x129\n" +
+	"\x05value\x18\x02 \x01(\v2#.datastore.MapValueMessageDatastoreR\x05value:\x028\x01\x1ae\n" +
+	"\x12BoolToMessageEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\bR\x03key\x129\n" +
+	"\x05value\x18\x02 \x01(\v2#.datastore.MapValueMessageDatastoreR\x05value:\x028\x01:$Ҧ\x1d \n" +
+	"\rtest_records2*\x0fapi.TestRecord2B\x9a\x01\n" +
 	"\rcom.datastoreB\fTestanyProtoP\x01Z7github.com/panyam/protoc-gen-dal/tests/gen/go/datastore\xa2\x02\x03DXX\xaa\x02\tDatastore\xca\x02\tDatastore\xe2\x02\x15Datastore\\GPBMetadata\xea\x02\tDatastoreb\x06proto3"
 
 var (
@@ -83,16 +231,30 @@ func file_datastore_testany_proto_rawDescGZIP() []byte {
 	return file_datastore_testany_proto_rawDescData
 }
 
-var file_datastore_testany_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_datastore_testany_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_datastore_testany_proto_goTypes = []any{
-	(*TestRecord1Datastore)(nil), // 0: datastore.TestRecord1Datastore
+	(*TestRecord1Datastore)(nil),     // 0: datastore.TestRecord1Datastore
+	(*MapValueMessageDatastore)(nil), // 1: datastore.MapValueMessageDatastore
+	(*TestRecord2Datastore)(nil),     // 2: datastore.TestRecord2Datastore
+	nil,                              // 3: datastore.TestRecord2Datastore.Int32ToMessageEntry
+	nil,                              // 4: datastore.TestRecord2Datastore.Int64ToMessageEntry
+	nil,                              // 5: datastore.TestRecord2Datastore.Uint32ToMessageEntry
+	nil,                              // 6: datastore.TestRecord2Datastore.BoolToMessageEntry
 }
 var file_datastore_testany_proto_depIdxs = []int32{
-	0, // [0:0] is the sub-list for method output_type
-	0, // [0:0] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	3, // 0: datastore.TestRecord2Datastore.int32_to_message:type_name -> datastore.TestRecord2Datastore.Int32ToMessageEntry
+	4, // 1: datastore.TestRecord2Datastore.int64_to_message:type_name -> datastore.TestRecord2Datastore.Int64ToMessageEntry
+	5, // 2: datastore.TestRecord2Datastore.uint32_to_message:type_name -> datastore.TestRecord2Datastore.Uint32ToMessageEntry
+	6, // 3: datastore.TestRecord2Datastore.bool_to_message:type_name -> datastore.TestRecord2Datastore.BoolToMessageEntry
+	1, // 4: datastore.TestRecord2Datastore.Int32ToMessageEntry.value:type_name -> datastore.MapValueMessageDatastore
+	1, // 5: datastore.TestRecord2Datastore.Int64ToMessageEntry.value:type_name -> datastore.MapValueMessageDatastore
+	1, // 6: datastore.TestRecord2Datastore.Uint32ToMessageEntry.value:type_name -> datastore.MapValueMessageDatastore
+	1, // 7: datastore.TestRecord2Datastore.BoolToMessageEntry.value:type_name -> datastore.MapValueMessageDatastore
+	8, // [8:8] is the sub-list for method output_type
+	8, // [8:8] is the sub-list for method input_type
+	8, // [8:8] is the sub-list for extension type_name
+	8, // [8:8] is the sub-list for extension extendee
+	0, // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_datastore_testany_proto_init() }
@@ -106,7 +268,7 @@ func file_datastore_testany_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_datastore_testany_proto_rawDesc), len(file_datastore_testany_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   1,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
