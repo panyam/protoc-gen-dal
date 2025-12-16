@@ -343,3 +343,296 @@ func TestRecord1Conversion_AllFieldsNil(t *testing.T) {
 		t.Errorf("Round-trip AnEnum mismatch: got %v, want %v", apiRecord.AnEnum, api.SampleEnum_SAMPLE_ENUM_UNSPECIFIED)
 	}
 }
+
+// TestRecord2Conversion_MapWithInt32Keys verifies maps with int32 keys and message values.
+func TestRecord2Conversion_MapWithInt32Keys(t *testing.T) {
+	src := &api.TestRecord2{
+		Name: "Test Record 2",
+		Int32ToMessage: map[int32]*api.MapValueMessage{
+			1:  {Label: "one", Count: 1},
+			-5: {Label: "negative five", Count: -5},
+			42: {Label: "forty-two", Count: 42},
+		},
+	}
+
+	// Convert to GORM
+	gormRecord, err := gorm.TestRecord2ToTestRecord2GORM(src, nil, nil)
+	if err != nil {
+		t.Fatalf("TestRecord2ToTestRecord2GORM failed: %v", err)
+	}
+
+	// Verify Name
+	if gormRecord.Name != src.Name {
+		t.Errorf("Name mismatch: got %s, want %s", gormRecord.Name, src.Name)
+	}
+
+	// Verify Int32ToMessage
+	if len(gormRecord.Int32ToMessage) != len(src.Int32ToMessage) {
+		t.Errorf("Int32ToMessage length mismatch: got %d, want %d", len(gormRecord.Int32ToMessage), len(src.Int32ToMessage))
+	}
+
+	for key, srcVal := range src.Int32ToMessage {
+		gormVal, ok := gormRecord.Int32ToMessage[key]
+		if !ok {
+			t.Errorf("Int32ToMessage missing key: %d", key)
+			continue
+		}
+		if gormVal.Label != srcVal.Label || gormVal.Count != srcVal.Count {
+			t.Errorf("Int32ToMessage[%d] mismatch: got {%s, %d}, want {%s, %d}",
+				key, gormVal.Label, gormVal.Count, srcVal.Label, srcVal.Count)
+		}
+	}
+
+	// Convert back to API
+	apiRecord, err := gorm.TestRecord2FromTestRecord2GORM(nil, gormRecord, nil)
+	if err != nil {
+		t.Fatalf("TestRecord2FromTestRecord2GORM failed: %v", err)
+	}
+
+	// Verify round-trip
+	if len(apiRecord.Int32ToMessage) != len(src.Int32ToMessage) {
+		t.Errorf("Round-trip Int32ToMessage length mismatch: got %d, want %d",
+			len(apiRecord.Int32ToMessage), len(src.Int32ToMessage))
+	}
+
+	for key, srcVal := range src.Int32ToMessage {
+		apiVal, ok := apiRecord.Int32ToMessage[key]
+		if !ok {
+			t.Errorf("Round-trip Int32ToMessage missing key: %d", key)
+			continue
+		}
+		if apiVal.Label != srcVal.Label || apiVal.Count != srcVal.Count {
+			t.Errorf("Round-trip Int32ToMessage[%d] mismatch: got {%s, %d}, want {%s, %d}",
+				key, apiVal.Label, apiVal.Count, srcVal.Label, srcVal.Count)
+		}
+	}
+}
+
+// TestRecord2Conversion_MapWithInt64Keys verifies maps with int64 keys and message values.
+func TestRecord2Conversion_MapWithInt64Keys(t *testing.T) {
+	src := &api.TestRecord2{
+		Name: "Test Record 2 - Int64",
+		Int64ToMessage: map[int64]*api.MapValueMessage{
+			1000000000000: {Label: "trillion", Count: 10},
+			-9999999999:   {Label: "large negative", Count: -99},
+		},
+	}
+
+	// Convert to GORM
+	gormRecord, err := gorm.TestRecord2ToTestRecord2GORM(src, nil, nil)
+	if err != nil {
+		t.Fatalf("TestRecord2ToTestRecord2GORM failed: %v", err)
+	}
+
+	// Verify Int64ToMessage
+	if len(gormRecord.Int64ToMessage) != len(src.Int64ToMessage) {
+		t.Errorf("Int64ToMessage length mismatch: got %d, want %d", len(gormRecord.Int64ToMessage), len(src.Int64ToMessage))
+	}
+
+	// Convert back and verify round-trip
+	apiRecord, err := gorm.TestRecord2FromTestRecord2GORM(nil, gormRecord, nil)
+	if err != nil {
+		t.Fatalf("TestRecord2FromTestRecord2GORM failed: %v", err)
+	}
+
+	for key, srcVal := range src.Int64ToMessage {
+		apiVal, ok := apiRecord.Int64ToMessage[key]
+		if !ok {
+			t.Errorf("Round-trip Int64ToMessage missing key: %d", key)
+			continue
+		}
+		if apiVal.Label != srcVal.Label || apiVal.Count != srcVal.Count {
+			t.Errorf("Round-trip Int64ToMessage[%d] mismatch", key)
+		}
+	}
+}
+
+// TestRecord2Conversion_MapWithUint32Keys verifies maps with uint32 keys and message values.
+func TestRecord2Conversion_MapWithUint32Keys(t *testing.T) {
+	src := &api.TestRecord2{
+		Name: "Test Record 2 - Uint32",
+		Uint32ToMessage: map[uint32]*api.MapValueMessage{
+			0:          {Label: "zero", Count: 0},
+			4294967295: {Label: "max uint32", Count: 100},
+		},
+	}
+
+	// Convert to GORM
+	gormRecord, err := gorm.TestRecord2ToTestRecord2GORM(src, nil, nil)
+	if err != nil {
+		t.Fatalf("TestRecord2ToTestRecord2GORM failed: %v", err)
+	}
+
+	// Verify Uint32ToMessage
+	if len(gormRecord.Uint32ToMessage) != len(src.Uint32ToMessage) {
+		t.Errorf("Uint32ToMessage length mismatch: got %d, want %d", len(gormRecord.Uint32ToMessage), len(src.Uint32ToMessage))
+	}
+
+	// Convert back and verify round-trip
+	apiRecord, err := gorm.TestRecord2FromTestRecord2GORM(nil, gormRecord, nil)
+	if err != nil {
+		t.Fatalf("TestRecord2FromTestRecord2GORM failed: %v", err)
+	}
+
+	for key, srcVal := range src.Uint32ToMessage {
+		apiVal, ok := apiRecord.Uint32ToMessage[key]
+		if !ok {
+			t.Errorf("Round-trip Uint32ToMessage missing key: %d", key)
+			continue
+		}
+		if apiVal.Label != srcVal.Label || apiVal.Count != srcVal.Count {
+			t.Errorf("Round-trip Uint32ToMessage[%d] mismatch", key)
+		}
+	}
+}
+
+// TestRecord2Conversion_MapWithBoolKeys verifies maps with bool keys and message values.
+func TestRecord2Conversion_MapWithBoolKeys(t *testing.T) {
+	src := &api.TestRecord2{
+		Name: "Test Record 2 - Bool",
+		BoolToMessage: map[bool]*api.MapValueMessage{
+			true:  {Label: "yes", Count: 1},
+			false: {Label: "no", Count: 0},
+		},
+	}
+
+	// Convert to GORM
+	gormRecord, err := gorm.TestRecord2ToTestRecord2GORM(src, nil, nil)
+	if err != nil {
+		t.Fatalf("TestRecord2ToTestRecord2GORM failed: %v", err)
+	}
+
+	// Verify BoolToMessage
+	if len(gormRecord.BoolToMessage) != len(src.BoolToMessage) {
+		t.Errorf("BoolToMessage length mismatch: got %d, want %d", len(gormRecord.BoolToMessage), len(src.BoolToMessage))
+	}
+
+	// Convert back and verify round-trip
+	apiRecord, err := gorm.TestRecord2FromTestRecord2GORM(nil, gormRecord, nil)
+	if err != nil {
+		t.Fatalf("TestRecord2FromTestRecord2GORM failed: %v", err)
+	}
+
+	for key, srcVal := range src.BoolToMessage {
+		apiVal, ok := apiRecord.BoolToMessage[key]
+		if !ok {
+			t.Errorf("Round-trip BoolToMessage missing key: %v", key)
+			continue
+		}
+		if apiVal.Label != srcVal.Label || apiVal.Count != srcVal.Count {
+			t.Errorf("Round-trip BoolToMessage[%v] mismatch", key)
+		}
+	}
+}
+
+// TestRecord2Conversion_AllMapsPopulated verifies all map types together.
+func TestRecord2Conversion_AllMapsPopulated(t *testing.T) {
+	src := &api.TestRecord2{
+		Name: "All Maps Test",
+		Int32ToMessage: map[int32]*api.MapValueMessage{
+			1: {Label: "int32-1", Count: 1},
+		},
+		Int64ToMessage: map[int64]*api.MapValueMessage{
+			100: {Label: "int64-100", Count: 100},
+		},
+		Uint32ToMessage: map[uint32]*api.MapValueMessage{
+			200: {Label: "uint32-200", Count: 200},
+		},
+		BoolToMessage: map[bool]*api.MapValueMessage{
+			true: {Label: "bool-true", Count: 1},
+		},
+	}
+
+	// Convert to GORM
+	gormRecord, err := gorm.TestRecord2ToTestRecord2GORM(src, nil, nil)
+	if err != nil {
+		t.Fatalf("TestRecord2ToTestRecord2GORM failed: %v", err)
+	}
+
+	// Verify all maps are populated
+	if len(gormRecord.Int32ToMessage) != 1 {
+		t.Errorf("Int32ToMessage should have 1 entry")
+	}
+	if len(gormRecord.Int64ToMessage) != 1 {
+		t.Errorf("Int64ToMessage should have 1 entry")
+	}
+	if len(gormRecord.Uint32ToMessage) != 1 {
+		t.Errorf("Uint32ToMessage should have 1 entry")
+	}
+	if len(gormRecord.BoolToMessage) != 1 {
+		t.Errorf("BoolToMessage should have 1 entry")
+	}
+
+	// Convert back and verify round-trip
+	apiRecord, err := gorm.TestRecord2FromTestRecord2GORM(nil, gormRecord, nil)
+	if err != nil {
+		t.Fatalf("TestRecord2FromTestRecord2GORM failed: %v", err)
+	}
+
+	// Verify all maps are populated in round-trip
+	if len(apiRecord.Int32ToMessage) != 1 {
+		t.Errorf("Round-trip Int32ToMessage should have 1 entry")
+	}
+	if len(apiRecord.Int64ToMessage) != 1 {
+		t.Errorf("Round-trip Int64ToMessage should have 1 entry")
+	}
+	if len(apiRecord.Uint32ToMessage) != 1 {
+		t.Errorf("Round-trip Uint32ToMessage should have 1 entry")
+	}
+	if len(apiRecord.BoolToMessage) != 1 {
+		t.Errorf("Round-trip BoolToMessage should have 1 entry")
+	}
+}
+
+// TestRecord2Conversion_NilMaps verifies nil map handling.
+func TestRecord2Conversion_NilMaps(t *testing.T) {
+	src := &api.TestRecord2{
+		Name: "Nil Maps Test",
+		// All maps are nil
+	}
+
+	// Convert to GORM
+	gormRecord, err := gorm.TestRecord2ToTestRecord2GORM(src, nil, nil)
+	if err != nil {
+		t.Fatalf("TestRecord2ToTestRecord2GORM failed: %v", err)
+	}
+
+	// Verify Name
+	if gormRecord.Name != src.Name {
+		t.Errorf("Name mismatch: got %s, want %s", gormRecord.Name, src.Name)
+	}
+
+	// Nil maps should remain nil
+	if gormRecord.Int32ToMessage != nil {
+		t.Errorf("Int32ToMessage should be nil")
+	}
+	if gormRecord.Int64ToMessage != nil {
+		t.Errorf("Int64ToMessage should be nil")
+	}
+	if gormRecord.Uint32ToMessage != nil {
+		t.Errorf("Uint32ToMessage should be nil")
+	}
+	if gormRecord.BoolToMessage != nil {
+		t.Errorf("BoolToMessage should be nil")
+	}
+
+	// Convert back and verify round-trip
+	apiRecord, err := gorm.TestRecord2FromTestRecord2GORM(nil, gormRecord, nil)
+	if err != nil {
+		t.Fatalf("TestRecord2FromTestRecord2GORM failed: %v", err)
+	}
+
+	// Verify maps are nil in round-trip
+	if apiRecord.Int32ToMessage != nil {
+		t.Errorf("Round-trip Int32ToMessage should be nil")
+	}
+	if apiRecord.Int64ToMessage != nil {
+		t.Errorf("Round-trip Int64ToMessage should be nil")
+	}
+	if apiRecord.Uint32ToMessage != nil {
+		t.Errorf("Round-trip Uint32ToMessage should be nil")
+	}
+	if apiRecord.BoolToMessage != nil {
+		t.Errorf("Round-trip BoolToMessage should be nil")
+	}
+}

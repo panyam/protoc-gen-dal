@@ -91,3 +91,207 @@ func TestRecord1FromTestRecord1GORM(
 
 	return out, nil
 }
+
+// MapValueMessageToMapValueMessageGORM converts a api.MapValueMessage to MapValueMessageGORM.
+// The optional decorator function allows custom field transformations.
+func MapValueMessageToMapValueMessageGORM(
+	src *api.MapValueMessage,
+	dest *MapValueMessageGORM,
+	decorator func(*api.MapValueMessage, *MapValueMessageGORM) error,
+) (out *MapValueMessageGORM, err error) {
+	if src == nil {
+		return nil, nil
+	}
+	if dest == nil {
+		dest = &MapValueMessageGORM{}
+	}
+
+	// Initialize struct with inline values
+	*dest = MapValueMessageGORM{
+		Label: src.Label,
+		Count: src.Count,
+	}
+	out = dest
+
+	// Apply decorator if provided
+	if decorator != nil {
+		if err := decorator(src, dest); err != nil {
+			return nil, err
+		}
+	}
+
+	return dest, nil
+}
+
+// MapValueMessageFromMapValueMessageGORM converts a MapValueMessageGORM back to api.MapValueMessage.
+// The optional decorator function allows custom field transformations.
+func MapValueMessageFromMapValueMessageGORM(
+	dest *api.MapValueMessage,
+	src *MapValueMessageGORM,
+	decorator func(dest *api.MapValueMessage, src *MapValueMessageGORM) error,
+) (out *api.MapValueMessage, err error) {
+	if src == nil {
+		return nil, nil
+	}
+	if dest == nil {
+		dest = &api.MapValueMessage{}
+	}
+
+	// Initialize struct with inline values
+	*dest = api.MapValueMessage{
+		Label: src.Label,
+		Count: src.Count,
+	}
+	out = dest
+
+	// Apply decorator if provided
+	if decorator != nil {
+		if err := decorator(dest, src); err != nil {
+			return nil, err
+		}
+	}
+
+	return out, nil
+}
+
+// TestRecord2ToTestRecord2GORM converts a api.TestRecord2 to TestRecord2GORM.
+// The optional decorator function allows custom field transformations.
+func TestRecord2ToTestRecord2GORM(
+	src *api.TestRecord2,
+	dest *TestRecord2GORM,
+	decorator func(*api.TestRecord2, *TestRecord2GORM) error,
+) (out *TestRecord2GORM, err error) {
+	if src == nil {
+		return nil, nil
+	}
+	if dest == nil {
+		dest = &TestRecord2GORM{}
+	}
+
+	// Initialize struct with inline values
+	*dest = TestRecord2GORM{
+		Name: src.Name,
+	}
+	out = dest
+
+	if src.Int32ToMessage != nil {
+		out.Int32ToMessage = make(map[int32]MapValueMessageGORM, len(src.Int32ToMessage))
+		for key, value := range src.Int32ToMessage {
+			var converted MapValueMessageGORM
+			_, err = MapValueMessageToMapValueMessageGORM(value, &converted, nil)
+			if err != nil {
+				return nil, fmt.Errorf("converting Int32ToMessage[%v]: %w", key, err)
+			}
+			out.Int32ToMessage[key] = converted
+		}
+	}
+	if src.Int64ToMessage != nil {
+		out.Int64ToMessage = make(map[int64]MapValueMessageGORM, len(src.Int64ToMessage))
+		for key, value := range src.Int64ToMessage {
+			var converted MapValueMessageGORM
+			_, err = MapValueMessageToMapValueMessageGORM(value, &converted, nil)
+			if err != nil {
+				return nil, fmt.Errorf("converting Int64ToMessage[%v]: %w", key, err)
+			}
+			out.Int64ToMessage[key] = converted
+		}
+	}
+	if src.Uint32ToMessage != nil {
+		out.Uint32ToMessage = make(map[uint32]MapValueMessageGORM, len(src.Uint32ToMessage))
+		for key, value := range src.Uint32ToMessage {
+			var converted MapValueMessageGORM
+			_, err = MapValueMessageToMapValueMessageGORM(value, &converted, nil)
+			if err != nil {
+				return nil, fmt.Errorf("converting Uint32ToMessage[%v]: %w", key, err)
+			}
+			out.Uint32ToMessage[key] = converted
+		}
+	}
+	if src.BoolToMessage != nil {
+		out.BoolToMessage = make(map[bool]MapValueMessageGORM, len(src.BoolToMessage))
+		for key, value := range src.BoolToMessage {
+			var converted MapValueMessageGORM
+			_, err = MapValueMessageToMapValueMessageGORM(value, &converted, nil)
+			if err != nil {
+				return nil, fmt.Errorf("converting BoolToMessage[%v]: %w", key, err)
+			}
+			out.BoolToMessage[key] = converted
+		}
+	}
+
+	// Apply decorator if provided
+	if decorator != nil {
+		if err := decorator(src, dest); err != nil {
+			return nil, err
+		}
+	}
+
+	return dest, nil
+}
+
+// TestRecord2FromTestRecord2GORM converts a TestRecord2GORM back to api.TestRecord2.
+// The optional decorator function allows custom field transformations.
+func TestRecord2FromTestRecord2GORM(
+	dest *api.TestRecord2,
+	src *TestRecord2GORM,
+	decorator func(dest *api.TestRecord2, src *TestRecord2GORM) error,
+) (out *api.TestRecord2, err error) {
+	if src == nil {
+		return nil, nil
+	}
+	if dest == nil {
+		dest = &api.TestRecord2{}
+	}
+
+	// Initialize struct with inline values
+	*dest = api.TestRecord2{
+		Name: src.Name,
+	}
+	out = dest
+
+	if src.Int32ToMessage != nil {
+		out.Int32ToMessage = make(map[int32]*api.MapValueMessage, len(src.Int32ToMessage))
+		for key, value := range src.Int32ToMessage {
+			out.Int32ToMessage[key], err = MapValueMessageFromMapValueMessageGORM(nil, &value, nil)
+			if err != nil {
+				return nil, fmt.Errorf("converting Int32ToMessage[%v]: %w", key, err)
+			}
+		}
+	}
+	if src.Int64ToMessage != nil {
+		out.Int64ToMessage = make(map[int64]*api.MapValueMessage, len(src.Int64ToMessage))
+		for key, value := range src.Int64ToMessage {
+			out.Int64ToMessage[key], err = MapValueMessageFromMapValueMessageGORM(nil, &value, nil)
+			if err != nil {
+				return nil, fmt.Errorf("converting Int64ToMessage[%v]: %w", key, err)
+			}
+		}
+	}
+	if src.Uint32ToMessage != nil {
+		out.Uint32ToMessage = make(map[uint32]*api.MapValueMessage, len(src.Uint32ToMessage))
+		for key, value := range src.Uint32ToMessage {
+			out.Uint32ToMessage[key], err = MapValueMessageFromMapValueMessageGORM(nil, &value, nil)
+			if err != nil {
+				return nil, fmt.Errorf("converting Uint32ToMessage[%v]: %w", key, err)
+			}
+		}
+	}
+	if src.BoolToMessage != nil {
+		out.BoolToMessage = make(map[bool]*api.MapValueMessage, len(src.BoolToMessage))
+		for key, value := range src.BoolToMessage {
+			out.BoolToMessage[key], err = MapValueMessageFromMapValueMessageGORM(nil, &value, nil)
+			if err != nil {
+				return nil, fmt.Errorf("converting BoolToMessage[%v]: %w", key, err)
+			}
+		}
+	}
+
+	// Apply decorator if provided
+	if decorator != nil {
+		if err := decorator(dest, src); err != nil {
+			return nil, err
+		}
+	}
+
+	return out, nil
+}

@@ -319,9 +319,9 @@ type MoveUnitActionDatastore struct {
 type GameMoveDatastore struct {
 	Key *datastore.Key `datastore:"-"`
 
-	Player int32 `datastore:"player"`
-
 	MoveType []byte `datastore:"move_type"`
+
+	Player int32 `datastore:"player"`
 
 	Timestamp time.Time `datastore:"timestamp"`
 

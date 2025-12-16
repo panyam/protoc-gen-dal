@@ -23,3 +23,20 @@ message TestRecord1 {
   repeated SampleEnum list_of_enums = 4;
   map<string, SampleEnum> map_string_to_enum = 5;
 }
+
+// A simple message to be used as map values
+message MapValueMessage {
+  string label = 1;
+  int32 count = 2;
+}
+
+// TestRecord2 tests maps with non-string keys containing proto message values.
+// Protobuf allows int32, int64, uint32, uint64, sint32, sint64, fixed32, fixed64,
+// sfixed32, sfixed64, bool, and string as map key types.
+message TestRecord2 {
+  string name = 1;
+  map<int32, MapValueMessage> int32_to_message = 2;
+  map<int64, MapValueMessage> int64_to_message = 3;
+  map<uint32, MapValueMessage> uint32_to_message = 4;
+  map<bool, MapValueMessage> bool_to_message = 5;
+}

@@ -844,7 +844,7 @@ func OrganizationToOrganizationGORM(
 			var converted AuthorGORM
 			_, err = AuthorToAuthorGORM(value, &converted, nil)
 			if err != nil {
-				return nil, fmt.Errorf("converting Departments[%s]: %w", key, err)
+				return nil, fmt.Errorf("converting Departments[%v]: %w", key, err)
 			}
 			out.Departments[key] = converted
 		}
@@ -886,7 +886,7 @@ func OrganizationFromOrganizationGORM(
 		for key, value := range src.Departments {
 			out.Departments[key], err = AuthorFromAuthorGORM(nil, &value, nil)
 			if err != nil {
-				return nil, fmt.Errorf("converting Departments[%s]: %w", key, err)
+				return nil, fmt.Errorf("converting Departments[%v]: %w", key, err)
 			}
 		}
 	}
