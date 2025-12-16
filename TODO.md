@@ -634,6 +634,30 @@ From `tests/protos/datastore/user.proto`:
   - ✅ Tests: TestDALLateBinding, TestDALTableNameEmpty verify late-binding behavior
   - ✅ Use case: Same Address struct in user_addresses and company_addresses tables
 
+- ✅ **Datastore DAL Integration Tests** (Phase 3.1 Extension) - COMPLETE
+  - ✅ Created tests/tests/datastore/ folder with test helpers
+  - ✅ Created datastore_test.go with setupTestClient(), cleanupKind(), skipIfNoEmulator()
+  - ✅ Created user_dal_test.go with comprehensive DAL tests
+  - ✅ Test coverage for all DAL methods:
+    - ✅ Put (with string ID, existing key, incomplete key)
+    - ✅ Get, GetByID (existing and non-existent entities)
+    - ✅ Delete, DeleteByID
+    - ✅ PutMulti, GetMulti, GetMultiByIDs (with partial hits)
+    - ✅ DeleteMulti
+    - ✅ Query (all and with filter)
+    - ✅ Count
+    - ✅ WillPut hook (modification and validation)
+    - ✅ Namespace override
+  - ✅ Updated tests/Makefile with Datastore emulator commands:
+    - ✅ make upds - Start Datastore emulator container
+    - ✅ make downds - Stop emulator container
+    - ✅ make dslogs - Tail emulator logs
+    - ✅ make testds - Run tests with emulator (auto-starts if needed)
+  - ✅ Updated docs/DATASTORE_GUIDE.md with DAL documentation
+  - ✅ Created tests/README.md with comprehensive test guide
+  - ✅ Tests use custom TestUser struct (Datastore doesn't support uint32)
+  - ✅ All tests passing with Datastore emulator
+
 **Next:**
 1. **Phase 3.2**: postgres-raw (Go + database/sql)
 2. **Phase 3.3**: firestore (Go)

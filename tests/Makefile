@@ -117,7 +117,7 @@ upds:
 		--name $(DS_CONTAINER_NAME) \
 		-p $(DS_PORT):8081 \
 		gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators \
-		gcloud emulators datastore start \
+		gcloud beta emulators datastore start \
 			--host-port=0.0.0.0:8081 \
 			--project=$(DS_PROJECT) \
 			--no-store-on-disk
@@ -151,11 +151,11 @@ testds:
 			--name $(DS_CONTAINER_NAME) \
 			-p $(DS_PORT):8081 \
 			gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators \
-			gcloud emulators datastore start \
+			gcloud beta emulators datastore start \
 				--host-port=0.0.0.0:8081 \
 				--project=$(DS_PROJECT) \
 				--no-store-on-disk; \
-		sleep 3; \
+		sleep 5; \
 	fi
 	DATASTORE_EMULATOR_HOST=localhost:$(DS_PORT) \
 	DATASTORE_PROJECT_ID=$(DS_PROJECT) \

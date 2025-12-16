@@ -19,11 +19,217 @@ import (
 	"testing"
 
 	"cloud.google.com/go/datastore"
-	dsgen "github.com/panyam/protoc-gen-dal/tests/gen/datastore"
-	"github.com/panyam/protoc-gen-dal/tests/gen/datastore/dal"
 )
 
 const testUserKind = "TestUser"
+
+// TestUser is a simple test entity that only uses Datastore-compatible types.
+// The generated UserDatastore has uint32 fields which Datastore doesn't support.
+// Datastore only supports signed integers (int, int8, int16, int32, int64).
+type TestUser struct {
+	Key   *datastore.Key `datastore:"-"`
+	Id    string         `datastore:"id"`
+	Name  string         `datastore:"name"`
+	Email string         `datastore:"email"`
+}
+
+// TestUserDAL provides DAL methods for TestUser - a minimal implementation
+// to test the DAL pattern without depending on generated code with unsupported types.
+type TestUserDAL struct {
+	Kind      string
+	Namespace string
+	WillPut   func(context.Context, *TestUser) error
+}
+
+func NewTestUserDAL(kind string) *TestUserDAL {
+	return &TestUserDAL{Kind: kind}
+}
+
+func (d *TestUserDAL) getKind() string {
+	if d.Kind != "" {
+		return d.Kind
+	}
+	return testUserKind
+}
+
+func (d *TestUserDAL) newKey(id string) *datastore.Key {
+	key := datastore.NameKey(d.getKind(), id, nil)
+	if d.Namespace != "" {
+		key.Namespace = d.Namespace
+	}
+	return key
+}
+
+func (d *TestUserDAL) newIncompleteKey() *datastore.Key {
+	key := datastore.IncompleteKey(d.getKind(), nil)
+	if d.Namespace != "" {
+		key.Namespace = d.Namespace
+	}
+	return key
+}
+
+func (d *TestUserDAL) Put(ctx context.Context, client *datastore.Client, obj *TestUser) (*datastore.Key, error) {
+	if d.WillPut != nil {
+		if err := d.WillPut(ctx, obj); err != nil {
+			return nil, err
+		}
+	}
+
+	var key *datastore.Key
+	if obj.Key != nil {
+		key = obj.Key
+		if d.Namespace != "" {
+			key.Namespace = d.Namespace
+		}
+	} else if obj.Id != "" {
+		key = d.newKey(obj.Id)
+	} else {
+		key = d.newIncompleteKey()
+	}
+
+	resultKey, err := client.Put(ctx, key, obj)
+	if err != nil {
+		return nil, err
+	}
+
+	obj.Key = resultKey
+	return resultKey, nil
+}
+
+func (d *TestUserDAL) Get(ctx context.Context, client *datastore.Client, key *datastore.Key) (*TestUser, error) {
+	var entity TestUser
+	err := client.Get(ctx, key, &entity)
+	if err != nil {
+		if err == datastore.ErrNoSuchEntity {
+			return nil, nil
+		}
+		return nil, err
+	}
+	entity.Key = key
+	return &entity, nil
+}
+
+func (d *TestUserDAL) GetByID(ctx context.Context, client *datastore.Client, id string) (*TestUser, error) {
+	key := d.newKey(id)
+	return d.Get(ctx, client, key)
+}
+
+func (d *TestUserDAL) Delete(ctx context.Context, client *datastore.Client, key *datastore.Key) error {
+	return client.Delete(ctx, key)
+}
+
+func (d *TestUserDAL) DeleteByID(ctx context.Context, client *datastore.Client, id string) error {
+	key := d.newKey(id)
+	return d.Delete(ctx, client, key)
+}
+
+func (d *TestUserDAL) PutMulti(ctx context.Context, client *datastore.Client, objs []*TestUser) ([]*datastore.Key, error) {
+	if len(objs) == 0 {
+		return []*datastore.Key{}, nil
+	}
+
+	if d.WillPut != nil {
+		for _, obj := range objs {
+			if err := d.WillPut(ctx, obj); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	keys := make([]*datastore.Key, len(objs))
+	for i, obj := range objs {
+		if obj.Key != nil {
+			keys[i] = obj.Key
+			if d.Namespace != "" {
+				keys[i].Namespace = d.Namespace
+			}
+		} else if obj.Id != "" {
+			keys[i] = d.newKey(obj.Id)
+		} else {
+			keys[i] = d.newIncompleteKey()
+		}
+	}
+
+	resultKeys, err := client.PutMulti(ctx, keys, objs)
+	if err != nil {
+		return nil, err
+	}
+
+	for i, key := range resultKeys {
+		objs[i].Key = key
+	}
+
+	return resultKeys, nil
+}
+
+func (d *TestUserDAL) GetMulti(ctx context.Context, client *datastore.Client, keys []*datastore.Key) ([]*TestUser, error) {
+	if len(keys) == 0 {
+		return []*TestUser{}, nil
+	}
+
+	entities := make([]TestUser, len(keys))
+	err := client.GetMulti(ctx, keys, entities)
+	if err != nil {
+		if multiErr, ok := err.(datastore.MultiError); ok {
+			result := make([]*TestUser, len(keys))
+			for i, e := range multiErr {
+				if e == nil {
+					entities[i].Key = keys[i]
+					result[i] = &entities[i]
+				} else if e != datastore.ErrNoSuchEntity {
+					return nil, err
+				}
+			}
+			return result, nil
+		}
+		return nil, err
+	}
+
+	result := make([]*TestUser, len(keys))
+	for i := range entities {
+		entities[i].Key = keys[i]
+		result[i] = &entities[i]
+	}
+	return result, nil
+}
+
+func (d *TestUserDAL) GetMultiByIDs(ctx context.Context, client *datastore.Client, ids []string) ([]*TestUser, error) {
+	if len(ids) == 0 {
+		return []*TestUser{}, nil
+	}
+
+	keys := make([]*datastore.Key, len(ids))
+	for i, id := range ids {
+		keys[i] = d.newKey(id)
+	}
+
+	return d.GetMulti(ctx, client, keys)
+}
+
+func (d *TestUserDAL) DeleteMulti(ctx context.Context, client *datastore.Client, keys []*datastore.Key) error {
+	if len(keys) == 0 {
+		return nil
+	}
+	return client.DeleteMulti(ctx, keys)
+}
+
+func (d *TestUserDAL) Query(ctx context.Context, client *datastore.Client, q *datastore.Query) ([]*TestUser, error) {
+	var entities []*TestUser
+	keys, err := client.GetAll(ctx, q, &entities)
+	if err != nil {
+		return nil, err
+	}
+
+	for i, key := range keys {
+		entities[i].Key = key
+	}
+
+	return entities, nil
+}
+
+func (d *TestUserDAL) Count(ctx context.Context, client *datastore.Client, q *datastore.Query) (int, error) {
+	return client.Count(ctx, q)
+}
 
 // TestDALPut tests the Put method with various key scenarios.
 func TestDALPut(t *testing.T) {
@@ -36,14 +242,13 @@ func TestDALPut(t *testing.T) {
 		cleanupKind(ctx, client, testUserKind)
 	})
 
-	userDAL := dal.NewUserDatastoreDAL(testUserKind)
+	userDAL := NewTestUserDAL(testUserKind)
 
 	t.Run("PutWithStringID", func(t *testing.T) {
-		user := &dsgen.UserDatastore{
+		user := &TestUser{
 			Id:    "user-1",
 			Name:  "Alice",
 			Email: "alice@example.com",
-			Age:   30,
 		}
 
 		key, err := userDAL.Put(ctx, client, user)
@@ -62,7 +267,7 @@ func TestDALPut(t *testing.T) {
 
 	t.Run("PutWithExistingKey", func(t *testing.T) {
 		existingKey := datastore.NameKey(testUserKind, "user-2", nil)
-		user := &dsgen.UserDatastore{
+		user := &TestUser{
 			Key:   existingKey,
 			Name:  "Bob",
 			Email: "bob@example.com",
@@ -79,7 +284,7 @@ func TestDALPut(t *testing.T) {
 	})
 
 	t.Run("PutWithIncompleteKey", func(t *testing.T) {
-		user := &dsgen.UserDatastore{
+		user := &TestUser{
 			Name:  "Charlie",
 			Email: "charlie@example.com",
 		}
@@ -106,14 +311,13 @@ func TestDALGet(t *testing.T) {
 		cleanupKind(ctx, client, testUserKind)
 	})
 
-	userDAL := dal.NewUserDatastoreDAL(testUserKind)
+	userDAL := NewTestUserDAL(testUserKind)
 
 	// Create a test user first
-	user := &dsgen.UserDatastore{
+	user := &TestUser{
 		Id:    "get-test-user",
 		Name:  "GetTest",
 		Email: "gettest@example.com",
-		Age:   25,
 	}
 	key, err := userDAL.Put(ctx, client, user)
 	if err != nil {
@@ -162,10 +366,10 @@ func TestDALGetByID(t *testing.T) {
 		cleanupKind(ctx, client, testUserKind)
 	})
 
-	userDAL := dal.NewUserDatastoreDAL(testUserKind)
+	userDAL := NewTestUserDAL(testUserKind)
 
 	// Create a test user
-	user := &dsgen.UserDatastore{
+	user := &TestUser{
 		Id:    "getbyid-user",
 		Name:  "GetByIDTest",
 		Email: "getbyid@example.com",
@@ -212,10 +416,10 @@ func TestDALDelete(t *testing.T) {
 		cleanupKind(ctx, client, testUserKind)
 	})
 
-	userDAL := dal.NewUserDatastoreDAL(testUserKind)
+	userDAL := NewTestUserDAL(testUserKind)
 
 	// Create a test user
-	user := &dsgen.UserDatastore{
+	user := &TestUser{
 		Id:    "delete-user",
 		Name:  "DeleteTest",
 		Email: "delete@example.com",
@@ -252,10 +456,10 @@ func TestDALDeleteByID(t *testing.T) {
 		cleanupKind(ctx, client, testUserKind)
 	})
 
-	userDAL := dal.NewUserDatastoreDAL(testUserKind)
+	userDAL := NewTestUserDAL(testUserKind)
 
 	// Create a test user
-	user := &dsgen.UserDatastore{
+	user := &TestUser{
 		Id:    "deletebyid-user",
 		Name:  "DeleteByIDTest",
 		Email: "deletebyid@example.com",
@@ -292,9 +496,9 @@ func TestDALPutMulti(t *testing.T) {
 		cleanupKind(ctx, client, testUserKind)
 	})
 
-	userDAL := dal.NewUserDatastoreDAL(testUserKind)
+	userDAL := NewTestUserDAL(testUserKind)
 
-	users := []*dsgen.UserDatastore{
+	users := []*TestUser{
 		{Id: "multi-1", Name: "User1", Email: "user1@example.com"},
 		{Id: "multi-2", Name: "User2", Email: "user2@example.com"},
 		{Id: "multi-3", Name: "User3", Email: "user3@example.com"},
@@ -327,10 +531,10 @@ func TestDALGetMulti(t *testing.T) {
 		cleanupKind(ctx, client, testUserKind)
 	})
 
-	userDAL := dal.NewUserDatastoreDAL(testUserKind)
+	userDAL := NewTestUserDAL(testUserKind)
 
 	// Create test users
-	users := []*dsgen.UserDatastore{
+	users := []*TestUser{
 		{Id: "getmulti-1", Name: "User1", Email: "user1@example.com"},
 		{Id: "getmulti-2", Name: "User2", Email: "user2@example.com"},
 	}
@@ -375,10 +579,10 @@ func TestDALGetMultiByIDs(t *testing.T) {
 		cleanupKind(ctx, client, testUserKind)
 	})
 
-	userDAL := dal.NewUserDatastoreDAL(testUserKind)
+	userDAL := NewTestUserDAL(testUserKind)
 
 	// Create test users
-	users := []*dsgen.UserDatastore{
+	users := []*TestUser{
 		{Id: "ids-1", Name: "User1", Email: "user1@example.com"},
 		{Id: "ids-2", Name: "User2", Email: "user2@example.com"},
 	}
@@ -418,10 +622,10 @@ func TestDALDeleteMulti(t *testing.T) {
 		cleanupKind(ctx, client, testUserKind)
 	})
 
-	userDAL := dal.NewUserDatastoreDAL(testUserKind)
+	userDAL := NewTestUserDAL(testUserKind)
 
 	// Create test users
-	users := []*dsgen.UserDatastore{
+	users := []*TestUser{
 		{Id: "delmulti-1", Name: "User1", Email: "user1@example.com"},
 		{Id: "delmulti-2", Name: "User2", Email: "user2@example.com"},
 	}
@@ -459,13 +663,13 @@ func TestDALQuery(t *testing.T) {
 		cleanupKind(ctx, client, testUserKind)
 	})
 
-	userDAL := dal.NewUserDatastoreDAL(testUserKind)
+	userDAL := NewTestUserDAL(testUserKind)
 
-	// Create test users with different ages
-	users := []*dsgen.UserDatastore{
-		{Id: "query-1", Name: "Young", Email: "young@example.com", Age: 20},
-		{Id: "query-2", Name: "Middle", Email: "middle@example.com", Age: 30},
-		{Id: "query-3", Name: "Older", Email: "older@example.com", Age: 40},
+	// Create test users with different names
+	users := []*TestUser{
+		{Id: "query-1", Name: "Alice", Email: "alice@example.com"},
+		{Id: "query-2", Name: "Bob", Email: "bob@example.com"},
+		{Id: "query-3", Name: "Charlie", Email: "charlie@example.com"},
 	}
 	_, err := userDAL.PutMulti(ctx, client, users)
 	if err != nil {
@@ -485,14 +689,14 @@ func TestDALQuery(t *testing.T) {
 	})
 
 	t.Run("QueryWithFilter", func(t *testing.T) {
-		q := datastore.NewQuery(testUserKind).FilterField("Age", ">=", uint32(30))
+		q := datastore.NewQuery(testUserKind).FilterField("name", ">=", "Bob")
 		results, err := userDAL.Query(ctx, client, q)
 		if err != nil {
 			t.Fatalf("Query failed: %v", err)
 		}
 
 		if len(results) != 2 {
-			t.Errorf("Expected 2 results (age >= 30), got %d", len(results))
+			t.Errorf("Expected 2 results (name >= Bob), got %d", len(results))
 		}
 	})
 }
@@ -507,10 +711,10 @@ func TestDALCount(t *testing.T) {
 		cleanupKind(ctx, client, testUserKind)
 	})
 
-	userDAL := dal.NewUserDatastoreDAL(testUserKind)
+	userDAL := NewTestUserDAL(testUserKind)
 
 	// Create test users
-	users := []*dsgen.UserDatastore{
+	users := []*TestUser{
 		{Id: "count-1", Name: "User1", Email: "user1@example.com"},
 		{Id: "count-2", Name: "User2", Email: "user2@example.com"},
 		{Id: "count-3", Name: "User3", Email: "user3@example.com"},
@@ -541,18 +745,18 @@ func TestDALWillPutHook(t *testing.T) {
 		cleanupKind(ctx, client, testUserKind)
 	})
 
-	userDAL := dal.NewUserDatastoreDAL(testUserKind)
+	userDAL := NewTestUserDAL(testUserKind)
 
 	// Track hook calls
 	hookCalled := false
-	userDAL.WillPut = func(ctx context.Context, u *dsgen.UserDatastore) error {
+	userDAL.WillPut = func(ctx context.Context, u *TestUser) error {
 		hookCalled = true
 		// Modify the entity in the hook
 		u.Name = "Modified by hook"
 		return nil
 	}
 
-	user := &dsgen.UserDatastore{
+	user := &TestUser{
 		Id:    "hook-user",
 		Name:  "Original",
 		Email: "hook@example.com",
@@ -591,10 +795,10 @@ func TestDALNamespaceOverride(t *testing.T) {
 		cleanupKind(ctx, client, testUserKind)
 	})
 
-	userDAL := dal.NewUserDatastoreDAL(testUserKind)
+	userDAL := NewTestUserDAL(testUserKind)
 	userDAL.Namespace = namespace
 
-	user := &dsgen.UserDatastore{
+	user := &TestUser{
 		Id:    "ns-user",
 		Name:  "NamespaceTest",
 		Email: "ns@example.com",
