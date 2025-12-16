@@ -144,7 +144,7 @@ dslogs:
 	@docker logs -f $(DS_CONTAINER_NAME)
 
 # Run tests with Datastore emulator (starts container if not running)
-testds:
+testds: downds
 	@if ! docker ps --format '{{.Names}}' | grep -q '^$(DS_CONTAINER_NAME)$$'; then \
 		echo "Starting Datastore emulator container..."; \
 		docker run --rm -d \
@@ -159,6 +159,6 @@ testds:
 	fi
 	DATASTORE_EMULATOR_HOST=localhost:$(DS_PORT) \
 	DATASTORE_PROJECT_ID=$(DS_PROJECT) \
-	go test ./tests/datastore/...
+	go test -v ./tests/datastore/...
 
 .PHONY: run setupdev setupprod cleanall dev updb downdb dblogs testpg upds downds dslogs testds
