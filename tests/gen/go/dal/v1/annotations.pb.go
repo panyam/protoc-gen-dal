@@ -206,7 +206,11 @@ type ColumnOptions struct {
 	// Firestore tags (for Firestore target)
 	FirestoreTags []string `protobuf:"bytes,12,rep,name=firestore_tags,json=firestoreTags,proto3" json:"firestore_tags,omitempty"`
 	// MongoDB tags (for MongoDB target)
-	MongodbTags   []string `protobuf:"bytes,13,rep,name=mongodb_tags,json=mongodbTags,proto3" json:"mongodb_tags,omitempty"`
+	MongodbTags []string `protobuf:"bytes,13,rep,name=mongodb_tags,json=mongodbTags,proto3" json:"mongodb_tags,omitempty"`
+	// Datastore tags (for Google Cloud Datastore target)
+	// Example: ["noindex", "omitempty"]
+	// Generates: `datastore:"field_name,noindex,omitempty"`
+	DatastoreTags []string `protobuf:"bytes,14,rep,name=datastore_tags,json=datastoreTags,proto3" json:"datastore_tags,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -286,6 +290,13 @@ func (x *ColumnOptions) GetFirestoreTags() []string {
 func (x *ColumnOptions) GetMongodbTags() []string {
 	if x != nil {
 		return x.MongodbTags
+	}
+	return nil
+}
+
+func (x *ColumnOptions) GetDatastoreTags() []string {
+	if x != nil {
+		return x.DatastoreTags
 	}
 	return nil
 }
@@ -1022,7 +1033,7 @@ const file_dal_v1_annotations_proto_rawDesc = "" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x16\n" +
 	"\x06schema\x18\x02 \x01(\tR\x06schema\x12\x18\n" +
 	"\acomment\x18\x03 \x01(\tR\acomment\x12\x16\n" +
-	"\x06source\x18\x04 \x01(\tR\x06source\"\x89\x02\n" +
+	"\x06source\x18\x04 \x01(\tR\x06source\"\xb0\x02\n" +
 	"\rColumnOptions\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12.\n" +
 	"\ato_func\x18\x02 \x01(\v2\x15.dal.v1.ConverterFuncR\x06toFunc\x122\n" +
@@ -1031,7 +1042,8 @@ const file_dal_v1_annotations_proto_rawDesc = "" +
 	" \x03(\tR\bgormTags\x12\x19\n" +
 	"\bsql_tags\x18\v \x03(\tR\asqlTags\x12%\n" +
 	"\x0efirestore_tags\x18\f \x03(\tR\rfirestoreTags\x12!\n" +
-	"\fmongodb_tags\x18\r \x03(\tR\vmongodbTags\"[\n" +
+	"\fmongodb_tags\x18\r \x03(\tR\vmongodbTags\x12%\n" +
+	"\x0edatastore_tags\x18\x0e \x03(\tR\rdatastoreTags\"[\n" +
 	"\rConverterFunc\x12\x18\n" +
 	"\apackage\x18\x01 \x01(\tR\apackage\x12\x14\n" +
 	"\x05alias\x18\x02 \x01(\tR\x05alias\x12\x1a\n" +

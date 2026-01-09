@@ -16,6 +16,7 @@ package datastore
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/panyam/protoc-gen-dal/pkg/collector"
 	"github.com/panyam/protoc-gen-dal/pkg/generator/common"
@@ -223,10 +224,39 @@ func fieldType(field *protogen.Field, sourcePkgName string, registry *common.Mes
 }
 
 // buildFieldTags creates struct tags for a field.
+// It reads datastore_tags from the column annotation and joins them with the field name.
+// Example: datastore_tags: ["noindex", "omitempty"] generates `datastore:"field_name,noindex,omitempty"`
 func buildFieldTags(field *protogen.Field) string {
 	// Use snake_case for datastore property names
 	propName := string(field.Desc.Name())
+
+	// Get datastore_tags from column options
+	colOpts := common.GetColumnOptions(field)
+	if colOpts != nil && len(colOpts.DatastoreTags) > 0 {
+		// Check for "-" tag (ignore field)
+		for _, tag := range colOpts.DatastoreTags {
+			if tag == "-" {
+				return "`datastore:\"-\"`"
+			}
+		}
+		// Join field name with additional tags
+		tags := append([]string{propName}, colOpts.DatastoreTags...)
+		return fmt.Sprintf("`datastore:\"%s\"`", joinDatastoreTags(tags))
+	}
+
 	return fmt.Sprintf("`datastore:\"%s\"`", propName)
+}
+
+// joinDatastoreTags joins datastore tags with commas.
+func joinDatastoreTags(tags []string) string {
+	var result []string
+	for _, tag := range tags {
+		tag = strings.TrimSpace(tag)
+		if tag != "" {
+			result = append(result, tag)
+		}
+	}
+	return strings.Join(result, ",")
 }
 
 // GenerateConverters generates converter functions for transforming between

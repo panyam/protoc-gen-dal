@@ -11,11 +11,11 @@ import (
 type UserDatastore struct {
 	Key *datastore.Key `datastore:"-"`
 
-	Id string `datastore:"id"`
+	Id string `datastore:"-"`
 
 	Name string `datastore:"name"`
 
-	Email string `datastore:"email"`
+	Email string `datastore:"email,noindex"`
 
 	Age uint32 `datastore:"age"`
 
@@ -67,11 +67,11 @@ func (*UserWithNamespace) Kind() string {
 type UserWithLargeText struct {
 	Key *datastore.Key `datastore:"-"`
 
-	Id string `datastore:"id"`
+	Id string `datastore:"-"`
 
 	Name string `datastore:"name"`
 
-	Email string `datastore:"email"`
+	Email string `datastore:"email,noindex"`
 
 	Age uint32 `datastore:"age"`
 
@@ -132,7 +132,7 @@ type AuthorDatastore struct {
 type ProductDatastore struct {
 	Key *datastore.Key `datastore:"-"`
 
-	Id string `datastore:"id"`
+	Id string `datastore:"-"`
 
 	Name string `datastore:"name"`
 
@@ -140,7 +140,7 @@ type ProductDatastore struct {
 
 	Categories []string `datastore:"categories"`
 
-	Metadata map[string]string `datastore:"metadata"`
+	Metadata map[string]string `datastore:"metadata,noindex,omitempty"`
 
 	Ratings []int32 `datastore:"ratings"`
 }

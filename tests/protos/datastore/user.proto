@@ -16,14 +16,18 @@ message UserDatastore {
     dal: true
   };
 
-  // ID field - stored in Key, excluded from properties
-  string id = 1;
+  // ID field - stored in Key, excluded from properties via datastore_tags
+  string id = 1 [(dal.v1.column) = {
+    datastore_tags: ["-"]
+  }];
 
   // Regular string field
   string name = 2;
 
-  // Email field
-  string email = 3;
+  // Email field with noindex (demonstrates tag support)
+  string email = 3 [(dal.v1.column) = {
+    datastore_tags: ["noindex"]
+  }];
 
   // Age field
   uint32 age = 4;
@@ -48,20 +52,21 @@ message UserWithNamespace {
 }
 
 // UserWithLargeText demonstrates noindex for large text fields
-// Note: For MVP, we're using simple field mapping without datastore_tags
-// This can be enhanced later to support noindex via tags
 message UserWithLargeText {
   option (dal.v1.datastore_options) = {
     source: "api.User"
     kind: "UserProfile"
   };
 
-  string id = 1;
+  string id = 1 [(dal.v1.column) = {
+    datastore_tags: ["-"]
+  }];
   string name = 2;
 
   // Biography - large text that shouldn't be indexed
-  // TODO: Add support for datastore_tags: ["noindex"] in future enhancement
-  string email = 3;  // Using email as proxy for now
+  string email = 3 [(dal.v1.column) = {
+    datastore_tags: ["noindex"]
+  }];
 }
 
 // UserSimple - minimal test case
@@ -94,7 +99,9 @@ message ProductDatastore {
     dal: true
   };
 
-  string id = 1;
+  string id = 1 [(dal.v1.column) = {
+    datastore_tags: ["-"]
+  }];
   string name = 2;
 
   // Repeated scalars - Datastore stores as array properties
@@ -102,7 +109,10 @@ message ProductDatastore {
   repeated string categories = 4;     // Native Datastore array
 
   // Map - no native support, but Go datastore library handles it
-  map<string, string> metadata = 5;   // Datastore will serialize this
+  // Using noindex and omitempty (multiple tags example)
+  map<string, string> metadata = 5 [(dal.v1.column) = {
+    datastore_tags: ["noindex", "omitempty"]
+  }];
 
   // Repeated numbers - Datastore array
   repeated int32 ratings = 6;

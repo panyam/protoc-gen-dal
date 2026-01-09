@@ -40,27 +40,29 @@ package datastore;
 
 import "dal/v1/annotations.proto";
 import "api/user.proto";
+import "google/protobuf/timestamp.proto";
 
 message UserDatastore {
-  option (dal.v1.table) = {
-    target_datastore: {
-      source: "api.v1.User"
-      kind: "User"
-      namespace: "production"
-    }
+  option (dal.v1.datastore_options) = {
+    source: "api.v1.User"
+    kind: "User"
+    namespace: "production"
   };
 
-  string key = 1 [(dal.v1.column) = {
-    datastore_tags: ["-"]  // Managed manually via Key field
+  // ID stored in Datastore Key, excluded from properties
+  string id = 1 [(dal.v1.column) = {
+    datastore_tags: ["-"]
   }];
 
-  string id = 2;
-  string name = 3;
-  string email = 4 [(dal.v1.column) = {
-    datastore_tags: ["noindex"]  // Don't index email
+  string name = 2;
+
+  // Large text fields should not be indexed
+  string email = 3 [(dal.v1.column) = {
+    datastore_tags: ["noindex"]
   }];
 
-  int64 created_at = 5;
+  // Timestamps map to time.Time automatically
+  google.protobuf.Timestamp created_at = 4;
 }
 ```
 
@@ -299,16 +301,14 @@ message UserDatastore {
 
 ## Namespaces
 
-Specify namespace in table options:
+Specify namespace in datastore_options:
 
 ```protobuf
 message UserDatastore {
-  option (dal.v1.table) = {
-    target_datastore: {
-      source: "api.v1.User"
-      kind: "User"
-      namespace: "production"  // Optional namespace
-    }
+  option (dal.v1.datastore_options) = {
+    source: "api.v1.User"
+    kind: "User"
+    namespace: "production"  // Optional namespace
   };
 }
 ```

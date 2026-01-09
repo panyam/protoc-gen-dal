@@ -130,6 +130,8 @@
 - [x] Enhance fieldType() to handle repeated/map/message types
 - [x] Add converterRegistry for nested message lookups
 - [x] Template support for loop-based conversions
+- [x] **TEST**: datastore_tags support (noindex, omitempty, -)
+- [x] Implement datastore_tags in buildFieldTags() for field customization
 - ⏸️ LoadKey/SaveKey methods (deferred - not essential for MVP, can add later)
 
 **Design Decision**: Skipped LoadKey/SaveKey PropertyLoadSaver implementation for MVP

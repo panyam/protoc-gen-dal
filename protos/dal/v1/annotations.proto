@@ -218,6 +218,11 @@ message ColumnOptions {
 
   // MongoDB tags (for MongoDB target)
   repeated string mongodb_tags = 13;
+
+  // Datastore tags (for Google Cloud Datastore target)
+  // Example: ["noindex", "omitempty"]
+  // Generates: `datastore:"field_name,noindex,omitempty"`
+  repeated string datastore_tags = 14;
 }
 
 // Specification for a custom converter function

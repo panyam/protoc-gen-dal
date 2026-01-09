@@ -28,11 +28,11 @@ const (
 // UserDatastore demonstrates basic Datastore entity with DAL generation
 type UserDatastore struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// ID field - stored in Key, excluded from properties
+	// ID field - stored in Key, excluded from properties via datastore_tags
 	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// Regular string field
 	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	// Email field
+	// Email field with noindex (demonstrates tag support)
 	Email string `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
 	// Age field
 	Age uint32 `protobuf:"varint,4,opt,name=age,proto3" json:"age,omitempty"`
@@ -185,15 +185,12 @@ func (x *UserWithNamespace) GetEmail() string {
 }
 
 // UserWithLargeText demonstrates noindex for large text fields
-// Note: For MVP, we're using simple field mapping without datastore_tags
-// This can be enhanced later to support noindex via tags
 type UserWithLargeText struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Name  string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	// Biography - large text that shouldn't be indexed
-	// TODO: Add support for datastore_tags: ["noindex"] in future enhancement
-	Email         string `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"` // Using email as proxy for now
+	Email         string `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -365,7 +362,8 @@ type ProductDatastore struct {
 	Tags       []string `protobuf:"bytes,3,rep,name=tags,proto3" json:"tags,omitempty"`             // Native Datastore array
 	Categories []string `protobuf:"bytes,4,rep,name=categories,proto3" json:"categories,omitempty"` // Native Datastore array
 	// Map - no native support, but Go datastore library handles it
-	Metadata map[string]string `protobuf:"bytes,5,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // Datastore will serialize this
+	// Using noindex and omitempty (multiple tags example)
+	Metadata map[string]string `protobuf:"bytes,5,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	// Repeated numbers - Datastore array
 	Ratings       []int32 `protobuf:"varint,6,rep,packed,name=ratings,proto3" json:"ratings,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -573,11 +571,11 @@ var File_datastore_user_proto protoreflect.FileDescriptor
 
 const file_datastore_user_proto_rawDesc = "" +
 	"\n" +
-	"\x14datastore/user.proto\x12\tdatastore\x1a\x18dal/v1/annotations.proto\x1a\x0eapi/user.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa1\x02\n" +
-	"\rUserDatastore\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12\x14\n" +
-	"\x05email\x18\x03 \x01(\tR\x05email\x12\x10\n" +
+	"\x14datastore/user.proto\x12\tdatastore\x1a\x18dal/v1/annotations.proto\x1a\x0eapi/user.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xb9\x02\n" +
+	"\rUserDatastore\x12\x17\n" +
+	"\x02id\x18\x01 \x01(\tB\a\x92\xa6\x1d\x03r\x01-R\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12#\n" +
+	"\x05email\x18\x03 \x01(\tB\r\x92\xa6\x1d\tr\anoindexR\x05email\x12\x10\n" +
 	"\x03age\x18\x04 \x01(\rR\x03age\x126\n" +
 	"\bbirthday\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\bbirthday\x129\n" +
 	"\n" +
@@ -590,11 +588,11 @@ const file_datastore_user_proto_rawDesc = "" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x14\n" +
 	"\x05email\x18\x03 \x01(\tR\x05email: Ҧ\x1d\x1c\n" +
 	"\x04User\x12\n" +
-	"production*\bapi.User\"j\n" +
-	"\x11UserWithLargeText\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12\x14\n" +
-	"\x05email\x18\x03 \x01(\tR\x05email:\x1bҦ\x1d\x17\n" +
+	"production*\bapi.User\"\x82\x01\n" +
+	"\x11UserWithLargeText\x12\x17\n" +
+	"\x02id\x18\x01 \x01(\tB\a\x92\xa6\x1d\x03r\x01-R\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12#\n" +
+	"\x05email\x18\x03 \x01(\tB\r\x92\xa6\x1d\tr\anoindexR\x05email:\x1bҦ\x1d\x17\n" +
 	"\vUserProfile*\bapi.User\"L\n" +
 	"\n" +
 	"UserSimple\x12\x0e\n" +
@@ -605,15 +603,15 @@ const file_datastore_user_proto_rawDesc = "" +
 	"\x0fAuthorDatastore\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email:\x10Ҧ\x1d\f*\n" +
-	"api.Author\"\xa6\x02\n" +
-	"\x10ProductDatastore\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"api.Author\"\xc9\x02\n" +
+	"\x10ProductDatastore\x12\x17\n" +
+	"\x02id\x18\x01 \x01(\tB\a\x92\xa6\x1d\x03r\x01-R\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x12\n" +
 	"\x04tags\x18\x03 \x03(\tR\x04tags\x12\x1e\n" +
 	"\n" +
 	"categories\x18\x04 \x03(\tR\n" +
-	"categories\x12E\n" +
-	"\bmetadata\x18\x05 \x03(\v2).datastore.ProductDatastore.MetadataEntryR\bmetadata\x12\x18\n" +
+	"categories\x12_\n" +
+	"\bmetadata\x18\x05 \x03(\v2).datastore.ProductDatastore.MetadataEntryB\x18\x92\xa6\x1d\x14r\anoindexr\tomitemptyR\bmetadata\x12\x18\n" +
 	"\aratings\x18\x06 \x03(\x05R\aratings\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +

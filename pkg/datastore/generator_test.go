@@ -231,6 +231,126 @@ func TestGenerateConverters(t *testing.T) {
 	}
 }
 
+// TestGenerateDatastore_DatastoreTags tests that datastore_tags are correctly applied
+// to generated struct field tags.
+//
+// This test verifies that:
+// - datastore_tags: ["-"] generates `datastore:"-"` (ignore field)
+// - datastore_tags: ["noindex"] generates `datastore:"field_name,noindex"`
+// - datastore_tags: ["noindex", "omitempty"] generates `datastore:"field_name,noindex,omitempty"`
+func TestGenerateDatastore_DatastoreTags(t *testing.T) {
+	// Given: A message with various datastore_tags
+	plugin := testutil.CreateTestPlugin(t, &testutil.TestProtoSet{
+		Files: []testutil.TestFile{
+			// API proto
+			{
+				Name: "api/v1/user.proto",
+				Pkg:  "api.v1",
+				Messages: []testutil.TestMessage{
+					{
+						Name: "User",
+						Fields: []testutil.TestField{
+							{Name: "id", Number: 1, TypeName: "string"},
+							{Name: "name", Number: 2, TypeName: "string"},
+							{Name: "email", Number: 3, TypeName: "string"},
+							{Name: "bio", Number: 4, TypeName: "string"},
+						},
+					},
+				},
+			},
+			// Datastore DAL proto with datastore_tags
+			{
+				Name: "dal/v1/user_datastore.proto",
+				Pkg:  "dal.v1",
+				Messages: []testutil.TestMessage{
+					{
+						Name: "UserDatastore",
+						DatastoreOpts: &dalv1.DatastoreOptions{
+							Source: "api.v1.User",
+							Kind:   "User",
+						},
+						Fields: []testutil.TestField{
+							{
+								Name:     "id",
+								Number:   1,
+								TypeName: "string",
+								ColumnOpts: &dalv1.ColumnOptions{
+									DatastoreTags: []string{"-"}, // Ignore field
+								},
+							},
+							{
+								Name:     "name",
+								Number:   2,
+								TypeName: "string",
+								// No tags - should get default tag
+							},
+							{
+								Name:     "email",
+								Number:   3,
+								TypeName: "string",
+								ColumnOpts: &dalv1.ColumnOptions{
+									DatastoreTags: []string{"noindex"}, // Single tag
+								},
+							},
+							{
+								Name:     "bio",
+								Number:   4,
+								TypeName: "string",
+								ColumnOpts: &dalv1.ColumnOptions{
+									DatastoreTags: []string{"noindex", "omitempty"}, // Multiple tags
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	})
+
+	// Collect Datastore messages
+	messages, err := collector.CollectMessages(plugin, collector.TargetDatastore)
+	if err != nil {
+		t.Fatalf("CollectMessages failed: %v", err)
+	}
+	if len(messages) != 1 {
+		t.Fatalf("Expected 1 Datastore message, got %d", len(messages))
+	}
+
+	// When: Generate Datastore code
+	result, err := Generate(messages)
+
+	// Then: Should succeed
+	if err != nil {
+		t.Fatalf("Generate failed: %v", err)
+	}
+
+	if len(result.Files) == 0 {
+		t.Fatal("Expected at least one generated file")
+	}
+
+	content := result.Files[0].Content
+
+	// Then: ID field should have datastore:"-" tag (ignored)
+	if !strings.Contains(content, "`datastore:\"-\"`") {
+		t.Errorf("Expected ID field with datastore:\"-\" tag for ignored field.\nGenerated content:\n%s", content)
+	}
+
+	// Then: Name field should have default tag (just field name)
+	if !strings.Contains(content, "`datastore:\"name\"`") {
+		t.Errorf("Expected Name field with default datastore:\"name\" tag.\nGenerated content:\n%s", content)
+	}
+
+	// Then: Email field should have noindex tag
+	if !strings.Contains(content, "`datastore:\"email,noindex\"`") {
+		t.Errorf("Expected Email field with datastore:\"email,noindex\" tag.\nGenerated content:\n%s", content)
+	}
+
+	// Then: Bio field should have noindex and omitempty tags
+	if !strings.Contains(content, "`datastore:\"bio,noindex,omitempty\"`") {
+		t.Errorf("Expected Bio field with datastore:\"bio,noindex,omitempty\" tag.\nGenerated content:\n%s", content)
+	}
+}
+
 // Test helpers (copied from collector_test.go pattern)
 
 // Test helpers have been moved to pkg/generator/testutil
