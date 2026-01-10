@@ -2,10 +2,11 @@
 package datastore
 
 import (
+	"strconv"
+
 	api "github.com/panyam/protoc-gen-dal/tests/gen/go/api"
 
 	"fmt"
-	"strconv"
 
 	"github.com/panyam/protoc-gen-dal/pkg/converters"
 )

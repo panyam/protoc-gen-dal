@@ -2,9 +2,9 @@
 package datastore
 
 import (
-	api "github.com/panyam/protoc-gen-dal/tests/gen/go/api"
-
 	"strconv"
+
+	api "github.com/panyam/protoc-gen-dal/tests/gen/go/api"
 
 	"github.com/panyam/protoc-gen-dal/pkg/converters"
 )
