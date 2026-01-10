@@ -139,13 +139,22 @@ func buildTemplateData(messages []*collector.MessageInfo, registry *common.Messa
 		}
 		structs = append(structs, structData)
 
-		// Add source package import if needed (for enum types)
+		// Add source package import only if actually needed (for enum types)
+		// Check if any field type references the source package
 		if msgInfo.SourceMessage != nil {
 			pkgInfo := common.ExtractPackageInfo(msgInfo.SourceMessage)
-			importsMap.Add(common.ImportSpec{
-				Alias: pkgInfo.Alias,
-				Path:  pkgInfo.ImportPath,
-			})
+			if pkgInfo.Alias != "" {
+				prefix := pkgInfo.Alias + "."
+				for _, field := range structData.Fields {
+					if strings.Contains(field.Type, prefix) {
+						importsMap.Add(common.ImportSpec{
+							Alias: pkgInfo.Alias,
+							Path:  pkgInfo.ImportPath,
+						})
+						break
+					}
+				}
+			}
 		}
 	}
 
@@ -430,12 +439,13 @@ func buildConverterData(msgInfo *collector.MessageInfo, reg *registry.ConverterR
 
 	// Classify fields by render strategy using shared utility
 	classified := converter.ClassifyFields(fieldMappings)
-	toTargetInline := classified.ToTargetInline
-	toTargetSetter := classified.ToTargetSetter
-	toTargetLoop := classified.ToTargetLoop
-	fromTargetInline := classified.FromTargetInline
-	fromTargetSetter := classified.FromTargetSetter
-	fromTargetLoop := classified.FromTargetLoop
+
+	// Filter out oneof members from FromTarget lists.
+	// Proto oneofs don't expose fields directly in struct literals, so we can't
+	// generate automatic conversion code for them. Users must handle these in decorators.
+	fromInline := filterNonOneofFields(classified.FromTargetInline)
+	fromSetter := filterNonOneofFields(classified.FromTargetSetter)
+	fromLoop := filterNonOneofFields(classified.FromTargetLoop)
 
 	return &types.ConverterData{
 		SourceType:    sourceName,
@@ -443,14 +453,26 @@ func buildConverterData(msgInfo *collector.MessageInfo, reg *registry.ConverterR
 		SourcePkgName: sourcePkgName,
 		FieldMappings: fieldMappings,
 
-		ToTargetInlineFields: toTargetInline,
-		ToTargetSetterFields: toTargetSetter,
-		ToTargetLoopFields:   toTargetLoop,
+		ToTargetInlineFields: classified.ToTargetInline,
+		ToTargetSetterFields: classified.ToTargetSetter,
+		ToTargetLoopFields:   classified.ToTargetLoop,
 
-		FromTargetInlineFields: fromTargetInline,
-		FromTargetSetterFields: fromTargetSetter,
-		FromTargetLoopFields:   fromTargetLoop,
+		FromTargetInlineFields: fromInline,
+		FromTargetSetterFields: fromSetter,
+		FromTargetLoopFields:   fromLoop,
 	}, nil
+}
+
+// filterNonOneofFields removes oneof members from a field mapping slice.
+// This is needed because proto oneofs can't be set via direct struct field assignment.
+func filterNonOneofFields(fields []*converter.FieldMapping) []*converter.FieldMapping {
+	result := make([]*converter.FieldMapping, 0, len(fields))
+	for _, f := range fields {
+		if !f.SourceIsOneofMember {
+			result = append(result, f)
+		}
+	}
+	return result
 }
 
 // addRenderStrategies calculates and adds render strategies to a FieldMapping.
@@ -474,6 +496,13 @@ func addRenderStrategies(mapping *converter.FieldMapping) {
 
 	mapping.ToTargetRenderStrategy = toTargetStrategy
 	mapping.FromTargetRenderStrategy = fromTargetStrategy
+
+	// Oneof fields cannot be initialized inline in proto struct literals.
+	// For FromTarget direction (Target → Proto), force oneof members to setter strategy.
+	// This is because proto messages with oneofs don't expose oneof fields as named struct fields.
+	if mapping.SourceIsOneofMember && mapping.FromTargetRenderStrategy == converter.StrategyInlineValue {
+		mapping.FromTargetRenderStrategy = converter.StrategySetterSimple
+	}
 }
 
 // buildFieldMapping creates a field mapping with type conversion if needed.

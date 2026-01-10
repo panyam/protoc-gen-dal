@@ -48,6 +48,9 @@ type FieldMapping struct {
 	SourceIsPointer bool // Whether source field is a pointer type (needs nil check)
 	TargetIsPointer bool // Whether target field is a pointer type (affects assignment)
 
+	// Oneof characteristics
+	SourceIsOneofMember bool // Whether source field is part of a oneof (requires getter access)
+
 	// Collection characteristics
 	IsRepeated bool // Whether this is a repeated field (needs loop-based conversion)
 	IsMap      bool // Whether this is a map field (needs loop-based conversion)
@@ -59,6 +62,16 @@ type FieldMapping struct {
 
 	// Package information
 	SourcePkgName string // Source package name (e.g., "api" or "testapi") - needed for type references
+}
+
+// sourceFieldAccess generates the correct source field access expression.
+// For oneof members, it returns "src.GetFieldName()" (getter method required).
+// For regular fields, it returns "src.FieldName" (direct field access).
+func sourceFieldAccess(fieldName string, isOneofMember bool) string {
+	if isOneofMember {
+		return fmt.Sprintf("src.Get%s()", fieldName)
+	}
+	return fmt.Sprintf("src.%s", fieldName)
 }
 
 // Implement FieldWithStrategy interface for FieldMapping
@@ -156,7 +169,8 @@ func BuildMapFieldMapping(params MapFieldMappingParams, mapping *FieldMapping) b
 	}
 
 	// map<K, primitive> - direct assignment (copy entire map)
-	mapping.ToTargetCode = fmt.Sprintf("src.%s", params.FieldName)
+	// Use sourceFieldAccess to handle oneof member access correctly
+	mapping.ToTargetCode = sourceFieldAccess(params.FieldName, mapping.SourceIsOneofMember)
 	mapping.FromTargetCode = fmt.Sprintf("src.%s", params.FieldName)
 	mapping.ToTargetConversionType = ConvertByAssignment
 	mapping.FromTargetConversionType = ConvertByAssignment
@@ -210,7 +224,8 @@ func BuildRepeatedFieldMapping(params RepeatedFieldMappingParams, mapping *Field
 	}
 
 	// []primitive - direct assignment (copy entire slice)
-	mapping.ToTargetCode = fmt.Sprintf("src.%s", params.FieldName)
+	// Use sourceFieldAccess to handle oneof member access correctly
+	mapping.ToTargetCode = sourceFieldAccess(params.FieldName, mapping.SourceIsOneofMember)
 	mapping.FromTargetCode = fmt.Sprintf("src.%s", params.FieldName)
 	mapping.ToTargetConversionType = ConvertByAssignment
 	mapping.FromTargetConversionType = ConvertByAssignment
@@ -331,6 +346,7 @@ func BuildKnownTypeMapping(sourceField, targetField *protogen.Field, mapping *Fi
 
 // BuildSameTypeMapping handles same-type field conversions (direct assignment).
 // Returns true if types match. Modifies mapping in place.
+// Uses mapping.SourceIsOneofMember to determine correct field access (getter vs direct).
 func BuildSameTypeMapping(sourceKind, targetKind, fieldName string, excludeMessages bool, mapping *FieldMapping) bool {
 	if sourceKind != targetKind {
 		return false
@@ -341,7 +357,8 @@ func BuildSameTypeMapping(sourceKind, targetKind, fieldName string, excludeMessa
 		return false
 	}
 
-	mapping.ToTargetCode = fmt.Sprintf("src.%s", fieldName)
+	// Use sourceFieldAccess to handle oneof member access correctly
+	mapping.ToTargetCode = sourceFieldAccess(fieldName, mapping.SourceIsOneofMember)
 	mapping.FromTargetCode = fmt.Sprintf("src.%s", fieldName)
 	mapping.ToTargetConversionType = ConvertByAssignment
 	mapping.FromTargetConversionType = ConvertByAssignment
@@ -350,12 +367,15 @@ func BuildSameTypeMapping(sourceKind, targetKind, fieldName string, excludeMessa
 
 // BuildNumericTypeMapping handles numeric type conversions using casting.
 // Returns true if both types are numeric. Modifies mapping in place.
+// Uses mapping.SourceIsOneofMember to determine correct field access (getter vs direct).
 func BuildNumericTypeMapping(sourceKind, targetKind, fieldName string, mapping *FieldMapping) bool {
 	if !common.IsNumericKind(sourceKind) || !common.IsNumericKind(targetKind) {
 		return false
 	}
 
-	mapping.ToTargetCode = fmt.Sprintf("%s(src.%s)", common.ProtoKindToGoType(targetKind), fieldName)
+	// Use sourceFieldAccess to handle oneof member access correctly
+	srcAccess := sourceFieldAccess(fieldName, mapping.SourceIsOneofMember)
+	mapping.ToTargetCode = fmt.Sprintf("%s(%s)", common.ProtoKindToGoType(targetKind), srcAccess)
 	mapping.FromTargetCode = fmt.Sprintf("%s(src.%s)", common.ProtoKindToGoType(sourceKind), fieldName)
 	mapping.ToTargetConversionType = ConvertByAssignment
 	mapping.FromTargetConversionType = ConvertByAssignment
@@ -389,20 +409,34 @@ func BuildFieldMapping(
 	targetKind := targetField.Desc.Kind().String()
 	fieldName := sourceField.GoName
 
+	// Check if source field is part of a real oneof (not synthetic optional)
+	// Real oneofs require getter method access (src.GetFieldName()) instead of direct field access
+	sourceIsOneofMember := false
+	if sourceField.Oneof != nil && !sourceField.Oneof.Desc.IsSynthetic() {
+		sourceIsOneofMember = true
+	}
+
 	// Determine if fields are pointers
 	// Source (proto): protoc-gen-go generates message fields as always pointers, optional scalars as pointers
+	// For oneof members, pointer status depends on the actual type (messages are pointers, scalars are not)
 	sourceIsPointer := sourceKind == "message" || sourceField.Desc.HasPresence()
+	if sourceIsOneofMember {
+		// Oneof scalar members (string, int, bool, etc.) are NOT pointers in proto-go
+		// Only message types within oneofs are pointers
+		sourceIsPointer = sourceKind == "message"
+	}
 
 	// Target: Only fields with explicit 'optional' keyword become pointers (message or scalar)
 	// This gives us control over pointer vs value semantics in generated structs
 	targetIsPointer := targetField.Desc.HasOptionalKeyword()
 
 	mapping := &FieldMapping{
-		SourceField:     sourceField.GoName,
-		TargetField:     targetField.GoName,
-		SourceIsPointer: sourceIsPointer,
-		TargetIsPointer: targetIsPointer,
-		SourcePkgName:   sourcePkgName,
+		SourceField:         sourceField.GoName,
+		TargetField:         targetField.GoName,
+		SourceIsPointer:     sourceIsPointer,
+		TargetIsPointer:     targetIsPointer,
+		SourceIsOneofMember: sourceIsOneofMember,
+		SourcePkgName:       sourcePkgName,
 	}
 
 	// Mark if map or repeated (needed for later checks)

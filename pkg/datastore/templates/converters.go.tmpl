@@ -8,7 +8,6 @@ import (
 {{- if .HasRepeatedMessageConversions }}
 	"fmt"
 {{- end }}
-	"strconv"
 
 	"github.com/panyam/protoc-gen-dal/pkg/converters"
 )
@@ -41,7 +40,7 @@ func {{ .SourceType }}To{{ .TargetType }}(
 	// Initialize struct with inline values
 	*dest = {{ .TargetType }}{
 {{- range .ToTargetInlineFields }}
-		{{ .TargetField }}: {{ if .ToTargetCode }}{{ .ToTargetCode }}{{ else }}src.{{ .SourceField }}{{ end }},
+		{{ .TargetField }}: {{ if .ToTargetCode }}{{ .ToTargetCode }}{{ else }}{{ srcField .SourceField .SourceIsOneofMember }}{{ end }},
 {{- end }}
 	}
 	out = dest
@@ -50,7 +49,7 @@ func {{ .SourceType }}To{{ .TargetType }}(
 	{{- range .ToTargetSetterFields }}
 		{{ if isSetterSimple .ToTargetRenderStrategy }}
 			{{- if .SourceIsPointer }}
-	if src.{{ .SourceField }} != nil {
+	if {{ srcField .SourceField .SourceIsOneofMember }} != nil {
 		out.{{ .TargetField }} = {{ .ToTargetCode }}
 	}
 			{{ else }}
@@ -58,7 +57,7 @@ func {{ .SourceType }}To{{ .TargetType }}(
 			{{ end }}
 		{{ else if isSetterTransform .ToTargetRenderStrategy }}
 			{{- if .SourceIsPointer }}
-	if src.{{ .SourceField }} != nil {
+	if {{ srcField .SourceField .SourceIsOneofMember }} != nil {
 		out.{{ .TargetField }} = {{ .ToTargetCode }}
 	}
 			{{- else }}
@@ -67,8 +66,8 @@ func {{ .SourceType }}To{{ .TargetType }}(
 		{{ else if or (isSetterWithError .ToTargetRenderStrategy) (isSetterIgnoreError .ToTargetRenderStrategy) }}
 			{{- if .ToTargetConverterFunc }}
 				{{- /* Use converter function (message type conversions) */ -}}
-				{{- if .SourceIsPointer }}if src.{{ .SourceField }} != nil { {{ end }}
-	_, err = {{ .ToTargetConverterFunc }}(src.{{ .SourceField }}, {{ fieldRef "out" .TargetField .TargetIsPointer }}, nil)
+				{{- if .SourceIsPointer }}if {{ srcField .SourceField .SourceIsOneofMember }} != nil { {{ end }}
+	_, err = {{ .ToTargetConverterFunc }}({{ srcField .SourceField .SourceIsOneofMember }}, {{ fieldRef "out" .TargetField .TargetIsPointer }}, nil)
 				{{- if needsErrorCheck .ToTargetConversionType }}
 	if err != nil {
 		return nil, fmt.Errorf("converting {{ .SourceField }}: %w", err)
@@ -78,7 +77,7 @@ func {{ .SourceType }}To{{ .TargetType }}(
 			{{- else if .ToTargetCode }}
 				{{- /* Use inline converter code (type mapping registry) */ -}}
 				{{- if .SourceIsPointer }}
-	if src.{{ .SourceField }} != nil {
+	if {{ srcField .SourceField .SourceIsOneofMember }} != nil {
 				{{- end }}
 		out.{{ .TargetField }}, err = {{ .ToTargetCode }}
 				{{- if needsErrorCheck .ToTargetConversionType }}
@@ -96,9 +95,9 @@ func {{ .SourceType }}To{{ .TargetType }}(
 	{{/* Loop-based conversions */}}
 	{{- range .ToTargetLoopFields }}
 		{{- if isLoopRepeated .ToTargetRenderStrategy }}
-	if src.{{ .SourceField }} != nil {
-		out.{{ .TargetField }} = make([]{{ .TargetElementType }}, len(src.{{ .SourceField }}))
-		for i, item := range src.{{ .SourceField }} {
+	if {{ srcField .SourceField .SourceIsOneofMember }} != nil {
+		out.{{ .TargetField }} = make([]{{ .TargetElementType }}, len({{ srcField .SourceField .SourceIsOneofMember }}))
+		for i, item := range {{ srcField .SourceField .SourceIsOneofMember }} {
 			_, err = {{ .ToTargetConverterFunc }}(item, &out.{{ .TargetField }}[i], nil)
 			{{- if needsErrorCheck .ToTargetConversionType }}
 			if err != nil {
@@ -108,9 +107,9 @@ func {{ .SourceType }}To{{ .TargetType }}(
 		}
 	}
 		{{- else if isLoopMap .ToTargetRenderStrategy }}
-	if src.{{ .SourceField }} != nil {
-		out.{{ .TargetField }} = make(map[{{ .MapKeyType }}]{{ .TargetElementType }}, len(src.{{ .SourceField }}))
-		for key, value := range src.{{ .SourceField }} {
+	if {{ srcField .SourceField .SourceIsOneofMember }} != nil {
+		out.{{ .TargetField }} = make(map[{{ .MapKeyType }}]{{ .TargetElementType }}, len({{ srcField .SourceField .SourceIsOneofMember }}))
+		for key, value := range {{ srcField .SourceField .SourceIsOneofMember }} {
 			var converted {{ .TargetElementType }}
 			_, err = {{ .ToTargetConverterFunc }}(value, &converted, nil)
 			{{- if needsErrorCheck .ToTargetConversionType }}

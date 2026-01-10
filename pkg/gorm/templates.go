@@ -66,6 +66,15 @@ func loadTemplates() (*template.Template, error) {
 			}
 			return "&" + varName + "." + fieldName
 		},
+		// srcField generates the correct source field access expression.
+		// For oneof members: returns "src.GetFieldName()" (getter method required)
+		// For regular fields: returns "src.FieldName" (direct field access)
+		"srcField": func(fieldName string, isOneofMember bool) string {
+			if isOneofMember {
+				return "src.Get" + fieldName + "()"
+			}
+			return "src." + fieldName
+		},
 		// Render strategy helpers for ToTarget direction
 		"isInlineValue": func(strategy converter.FieldRenderStrategy) bool {
 			return strategy == converter.StrategyInlineValue
