@@ -212,9 +212,43 @@ Primary keys are auto-detected from `gorm_tags: ["primaryKey"]` or fallback to `
 
 Built-in conversions handle common type mismatches:
 
-- `google.protobuf.Timestamp` ↔ `int64` (Unix seconds)
+- `google.protobuf.Timestamp` ↔ `time.Time` (native time type for database storage)
 - `uint32` ↔ `string` (Datastore keys)
 - Numeric types with casting (`int32` → `int64`, etc.)
+
+### Well-Known Types
+
+Converters handle protobuf well-known types including those with `oneof` fields:
+
+**`google.protobuf.Struct`** - For arbitrary JSON data:
+```protobuf
+message UserGORM {
+  // Store arbitrary extras as JSON
+  StructGORM extras = 20 [(dal.v1.column) = {
+    gorm_tags: ["serializer:json"]
+  }];
+}
+
+// Define GORM wrapper with Valuer/Scanner
+message StructGORM {
+  option (dal.v1.gorm) = {
+    source: "google.protobuf.Struct",
+    implement_scanner: true
+  };
+}
+```
+
+**`google.protobuf.Value`** - For variant types (oneof):
+```protobuf
+message ValueGORM {
+  option (dal.v1.gorm) = {
+    source: "google.protobuf.Value",
+    implement_scanner: true
+  };
+}
+```
+
+Converters correctly use getter methods (`src.GetNullValue()`, `src.GetStringValue()`) for oneof fields since they're not directly accessible as struct fields.
 
 ### Nested Messages
 
