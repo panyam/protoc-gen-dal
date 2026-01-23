@@ -16,6 +16,7 @@ package datastore
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/panyam/protoc-gen-dal/pkg/collector"
@@ -82,10 +83,18 @@ func GenerateDALHelpers(messages []*collector.MessageInfo, options *DALOptions) 
 	// Group messages by their source proto file
 	fileGroups := common.GroupMessagesByFile(dalMessages)
 
+	// Get sorted proto file paths for deterministic output
+	protoFiles := make([]string, 0, len(fileGroups))
+	for protoFile := range fileGroups {
+		protoFiles = append(protoFiles, protoFile)
+	}
+	sort.Strings(protoFiles)
+
 	var files []*GeneratedFile
 
 	// Generate one DAL file per proto file
-	for protoFile, msgs := range fileGroups {
+	for _, protoFile := range protoFiles {
+		msgs := fileGroups[protoFile]
 		// Extract entity package info from the first message
 		entityPkgInfo := common.ExtractPackageInfo(msgs[0].TargetMessage)
 

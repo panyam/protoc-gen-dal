@@ -17,6 +17,7 @@ package gorm
 import (
 	"fmt"
 	"log"
+	"sort"
 	"strings"
 
 	"github.com/panyam/protoc-gen-dal/pkg/collector"
@@ -92,8 +93,16 @@ func Generate(messages []*collector.MessageInfo) (*GenerateResult, error) {
 
 	var files []*GeneratedFile
 
+	// Get sorted proto file paths for deterministic output
+	protoFiles := make([]string, 0, len(fileGroups))
+	for protoFile := range fileGroups {
+		protoFiles = append(protoFiles, protoFile)
+	}
+	sort.Strings(protoFiles)
+
 	// Generate one file per proto file (without embedded types)
-	for protoFile, msgs := range fileGroups {
+	for _, protoFile := range protoFiles {
+		msgs := fileGroups[protoFile]
 		content, err := generateFileCodeWithoutEmbedded(msgs, msgRegistry)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate code for %s: %w", protoFile, err)
@@ -150,10 +159,18 @@ func GenerateConverters(messages []*collector.MessageInfo) (*GenerateResult, err
 	// Group messages by their source proto file
 	fileGroups := common.GroupMessagesByFile(messages)
 
+	// Get sorted proto file paths for deterministic output
+	protoFiles := make([]string, 0, len(fileGroups))
+	for protoFile := range fileGroups {
+		protoFiles = append(protoFiles, protoFile)
+	}
+	sort.Strings(protoFiles)
+
 	var files []*GeneratedFile
 
 	// Generate one converter file per proto file
-	for protoFile, msgs := range fileGroups {
+	for _, protoFile := range protoFiles {
+		msgs := fileGroups[protoFile]
 		content, err := generateConverterFileCode(msgs, msgRegistry)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate converters for %s: %w", protoFile, err)
@@ -242,9 +259,17 @@ func generateEmbeddedTypesFile(embeddedTypes map[string]*protogen.Message, sampl
 	// Extract package name (use sample message)
 	packageName := common.ExtractPackageName(sampleMsg)
 
+	// Get sorted type names for deterministic output
+	typeNames := make([]string, 0, len(embeddedTypes))
+	for fullName := range embeddedTypes {
+		typeNames = append(typeNames, fullName)
+	}
+	sort.Strings(typeNames)
+
 	// Build struct data for embedded types
 	var structs []StructData
-	for _, embMsg := range embeddedTypes {
+	for _, fullName := range typeNames {
+		embMsg := embeddedTypes[fullName]
 		// Build a simple struct for this embedded type (no table name)
 		// No field merging for embedded types - just use fields as-is
 		// Extract source package alias for enum types

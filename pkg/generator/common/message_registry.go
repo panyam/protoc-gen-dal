@@ -17,6 +17,7 @@ package common
 import (
 	"fmt"
 	"log"
+	"sort"
 
 	"github.com/panyam/protoc-gen-dal/pkg/collector"
 	"google.golang.org/protobuf/compiler/protogen"
@@ -164,6 +165,8 @@ func (r *MessageRegistry) ValidateMissingTypes(messages []*collector.MessageInfo
 	}
 
 	if len(missingTypes) > 0 {
+		// Sort for deterministic error messages
+		sort.Strings(missingTypes)
 		log.Printf("ERROR: The following message types are referenced but not defined:")
 		for _, sourceKey := range missingTypes {
 			log.Printf("  - %s (define a message with 'source: \"%s\"')", sourceKey, sourceKey)

@@ -14,6 +14,8 @@
 
 package common
 
+import "sort"
+
 // ImportSpec represents a Go import with optional alias.
 //
 // Import specs are used when generating import statements in Go files.
@@ -50,16 +52,21 @@ func (m ImportMap) Add(spec ImportSpec) {
 	}
 }
 
-// ToSlice converts the import map to a slice of import specs.
+// ToSlice converts the import map to a slice of import specs, sorted by path.
 //
 // This is useful for template rendering which typically expects slices.
+// Sorting ensures deterministic output across runs.
 //
 // Returns:
-//   - slice of import specs
+//   - slice of import specs, sorted by import path
 func (m ImportMap) ToSlice() []ImportSpec {
 	var result []ImportSpec
 	for _, spec := range m {
 		result = append(result, spec)
 	}
+	// Sort by import path for deterministic output
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Path < result[j].Path
+	})
 	return result
 }

@@ -49,8 +49,8 @@ type UserWithCustomTimestamps struct {
 	Email        string
 	Age          uint32
 	UpdatedMilli int64 `gorm:"autoUpdateTime:milli"`
-	UpdatedNano  int64 `gorm:"autoUpdateTime:nano"`
 	Birthday     time.Time
+	UpdatedNano  int64 `gorm:"autoUpdateTime:nano"`
 	MemberNumber string
 	ActivatedAt  time.Time
 	CreatedAt    int64 `gorm:"autoCreateTime"`
@@ -67,8 +67,8 @@ type UserWithIndexes struct {
 	Id           uint32 `gorm:"primaryKey"`
 	Name         string `gorm:"index"`
 	Email        string `gorm:"uniqueIndex"`
-	City         string `gorm:"index:idx_city,sort:desc"`
 	Age          uint32
+	City         string `gorm:"index:idx_city,sort:desc"`
 	Birthday     time.Time
 	FirstName    string `gorm:"index:idx_name"`
 	LastName     string `gorm:"index:idx_name"`

@@ -16,6 +16,7 @@ package datastore
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/panyam/protoc-gen-dal/pkg/collector"
@@ -69,10 +70,18 @@ func Generate(messages []*collector.MessageInfo) (*GenerateResult, error) {
 	// Group messages by their source proto file
 	fileGroups := common.GroupMessagesByFile(messages)
 
+	// Get sorted proto file paths for deterministic output
+	protoFiles := make([]string, 0, len(fileGroups))
+	for protoFile := range fileGroups {
+		protoFiles = append(protoFiles, protoFile)
+	}
+	sort.Strings(protoFiles)
+
 	var files []*GeneratedFile
 
 	// Generate one file per proto file
-	for protoFile, msgs := range fileGroups {
+	for _, protoFile := range protoFiles {
+		msgs := fileGroups[protoFile]
 		content, err := generateFileCode(msgs, msgRegistry)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate code for %s: %w", protoFile, err)
@@ -339,10 +348,18 @@ func GenerateConverters(messages []*collector.MessageInfo) (*GenerateResult, err
 	// Group messages by their source proto file
 	fileGroups := common.GroupMessagesByFile(messages)
 
+	// Get sorted proto file paths for deterministic output
+	protoFiles := make([]string, 0, len(fileGroups))
+	for protoFile := range fileGroups {
+		protoFiles = append(protoFiles, protoFile)
+	}
+	sort.Strings(protoFiles)
+
 	var files []*GeneratedFile
 
 	// Generate one converter file per proto file
-	for protoFile, msgs := range fileGroups {
+	for _, protoFile := range protoFiles {
+		msgs := fileGroups[protoFile]
 		content, err := generateConverterFileCode(msgs, msgRegistry)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate converters for %s: %w", protoFile, err)

@@ -588,6 +588,16 @@ From `tests/protos/datastore/user.proto`:
   - ✅ Test coverage in pkg/generator/common/field_merge_ordering_test.go
   - ✅ All tests passing, generated code verified
 
+- ✅ **Deterministic Code Generation** (COMPLETE)
+  - ✅ Field merge tie-breaking: Added secondary sort key (field name) when field numbers are equal
+  - ✅ Embedded types ordering: Sort type names alphabetically before generating _embedded_gorm.go
+  - ✅ File group ordering: Sort proto file paths before iterating (GORM + Datastore generators)
+  - ✅ Import ordering: Sort imports by path in ImportMap.ToSlice()
+  - ✅ DAL file ordering: Sort proto file paths before DAL generation (GORM + Datastore)
+  - ✅ Error message ordering: Sort missing type names in MessageRegistry.ValidateMissingTypes()
+  - ✅ Benefits: Generated code is identical across multiple regenerations
+  - ✅ All tests passing, verified with MD5 checksums across multiple runs
+
 **Recently Completed:**
 - ✅ **DAL Helper Generation** (Phase 2.6) - COMPLETE
   - ✅ Added `generate_dal`, `dal_filename_suffix`, `dal_filename_prefix`, `dal_output_dir` options

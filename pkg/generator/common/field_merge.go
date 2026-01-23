@@ -124,11 +124,19 @@ func MergeSourceFields(sourceMsg, targetMsg *protogen.Message) ([]*protogen.Fiel
 
 	// Sort by SOURCE field numbers to maintain source ordering
 	// This ensures fields appear in the same order as the source proto,
-	// even when target overrides them with different field numbers
+	// even when target overrides them with different field numbers.
+	// When field numbers are equal (e.g., target adds new fields with same number
+	// as source fields), use field name as secondary sort key for determinism.
 	sort.Slice(result, func(i, j int) bool {
 		iName := string(result[i].Desc.Name())
 		jName := string(result[j].Desc.Name())
-		return sourceFieldNumbers[iName] < sourceFieldNumbers[jName]
+		iNum := sourceFieldNumbers[iName]
+		jNum := sourceFieldNumbers[jName]
+		if iNum != jNum {
+			return iNum < jNum
+		}
+		// Secondary sort by field name for deterministic ordering when numbers are equal
+		return iName < jName
 	})
 
 	return result, nil
