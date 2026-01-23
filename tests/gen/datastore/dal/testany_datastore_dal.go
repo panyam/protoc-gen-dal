@@ -435,3 +435,252 @@ func (d *TestRecord2DatastoreDAL) Query(ctx context.Context, client *dslib.Clien
 func (d *TestRecord2DatastoreDAL) Count(ctx context.Context, client *dslib.Client, q *dslib.Query) (int, error) {
 	return client.Count(ctx, q)
 }
+
+// TestRecord3DatastoreDAL provides database access helper methods for datastore.TestRecord3Datastore.
+type TestRecord3DatastoreDAL struct {
+	// Kind overrides the Datastore kind for all operations.
+	// If empty, uses the struct's Kind() method (if any).
+	Kind string
+
+	// Namespace overrides the Datastore namespace for all operations.
+	// If empty, uses the default namespace.
+	Namespace string
+
+	// WillPut hook is called before Put operations.
+	// Return an error to prevent the put.
+	WillPut func(context.Context, *datastore.TestRecord3Datastore) error
+}
+
+// NewTestRecord3DatastoreDAL creates a new TestRecord3DatastoreDAL instance.
+// If kind is empty, operations will use the struct's Kind() method.
+func NewTestRecord3DatastoreDAL(kind string) *TestRecord3DatastoreDAL {
+	return &TestRecord3DatastoreDAL{Kind: kind}
+}
+
+// getKind returns the kind to use for operations.
+// Uses the DAL's Kind field if set, otherwise falls back to the struct's Kind() method.
+func (d *TestRecord3DatastoreDAL) getKind() string {
+	if d.Kind != "" {
+		return d.Kind
+	}
+	// Fall back to struct's Kind() method
+	var entity datastore.TestRecord3Datastore
+	return entity.Kind()
+}
+
+// newKey creates a new Datastore key for the given ID.
+func (d *TestRecord3DatastoreDAL) newKey(id string) *dslib.Key {
+	key := dslib.NameKey(d.getKind(), id, nil)
+	if d.Namespace != "" {
+		key.Namespace = d.Namespace
+	}
+	return key
+}
+
+// newIncompleteKey creates a new incomplete Datastore key (for auto-generated IDs).
+func (d *TestRecord3DatastoreDAL) newIncompleteKey() *dslib.Key {
+	key := dslib.IncompleteKey(d.getKind(), nil)
+	if d.Namespace != "" {
+		key.Namespace = d.Namespace
+	}
+	return key
+}
+
+// Put saves a datastore.TestRecord3Datastore entity to Datastore.
+// If the entity's Key field is set, uses that key; otherwise creates a key from the ID field.
+// Returns the key used to store the entity.
+func (d *TestRecord3DatastoreDAL) Put(ctx context.Context, client *dslib.Client, obj *datastore.TestRecord3Datastore) (*dslib.Key, error) {
+	// Call WillPut hook if set
+	if d.WillPut != nil {
+		if err := d.WillPut(ctx, obj); err != nil {
+			return nil, err
+		}
+	}
+
+	// Determine the key to use
+	var key *dslib.Key
+	if obj.Key != nil {
+		key = obj.Key
+		// Apply namespace override if set
+		if d.Namespace != "" {
+			key.Namespace = d.Namespace
+		}
+	} else if obj.Id != "" {
+		key = d.newKey(obj.Id)
+	} else {
+		key = d.newIncompleteKey()
+	}
+
+	// Put the entity
+	resultKey, err := client.Put(ctx, key, obj)
+	if err != nil {
+		return nil, err
+	}
+
+	// Update the entity's key
+	obj.Key = resultKey
+
+	return resultKey, nil
+}
+
+// Get retrieves a datastore.TestRecord3Datastore entity by key.
+// Returns (nil, nil) if the entity is not found.
+func (d *TestRecord3DatastoreDAL) Get(ctx context.Context, client *dslib.Client, key *dslib.Key) (*datastore.TestRecord3Datastore, error) {
+	var entity datastore.TestRecord3Datastore
+	err := client.Get(ctx, key, &entity)
+	if err != nil {
+		if err == dslib.ErrNoSuchEntity {
+			return nil, nil
+		}
+		return nil, err
+	}
+	entity.Key = key
+	return &entity, nil
+}
+
+// Delete removes a datastore.TestRecord3Datastore entity by key.
+func (d *TestRecord3DatastoreDAL) Delete(ctx context.Context, client *dslib.Client, key *dslib.Key) error {
+	return client.Delete(ctx, key)
+}
+
+// GetMulti retrieves multiple datastore.TestRecord3Datastore entities by keys.
+// Returns entities in the same order as the keys. Missing entities are nil in the result slice.
+func (d *TestRecord3DatastoreDAL) GetMulti(ctx context.Context, client *dslib.Client, keys []*dslib.Key) ([]*datastore.TestRecord3Datastore, error) {
+	if len(keys) == 0 {
+		return []*datastore.TestRecord3Datastore{}, nil
+	}
+
+	entities := make([]datastore.TestRecord3Datastore, len(keys))
+	err := client.GetMulti(ctx, keys, entities)
+	if err != nil {
+		// Handle partial errors (some entities not found)
+		if multiErr, ok := err.(dslib.MultiError); ok {
+			result := make([]*datastore.TestRecord3Datastore, len(keys))
+			for i, e := range multiErr {
+				if e == nil {
+					entities[i].Key = keys[i]
+					result[i] = &entities[i]
+				} else if e != dslib.ErrNoSuchEntity {
+					return nil, err // Return on non-NotFound errors
+				}
+				// nil for not-found entities
+			}
+			return result, nil
+		}
+		return nil, err
+	}
+
+	// All entities found
+	result := make([]*datastore.TestRecord3Datastore, len(keys))
+	for i := range entities {
+		entities[i].Key = keys[i]
+		result[i] = &entities[i]
+	}
+	return result, nil
+}
+
+// PutMulti saves multiple datastore.TestRecord3Datastore entities to Datastore.
+// Returns the keys used to store the entities.
+func (d *TestRecord3DatastoreDAL) PutMulti(ctx context.Context, client *dslib.Client, objs []*datastore.TestRecord3Datastore) ([]*dslib.Key, error) {
+	if len(objs) == 0 {
+		return []*dslib.Key{}, nil
+	}
+
+	// Call WillPut hook for each entity
+	if d.WillPut != nil {
+		for _, obj := range objs {
+			if err := d.WillPut(ctx, obj); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	// Build keys for each entity
+	keys := make([]*dslib.Key, len(objs))
+	for i, obj := range objs {
+		if obj.Key != nil {
+			keys[i] = obj.Key
+			if d.Namespace != "" {
+				keys[i].Namespace = d.Namespace
+			}
+		} else if obj.Id != "" {
+			keys[i] = d.newKey(obj.Id)
+		} else {
+			keys[i] = d.newIncompleteKey()
+		}
+	}
+
+	// Put all entities
+	resultKeys, err := client.PutMulti(ctx, keys, objs)
+	if err != nil {
+		return nil, err
+	}
+
+	// Update entity keys
+	for i, key := range resultKeys {
+		objs[i].Key = key
+	}
+
+	return resultKeys, nil
+}
+
+// DeleteMulti removes multiple datastore.TestRecord3Datastore entities by keys.
+func (d *TestRecord3DatastoreDAL) DeleteMulti(ctx context.Context, client *dslib.Client, keys []*dslib.Key) error {
+	if len(keys) == 0 {
+		return nil
+	}
+	return client.DeleteMulti(ctx, keys)
+}
+
+// Query retrieves datastore.TestRecord3Datastore entities matching the query.
+// The caller should create a query using dslib.NewQuery(dal.getKind()).
+func (d *TestRecord3DatastoreDAL) Query(ctx context.Context, client *dslib.Client, q *dslib.Query) ([]*datastore.TestRecord3Datastore, error) {
+	var entities []*datastore.TestRecord3Datastore
+	keys, err := client.GetAll(ctx, q, &entities)
+	if err != nil {
+		return nil, err
+	}
+
+	// Set keys on entities
+	for i, key := range keys {
+		entities[i].Key = key
+	}
+
+	return entities, nil
+}
+
+// Count returns the number of entities matching the query.
+func (d *TestRecord3DatastoreDAL) Count(ctx context.Context, client *dslib.Client, q *dslib.Query) (int, error) {
+	return client.Count(ctx, q)
+}
+
+// GetByID retrieves a datastore.TestRecord3Datastore entity by ID.
+// This is a convenience method that creates a key from the ID.
+// Returns (nil, nil) if the entity is not found.
+func (d *TestRecord3DatastoreDAL) GetByID(ctx context.Context, client *dslib.Client, id string) (*datastore.TestRecord3Datastore, error) {
+	key := d.newKey(id)
+	return d.Get(ctx, client, key)
+}
+
+// DeleteByID removes a datastore.TestRecord3Datastore entity by ID.
+// This is a convenience method that creates a key from the ID.
+func (d *TestRecord3DatastoreDAL) DeleteByID(ctx context.Context, client *dslib.Client, id string) error {
+	key := d.newKey(id)
+	return d.Delete(ctx, client, key)
+}
+
+// GetMultiByIDs retrieves multiple datastore.TestRecord3Datastore entities by IDs.
+// This is a convenience method that creates keys from the IDs.
+// Returns entities in the same order as the IDs. Missing entities are nil in the result slice.
+func (d *TestRecord3DatastoreDAL) GetMultiByIDs(ctx context.Context, client *dslib.Client, ids []string) ([]*datastore.TestRecord3Datastore, error) {
+	if len(ids) == 0 {
+		return []*datastore.TestRecord3Datastore{}, nil
+	}
+
+	keys := make([]*dslib.Key, len(ids))
+	for i, id := range ids {
+		keys[i] = d.newKey(id)
+	}
+
+	return d.GetMulti(ctx, client, keys)
+}

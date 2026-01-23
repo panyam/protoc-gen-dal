@@ -64,6 +64,11 @@ type MessageInfo struct {
 	// Defaults to true if TableName is specified, false otherwise.
 	// Can be explicitly overridden via the 'dal' option in proto annotations.
 	GenerateDAL bool
+
+	// ImplementPropertyLoader indicates whether to generate PropertyLoadSaver interface
+	// methods (Save/Load) for Datastore. Required for structs with map fields since
+	// Datastore doesn't natively support Go maps.
+	ImplementPropertyLoader bool
 }
 
 // CollectMessages finds all messages for a target across all proto files.
@@ -397,12 +402,13 @@ func extractDatastoreInfo(msg *protogen.Message, opts proto.Message, index map[s
 			}
 
 			return &MessageInfo{
-				SourceMessage: sourceMsg,
-				TargetMessage: msg,
-				SourceName:    dsOpts.Source,
-				TableName:     dsOpts.Kind,      // Datastore uses "kind" instead of "table"
-				SchemaName:    dsOpts.Namespace, // SchemaName repurposed for "namespace"
-				GenerateDAL:   generateDAL,
+				SourceMessage:           sourceMsg,
+				TargetMessage:           msg,
+				SourceName:              dsOpts.Source,
+				TableName:               dsOpts.Kind,      // Datastore uses "kind" instead of "table"
+				SchemaName:              dsOpts.Namespace, // SchemaName repurposed for "namespace"
+				GenerateDAL:             generateDAL,
+				ImplementPropertyLoader: dsOpts.ImplementPropertyLoader,
 			}, nil
 		}
 	}

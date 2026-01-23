@@ -23,4 +23,8 @@ func (*{{ .Name }}) Kind() string {
 	return "{{ .Kind }}"
 }
 {{ end }}
+{{ if .ImplementPropertyLoader }}
+
+{{ template "property_load_saver" . }}
+{{ end }}
 {{ end }}

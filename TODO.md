@@ -340,6 +340,7 @@ From `tests/protos/gorm/user.proto`:
   - ✅ Full repeated/map field support (primitives and messages)
   - ✅ Converter registry for nested message conversions
   - ✅ Loop-based conversion for repeated/map message types
+  - ✅ PropertyLoadSaver for map fields (implement_property_loader option)
   - ⏸️ LoadKey/SaveKey deferred (not essential for MVP)
 
 - ✅ Phase 3.1b - Timestamp Migration to time.Time (COMPLETE)

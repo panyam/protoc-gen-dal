@@ -65,6 +65,7 @@ type FieldData struct {
 	Type       string // Go type (e.g., "string", "int64", "[]string")
 	Tags       string // struct tag content (e.g., "primaryKey;type:uuid")
 	IsOptional bool   // Whether field is marked optional in proto (affects pointer generation)
+	IsMap      bool   // Whether field is a map type (e.g., map[string]int64)
 }
 
 // ConverterFileData contains all data for generating a converter file.

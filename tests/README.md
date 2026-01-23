@@ -121,6 +121,48 @@ View emulator logs:
 make dslogs
 ```
 
+### Real Google Cloud Datastore
+
+To run tests against a real Google Cloud Datastore (not the emulator):
+
+1. Configure your GCP project and credentials:
+   ```bash
+   # Required: GCP project ID
+   export DS_REAL_PROJECT=my-gcp-project
+
+   # Optional: Path to service account JSON (uses ADC if not set)
+   export DS_REAL_CREDENTIALS=~/path/to/service-account.json
+
+   # Optional: Test namespace (default: protoc-gen-dal-test)
+   export DS_REAL_NAMESPACE=my-test-namespace
+   ```
+
+2. Run the tests:
+   ```bash
+   make testrealDS
+   ```
+
+   Or pass variables directly:
+   ```bash
+   make testrealDS DS_REAL_PROJECT=my-project DS_REAL_CREDENTIALS=~/creds.json
+   ```
+
+**Safety Check**: Tests will fail if the namespace already contains entities for the test kinds. This prevents accidental data loss. To override:
+
+```bash
+# Force delete existing entities in the namespace
+make testrealDS-force DS_REAL_PROJECT=my-project
+```
+
+Or run directly with the flag:
+```bash
+DATASTORE_PROJECT_ID=my-project \
+DATASTORE_TEST_NAMESPACE=my-namespace \
+go test ./tests/datastore/... -args -force-delete-ns
+```
+
+**Cleanup**: All entities in the test namespace are automatically deleted after tests complete.
+
 ## Test Categories
 
 ### GORM Tests (`tests/gorm/`)
@@ -153,12 +195,25 @@ Note: Datastore tests use a custom `TestUser` struct that only uses Datastore-co
 | `PROTOC_GEN_DAL_TEST_PGUSER` | Username | `postgres` |
 | `PROTOC_GEN_DAL_TEST_PGPASSWORD` | Password | `testpassword` |
 
-### Datastore
+### Datastore (Emulator)
 
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `DATASTORE_EMULATOR_HOST` | Emulator host (e.g., `localhost:8081`) | - |
 | `DATASTORE_PROJECT_ID` | GCP project ID | `test-project` |
+
+### Datastore (Real GCP)
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `DATASTORE_PROJECT_ID` | GCP project ID | Required |
+| `DATASTORE_CREDENTIALS_FILE` | Path to service account JSON | Uses ADC |
+| `DATASTORE_TEST_NAMESPACE` | Namespace for test entities | Required |
+
+Test flags:
+| Flag | Description |
+|------|-------------|
+| `-force-delete-ns` | Force delete existing entities in namespace |
 
 ## Makefile Commands
 
@@ -178,6 +233,8 @@ Note: Datastore tests use a custom `TestUser` struct that only uses Datastore-co
 | `make downds` | Stop Datastore emulator |
 | `make dslogs` | Tail Datastore emulator logs |
 | `make testds` | Run tests with Datastore emulator |
+| `make testrealDS` | Run tests with real GCP Datastore |
+| `make testrealDS-force` | Run tests with real GCP Datastore (force delete existing) |
 
 ## Adding New Tests
 
@@ -226,6 +283,24 @@ Datastore only supports signed integers. If you encounter this error, your entit
 - `bool`, `string`, `float32`, `float64`
 - `[]byte`, `*datastore.Key`, `time.Time`
 - Structs and slices of the above
+
+### "datastore: unsupported struct field type: map[string]int64"
+
+Datastore doesn't natively support Go map types. To store maps, enable the `implement_property_loader` option in your proto:
+
+```protobuf
+message MyEntityDatastore {
+  option (dal.v1.datastore_options) = {
+    source: "api.MyEntity"
+    kind: "MyEntity"
+    implement_property_loader: true  // Enables PropertyLoadSaver interface
+  };
+
+  map<string, int64> my_map = 1;
+}
+```
+
+This generates `Save()` and `Load()` methods that serialize map fields to JSON. See `docs/DATASTORE_GUIDE.md` for details.
 
 ### Docker container fails to start
 

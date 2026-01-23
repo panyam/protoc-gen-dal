@@ -49,6 +49,28 @@ type StructData struct {
 
 	// Fields is the list of struct fields
 	Fields []*FieldData
+
+	// ImplementPropertyLoader indicates whether to generate PropertyLoadSaver interface
+	// methods (Save/Load) for handling unsupported types like maps.
+	ImplementPropertyLoader bool
+
+	// MapFields contains fields that are maps (need special handling in PropertyLoadSaver)
+	MapFields []*MapFieldInfo
+}
+
+// MapFieldInfo contains information about a map field for PropertyLoadSaver generation.
+type MapFieldInfo struct {
+	// GoName is the Go field name (e.g., "CountsByType")
+	GoName string
+
+	// PropName is the Datastore property name (e.g., "counts_by_type")
+	PropName string
+
+	// KeyType is the Go type for the map key (e.g., "string")
+	KeyType string
+
+	// ValueType is the Go type for the map value (e.g., "int64")
+	ValueType string
 }
 
 type FieldData = types.FieldData
@@ -65,11 +87,21 @@ var converterTemplate string
 //go:embed templates/dal.go.tmpl
 var dalTemplate string
 
+//go:embed templates/property_load_saver.go.tmpl
+var propertyLoadSaverTemplate string
+
 // executeTemplate executes the file template with the given data.
 func executeTemplate(data *TemplateData) (string, error) {
+	// Parse both templates so property_load_saver can be invoked from file template
 	tmpl, err := template.New("file").Parse(fileTemplate)
 	if err != nil {
-		return "", fmt.Errorf("failed to parse template: %w", err)
+		return "", fmt.Errorf("failed to parse file template: %w", err)
+	}
+
+	// Parse property_load_saver template into the same template set
+	tmpl, err = tmpl.Parse(propertyLoadSaverTemplate)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse property_load_saver template: %w", err)
 	}
 
 	var buf bytes.Buffer

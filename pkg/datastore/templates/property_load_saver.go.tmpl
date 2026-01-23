@@ -1,0 +1,108 @@
+{{ define "property_load_saver" -}}
+// Save implements the PropertyLoadSaver interface for {{ .Name }}.
+// It serializes map fields to JSON since Datastore doesn't natively support Go maps.
+func (m *{{ .Name }}) Save() ([]datastore.Property, error) {
+	// First, get the default properties using datastore.SaveStruct
+	// We need a copy without the map fields to avoid the "unsupported struct field type" error
+	props, err := m.saveNonMapFields()
+	if err != nil {
+		return nil, err
+	}
+
+{{ range .MapFields }}
+	// Serialize {{ .GoName }} map to JSON
+	if m.{{ .GoName }} != nil {
+		{{ .GoName }}JSON, err := json.Marshal(m.{{ .GoName }})
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal {{ .GoName }}: %w", err)
+		}
+		props = append(props, datastore.Property{
+			Name:    "{{ .PropName }}",
+			Value:   {{ .GoName }}JSON,
+			NoIndex: true, // Maps are typically not indexed
+		})
+	}
+{{ end }}
+
+	return props, nil
+}
+
+// saveNonMapFields saves all non-map fields using a temporary struct.
+func (m *{{ .Name }}) saveNonMapFields() ([]datastore.Property, error) {
+	// Create a temporary struct with only the non-map fields
+	type nonMapFields struct {
+{{ range .Fields }}{{ if not .IsMap }}
+		{{ .Name }} {{ .Type }} {{ .Tags }}
+{{ end }}{{ end }}
+	}
+
+	tmp := nonMapFields{
+{{ range .Fields }}{{ if not .IsMap }}
+		{{ .Name }}: m.{{ .Name }},
+{{ end }}{{ end }}
+	}
+
+	return datastore.SaveStruct(&tmp)
+}
+
+// Load implements the PropertyLoadSaver interface for {{ .Name }}.
+// It deserializes JSON-encoded map fields back to Go maps.
+func (m *{{ .Name }}) Load(props []datastore.Property) error {
+	// Separate map properties from regular properties
+	var regularProps []datastore.Property
+{{ range .MapFields }}
+	var {{ .GoName }}Prop *datastore.Property
+{{ end }}
+
+	for i := range props {
+		switch props[i].Name {
+{{ range .MapFields }}
+		case "{{ .PropName }}":
+			{{ .GoName }}Prop = &props[i]
+{{ end }}
+		default:
+			regularProps = append(regularProps, props[i])
+		}
+	}
+
+	// Load non-map fields using a temporary struct
+	type nonMapFields struct {
+{{ range .Fields }}{{ if not .IsMap }}
+		{{ .Name }} {{ .Type }} {{ .Tags }}
+{{ end }}{{ end }}
+	}
+
+	var tmp nonMapFields
+	if err := datastore.LoadStruct(&tmp, regularProps); err != nil {
+		return err
+	}
+
+	// Copy non-map fields back
+{{ range .Fields }}{{ if not .IsMap }}
+	m.{{ .Name }} = tmp.{{ .Name }}
+{{ end }}{{ end }}
+
+{{ range .MapFields }}
+	// Deserialize {{ .GoName }} from JSON
+	if {{ .GoName }}Prop != nil {
+		var jsonBytes []byte
+		switch v := {{ .GoName }}Prop.Value.(type) {
+		case []byte:
+			jsonBytes = v
+		case string:
+			jsonBytes = []byte(v)
+		default:
+			return fmt.Errorf("unexpected type for {{ .PropName }}: %T", {{ .GoName }}Prop.Value)
+		}
+		if len(jsonBytes) > 0 {
+			m.{{ .GoName }} = make(map[{{ .KeyType }}]{{ .ValueType }})
+			if err := json.Unmarshal(jsonBytes, &m.{{ .GoName }}); err != nil {
+				return fmt.Errorf("failed to unmarshal {{ .GoName }}: %w", err)
+			}
+		}
+	}
+{{ end }}
+
+	return nil
+}
+{{- end }}

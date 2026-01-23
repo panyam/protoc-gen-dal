@@ -285,6 +285,84 @@ func (x *TestRecord2) GetBoolToMessage() map[bool]*MapValueMessage {
 	return nil
 }
 
+// TestRecord3 tests maps with scalar value types (not messages).
+// This is important for cases like counters per reaction type.
+type TestRecord3 struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	EntityType    string                 `protobuf:"bytes,2,opt,name=entity_type,json=entityType,proto3" json:"entity_type,omitempty"`
+	EntityId      string                 `protobuf:"bytes,3,opt,name=entity_id,json=entityId,proto3" json:"entity_id,omitempty"`
+	TotalCount    int64                  `protobuf:"varint,4,opt,name=total_count,json=totalCount,proto3" json:"total_count,omitempty"`
+	CountsByType  map[string]int64       `protobuf:"bytes,5,rep,name=counts_by_type,json=countsByType,proto3" json:"counts_by_type,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TestRecord3) Reset() {
+	*x = TestRecord3{}
+	mi := &file_api_testany_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TestRecord3) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TestRecord3) ProtoMessage() {}
+
+func (x *TestRecord3) ProtoReflect() protoreflect.Message {
+	mi := &file_api_testany_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TestRecord3.ProtoReflect.Descriptor instead.
+func (*TestRecord3) Descriptor() ([]byte, []int) {
+	return file_api_testany_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *TestRecord3) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *TestRecord3) GetEntityType() string {
+	if x != nil {
+		return x.EntityType
+	}
+	return ""
+}
+
+func (x *TestRecord3) GetEntityId() string {
+	if x != nil {
+		return x.EntityId
+	}
+	return ""
+}
+
+func (x *TestRecord3) GetTotalCount() int64 {
+	if x != nil {
+		return x.TotalCount
+	}
+	return 0
+}
+
+func (x *TestRecord3) GetCountsByType() map[string]int64 {
+	if x != nil {
+		return x.CountsByType
+	}
+	return nil
+}
+
 var File_api_testany_proto protoreflect.FileDescriptor
 
 const file_api_testany_proto_rawDesc = "" +
@@ -321,7 +399,18 @@ const file_api_testany_proto_rawDesc = "" +
 	"\x05value\x18\x02 \x01(\v2\x14.api.MapValueMessageR\x05value:\x028\x01\x1aV\n" +
 	"\x12BoolToMessageEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\bR\x03key\x12*\n" +
-	"\x05value\x18\x02 \x01(\v2\x14.api.MapValueMessageR\x05value:\x028\x01*b\n" +
+	"\x05value\x18\x02 \x01(\v2\x14.api.MapValueMessageR\x05value:\x028\x01\"\x87\x02\n" +
+	"\vTestRecord3\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1f\n" +
+	"\ventity_type\x18\x02 \x01(\tR\n" +
+	"entityType\x12\x1b\n" +
+	"\tentity_id\x18\x03 \x01(\tR\bentityId\x12\x1f\n" +
+	"\vtotal_count\x18\x04 \x01(\x03R\n" +
+	"totalCount\x12H\n" +
+	"\x0ecounts_by_type\x18\x05 \x03(\v2\".api.TestRecord3.CountsByTypeEntryR\fcountsByType\x1a?\n" +
+	"\x11CountsByTypeEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\x03R\x05value:\x028\x01*b\n" +
 	"\n" +
 	"SampleEnum\x12\x1b\n" +
 	"\x17SAMPLE_ENUM_UNSPECIFIED\x10\x00\x12\x11\n" +
@@ -343,40 +432,43 @@ func file_api_testany_proto_rawDescGZIP() []byte {
 }
 
 var file_api_testany_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_api_testany_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_api_testany_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_api_testany_proto_goTypes = []any{
 	(SampleEnum)(0),               // 0: api.SampleEnum
 	(*TestRecord1)(nil),           // 1: api.TestRecord1
 	(*MapValueMessage)(nil),       // 2: api.MapValueMessage
 	(*TestRecord2)(nil),           // 3: api.TestRecord2
-	nil,                           // 4: api.TestRecord1.MapStringToEnumEntry
-	nil,                           // 5: api.TestRecord2.Int32ToMessageEntry
-	nil,                           // 6: api.TestRecord2.Int64ToMessageEntry
-	nil,                           // 7: api.TestRecord2.Uint32ToMessageEntry
-	nil,                           // 8: api.TestRecord2.BoolToMessageEntry
-	(*timestamppb.Timestamp)(nil), // 9: google.protobuf.Timestamp
-	(*anypb.Any)(nil),             // 10: google.protobuf.Any
+	(*TestRecord3)(nil),           // 4: api.TestRecord3
+	nil,                           // 5: api.TestRecord1.MapStringToEnumEntry
+	nil,                           // 6: api.TestRecord2.Int32ToMessageEntry
+	nil,                           // 7: api.TestRecord2.Int64ToMessageEntry
+	nil,                           // 8: api.TestRecord2.Uint32ToMessageEntry
+	nil,                           // 9: api.TestRecord2.BoolToMessageEntry
+	nil,                           // 10: api.TestRecord3.CountsByTypeEntry
+	(*timestamppb.Timestamp)(nil), // 11: google.protobuf.Timestamp
+	(*anypb.Any)(nil),             // 12: google.protobuf.Any
 }
 var file_api_testany_proto_depIdxs = []int32{
-	9,  // 0: api.TestRecord1.time_field:type_name -> google.protobuf.Timestamp
-	10, // 1: api.TestRecord1.extra_data:type_name -> google.protobuf.Any
+	11, // 0: api.TestRecord1.time_field:type_name -> google.protobuf.Timestamp
+	12, // 1: api.TestRecord1.extra_data:type_name -> google.protobuf.Any
 	0,  // 2: api.TestRecord1.an_enum:type_name -> api.SampleEnum
 	0,  // 3: api.TestRecord1.list_of_enums:type_name -> api.SampleEnum
-	4,  // 4: api.TestRecord1.map_string_to_enum:type_name -> api.TestRecord1.MapStringToEnumEntry
-	5,  // 5: api.TestRecord2.int32_to_message:type_name -> api.TestRecord2.Int32ToMessageEntry
-	6,  // 6: api.TestRecord2.int64_to_message:type_name -> api.TestRecord2.Int64ToMessageEntry
-	7,  // 7: api.TestRecord2.uint32_to_message:type_name -> api.TestRecord2.Uint32ToMessageEntry
-	8,  // 8: api.TestRecord2.bool_to_message:type_name -> api.TestRecord2.BoolToMessageEntry
-	0,  // 9: api.TestRecord1.MapStringToEnumEntry.value:type_name -> api.SampleEnum
-	2,  // 10: api.TestRecord2.Int32ToMessageEntry.value:type_name -> api.MapValueMessage
-	2,  // 11: api.TestRecord2.Int64ToMessageEntry.value:type_name -> api.MapValueMessage
-	2,  // 12: api.TestRecord2.Uint32ToMessageEntry.value:type_name -> api.MapValueMessage
-	2,  // 13: api.TestRecord2.BoolToMessageEntry.value:type_name -> api.MapValueMessage
-	14, // [14:14] is the sub-list for method output_type
-	14, // [14:14] is the sub-list for method input_type
-	14, // [14:14] is the sub-list for extension type_name
-	14, // [14:14] is the sub-list for extension extendee
-	0,  // [0:14] is the sub-list for field type_name
+	5,  // 4: api.TestRecord1.map_string_to_enum:type_name -> api.TestRecord1.MapStringToEnumEntry
+	6,  // 5: api.TestRecord2.int32_to_message:type_name -> api.TestRecord2.Int32ToMessageEntry
+	7,  // 6: api.TestRecord2.int64_to_message:type_name -> api.TestRecord2.Int64ToMessageEntry
+	8,  // 7: api.TestRecord2.uint32_to_message:type_name -> api.TestRecord2.Uint32ToMessageEntry
+	9,  // 8: api.TestRecord2.bool_to_message:type_name -> api.TestRecord2.BoolToMessageEntry
+	10, // 9: api.TestRecord3.counts_by_type:type_name -> api.TestRecord3.CountsByTypeEntry
+	0,  // 10: api.TestRecord1.MapStringToEnumEntry.value:type_name -> api.SampleEnum
+	2,  // 11: api.TestRecord2.Int32ToMessageEntry.value:type_name -> api.MapValueMessage
+	2,  // 12: api.TestRecord2.Int64ToMessageEntry.value:type_name -> api.MapValueMessage
+	2,  // 13: api.TestRecord2.Uint32ToMessageEntry.value:type_name -> api.MapValueMessage
+	2,  // 14: api.TestRecord2.BoolToMessageEntry.value:type_name -> api.MapValueMessage
+	15, // [15:15] is the sub-list for method output_type
+	15, // [15:15] is the sub-list for method input_type
+	15, // [15:15] is the sub-list for extension type_name
+	15, // [15:15] is the sub-list for extension extendee
+	0,  // [0:15] is the sub-list for field type_name
 }
 
 func init() { file_api_testany_proto_init() }
@@ -390,7 +482,7 @@ func file_api_testany_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_testany_proto_rawDesc), len(file_api_testany_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   8,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

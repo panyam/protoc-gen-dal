@@ -47,3 +47,30 @@ message TestRecord2Datastore {
   // Map with bool keys containing message values
   map<bool, MapValueMessageDatastore> bool_to_message = 5;
 }
+
+// TestRecord3Datastore tests Datastore handling of maps with scalar value types.
+// This is the pattern used for counting likes by reaction type, etc.
+// Google Cloud Datastore does NOT natively support map types, so the generated
+// code implements PropertyLoadSaver to serialize maps as JSON.
+message TestRecord3Datastore {
+  option (dal.v1.datastore_options) = {
+    source: "api.TestRecord3"
+    kind: "test_records3"
+    implement_property_loader: true
+  };
+
+  // The entity identifier (stored as datastore key name)
+  string id = 1;
+
+  // Entity type and ID being counted
+  string entity_type = 2;
+  string entity_id = 3;
+
+  // Total count across all types
+  int64 total_count = 4;
+
+  // Counts broken down by type - this is the map field that needs PropertyLoadSaver
+  map<string, int64> counts_by_type = 5 [(dal.v1.column) = {
+    datastore_tags: ["noindex"]
+  }];
+}

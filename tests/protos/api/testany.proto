@@ -40,3 +40,13 @@ message TestRecord2 {
   map<uint32, MapValueMessage> uint32_to_message = 4;
   map<bool, MapValueMessage> bool_to_message = 5;
 }
+
+// TestRecord3 tests maps with scalar value types (not messages).
+// This is important for cases like counters per reaction type.
+message TestRecord3 {
+  string id = 1;
+  string entity_type = 2;
+  string entity_id = 3;
+  int64 total_count = 4;
+  map<string, int64> counts_by_type = 5;
+}

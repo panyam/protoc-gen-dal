@@ -161,4 +161,58 @@ testds: downds
 	DATASTORE_PROJECT_ID=$(DS_PROJECT) \
 	go test -v ./tests/datastore/...
 
-.PHONY: run setupdev setupprod cleanall dev updb downdb dblogs testpg upds downds dslogs testds
+# Real Datastore configuration
+# Override via command line: make testrealDS DS_REAL_PROJECT=other-project
+DS_REAL_PROJECT ?= gappeng
+DS_REAL_CREDENTIALS ?= ~/dev-app-data/secrets/gappeng/gappeng-7bb71377bfa2.json
+DS_REAL_NAMESPACE ?= gendal
+
+# Run tests against real Google Cloud Datastore
+# This requires:
+#   - DS_REAL_PROJECT: GCP project ID
+#   - DS_REAL_CREDENTIALS: Path to service account JSON (optional, uses ADC if not set)
+#   - DS_REAL_NAMESPACE: Namespace for test entities (default: protoc-gen-dal-test)
+testrealDS:
+	@if [ -z "$(DS_REAL_PROJECT)" ]; then \
+		echo "Error: DS_REAL_PROJECT must be set to your GCP project ID"; \
+		echo "Usage: make testrealDS DS_REAL_PROJECT=my-project DS_REAL_CREDENTIALS=~/path/to/creds.json"; \
+		exit 1; \
+	fi
+	@echo "Running tests against real Datastore..."
+	@echo "  Project: $(DS_REAL_PROJECT)"
+	@echo "  Namespace: $(DS_REAL_NAMESPACE)"
+	@if [ -n "$(DS_REAL_CREDENTIALS)" ]; then \
+		echo "  Credentials: $(DS_REAL_CREDENTIALS)"; \
+	else \
+		echo "  Credentials: Application Default Credentials (ADC)"; \
+	fi
+	@echo ""
+	DATASTORE_PROJECT_ID=$(DS_REAL_PROJECT) \
+	DATASTORE_CREDENTIALS_FILE=$(DS_REAL_CREDENTIALS) \
+	DATASTORE_TEST_NAMESPACE=$(DS_REAL_NAMESPACE) \
+	go test -v ./tests/datastore/...
+
+# Run tests against real Datastore with force-delete-ns flag
+# This will delete any existing entities in the test namespace before running tests
+testrealDS-force:
+	@if [ -z "$(DS_REAL_PROJECT)" ]; then \
+		echo "Error: DS_REAL_PROJECT must be set to your GCP project ID"; \
+		echo "Usage: make testrealDS-force DS_REAL_PROJECT=my-project DS_REAL_CREDENTIALS=~/path/to/creds.json"; \
+		exit 1; \
+	fi
+	@echo "Running tests against real Datastore (with force delete)..."
+	@echo "  Project: $(DS_REAL_PROJECT)"
+	@echo "  Namespace: $(DS_REAL_NAMESPACE)"
+	@if [ -n "$(DS_REAL_CREDENTIALS)" ]; then \
+		echo "  Credentials: $(DS_REAL_CREDENTIALS)"; \
+	else \
+		echo "  Credentials: Application Default Credentials (ADC)"; \
+	fi
+	@echo "  Force delete: enabled"
+	@echo ""
+	DATASTORE_PROJECT_ID=$(DS_REAL_PROJECT) \
+	DATASTORE_CREDENTIALS_FILE=$(DS_REAL_CREDENTIALS) \
+	DATASTORE_TEST_NAMESPACE=$(DS_REAL_NAMESPACE) \
+	go test -v ./tests/datastore/... -args -force-delete-ns
+
+.PHONY: run setupdev setupprod cleanall dev updb downdb dblogs testpg upds downds dslogs testds testrealDS testrealDS-force

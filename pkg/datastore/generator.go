@@ -125,6 +125,7 @@ func buildTemplateData(messages []*collector.MessageInfo, registry *common.Messa
 
 	var structs []*StructData
 	importsMap := make(common.ImportMap)
+	hasPropertyLoader := false
 
 	// Always add required packages
 	importsMap.Add(common.ImportSpec{Path: "time"})
@@ -138,6 +139,11 @@ func buildTemplateData(messages []*collector.MessageInfo, registry *common.Messa
 				msgInfo.TargetMessage.Desc.Name(), err)
 		}
 		structs = append(structs, structData)
+
+		// Check if PropertyLoadSaver is needed
+		if structData.ImplementPropertyLoader {
+			hasPropertyLoader = true
+		}
 
 		// Add source package import only if actually needed (for enum types)
 		// Check if any field type references the source package
@@ -156,6 +162,12 @@ func buildTemplateData(messages []*collector.MessageInfo, registry *common.Messa
 				}
 			}
 		}
+	}
+
+	// Add imports for PropertyLoadSaver if needed
+	if hasPropertyLoader {
+		importsMap.Add(common.ImportSpec{Path: "encoding/json"})
+		importsMap.Add(common.ImportSpec{Path: "fmt"})
 	}
 
 	// Convert imports map to sorted slice
@@ -194,13 +206,23 @@ func buildStructData(msgInfo *collector.MessageInfo, registry *common.MessageReg
 
 	// Extract fields from merged list
 	var fields []*FieldData
+	var mapFields []*MapFieldInfo
 	for _, field := range mergedFields {
+		isMap := field.Desc.IsMap()
+
 		fieldData := &FieldData{
-			Name: fieldName(field),
-			Type: fieldType(field, sourcePkgName, registry),
-			Tags: buildFieldTags(field),
+			Name:  fieldName(field),
+			Type:  fieldType(field, sourcePkgName, registry),
+			Tags:  buildFieldTags(field),
+			IsMap: isMap,
 		}
 		fields = append(fields, fieldData)
+
+		// Collect map field info for PropertyLoadSaver generation
+		if isMap {
+			mapInfo := extractMapFieldInfo(field)
+			mapFields = append(mapFields, mapInfo)
+		}
 	}
 
 	// Add Key field at the beginning (excluded from datastore properties)
@@ -212,10 +234,35 @@ func buildStructData(msgInfo *collector.MessageInfo, registry *common.MessageReg
 	fields = append([]*FieldData{keyField}, fields...)
 
 	return &StructData{
-		Name:   structName,
-		Kind:   msgInfo.TableName, // TableName is repurposed for Kind
-		Fields: fields,
+		Name:                    structName,
+		Kind:                    msgInfo.TableName, // TableName is repurposed for Kind
+		Fields:                  fields,
+		ImplementPropertyLoader: msgInfo.ImplementPropertyLoader,
+		MapFields:               mapFields,
 	}, nil
+}
+
+// extractMapFieldInfo extracts information about a map field for PropertyLoadSaver generation.
+func extractMapFieldInfo(field *protogen.Field) *MapFieldInfo {
+	// Extract key and value types from the map entry message
+	mapEntry := field.Message
+	keyField := mapEntry.Fields[0]   // maps always have key at index 0
+	valueField := mapEntry.Fields[1] // maps always have value at index 1
+
+	keyType := common.ProtoScalarToGo(keyField.Desc.Kind().String())
+	valueType := common.ProtoScalarToGo(valueField.Desc.Kind().String())
+
+	// Handle message value types
+	if valueField.Desc.Kind().String() == "message" && valueField.Message != nil {
+		valueType = string(valueField.Message.Desc.Name())
+	}
+
+	return &MapFieldInfo{
+		GoName:    field.GoName,
+		PropName:  string(field.Desc.Name()),
+		KeyType:   keyType,
+		ValueType: valueType,
+	}
 }
 
 // fieldName converts a proto field name to a Go field name.

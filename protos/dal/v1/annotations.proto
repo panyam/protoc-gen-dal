@@ -345,6 +345,12 @@ message DatastoreOptions {
   // Reserved for future Datastore DAL implementation.
   // If not set: defaults to true when kind is specified, false otherwise
   optional bool dal = 6;
+
+  // Generate PropertyLoadSaver interface (Save/Load methods) for custom property handling
+  // When true, generates methods that serialize unsupported types (maps, complex structs)
+  // to JSON properties. Required for map fields since Datastore doesn't natively support Go maps.
+  // Example: map[string]int64 will be stored as a JSON-encoded []byte property.
+  bool implement_property_loader = 7;
 }
 
 // Firestore target options

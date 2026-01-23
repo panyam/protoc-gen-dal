@@ -71,8 +71,8 @@ type UserWithIndexes struct {
 	Age          uint32
 	Birthday     time.Time
 	FirstName    string `gorm:"index:idx_name"`
-	MemberNumber string
 	LastName     string `gorm:"index:idx_name"`
+	MemberNumber string
 	ActivatedAt  time.Time
 	CreatedAt    time.Time
 	UpdatedAt    time.Time

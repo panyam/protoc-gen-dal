@@ -356,3 +356,94 @@ func TestRecord2FromTestRecord2Datastore(
 
 	return dest, nil
 }
+
+// TestRecord3ToTestRecord3Datastore converts a TestRecord3 to TestRecord3Datastore.
+//
+// The optional decorator function allows custom field transformations after conversion.
+//
+// Parameters:
+//   - src: Source TestRecord3 message to convert from
+//   - dest: Destination TestRecord3Datastore entity (if nil, a new one is created)
+//   - decorator: Optional function for custom transformations
+//
+// Returns:
+//   - Converted TestRecord3Datastore entity
+//   - Error if conversion fails
+func TestRecord3ToTestRecord3Datastore(
+	src *api.TestRecord3,
+	dest *TestRecord3Datastore,
+	decorator func(*api.TestRecord3, *TestRecord3Datastore) error,
+) (out *TestRecord3Datastore, err error) {
+	if src == nil {
+		return nil, nil
+	}
+	if dest == nil {
+		dest = &TestRecord3Datastore{}
+	}
+
+	// Initialize struct with inline values
+	*dest = TestRecord3Datastore{
+		Id:         src.Id,
+		EntityType: src.EntityType,
+		EntityId:   src.EntityId,
+		TotalCount: src.TotalCount,
+	}
+	out = dest
+
+	if src.CountsByType != nil {
+		out.CountsByType = src.CountsByType
+	}
+
+	// Apply decorator if provided
+	if decorator != nil {
+		if err := decorator(src, dest); err != nil {
+			return nil, err
+		}
+	}
+
+	return dest, nil
+}
+
+// TestRecord3FromTestRecord3Datastore converts a TestRecord3Datastore back to TestRecord3.
+//
+// The optional decorator function allows custom field transformations after conversion.
+//
+// Parameters:
+//   - dest: Destination TestRecord3 message (if nil, a new one is created)
+//   - src: Source TestRecord3Datastore entity to convert from
+//   - decorator: Optional function for custom transformations
+//
+// Returns:
+//   - Converted TestRecord3 message
+//   - Error if conversion fails
+func TestRecord3FromTestRecord3Datastore(
+	dest *api.TestRecord3,
+	src *TestRecord3Datastore,
+	decorator func(*api.TestRecord3, *TestRecord3Datastore) error,
+) (out *api.TestRecord3, err error) {
+	if src == nil {
+		return nil, nil
+	}
+	if dest == nil {
+		dest = &api.TestRecord3{}
+	}
+
+	// Initialize struct with inline values
+	*dest = api.TestRecord3{
+		Id:           src.Id,
+		EntityType:   src.EntityType,
+		EntityId:     src.EntityId,
+		TotalCount:   src.TotalCount,
+		CountsByType: src.CountsByType,
+	}
+	out = dest
+
+	// Apply decorator if provided
+	if decorator != nil {
+		if err := decorator(dest, src); err != nil {
+			return nil, err
+		}
+	}
+
+	return dest, nil
+}

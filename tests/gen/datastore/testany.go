@@ -2,6 +2,8 @@
 package datastore
 
 import (
+	"encoding/json"
+	"fmt"
 	"time"
 
 	"cloud.google.com/go/datastore"
@@ -55,4 +57,152 @@ type TestRecord2Datastore struct {
 // Kind returns the Datastore kind name for TestRecord2Datastore.
 func (*TestRecord2Datastore) Kind() string {
 	return "test_records2"
+}
+
+// TestRecord3Datastore is the Datastore entity for the source message.
+type TestRecord3Datastore struct {
+	Key *datastore.Key `datastore:"-"`
+
+	Id string `datastore:"id"`
+
+	EntityType string `datastore:"entity_type"`
+
+	EntityId string `datastore:"entity_id"`
+
+	TotalCount int64 `datastore:"total_count"`
+
+	CountsByType map[string]int64 `datastore:"counts_by_type,noindex"`
+}
+
+// Kind returns the Datastore kind name for TestRecord3Datastore.
+func (*TestRecord3Datastore) Kind() string {
+	return "test_records3"
+}
+
+// Save implements the PropertyLoadSaver interface for TestRecord3Datastore.
+// It serializes map fields to JSON since Datastore doesn't natively support Go maps.
+func (m *TestRecord3Datastore) Save() ([]datastore.Property, error) {
+	// First, get the default properties using datastore.SaveStruct
+	// We need a copy without the map fields to avoid the "unsupported struct field type" error
+	props, err := m.saveNonMapFields()
+	if err != nil {
+		return nil, err
+	}
+
+	// Serialize CountsByType map to JSON
+	if m.CountsByType != nil {
+		CountsByTypeJSON, err := json.Marshal(m.CountsByType)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal CountsByType: %w", err)
+		}
+		props = append(props, datastore.Property{
+			Name:    "counts_by_type",
+			Value:   CountsByTypeJSON,
+			NoIndex: true, // Maps are typically not indexed
+		})
+	}
+
+	return props, nil
+}
+
+// saveNonMapFields saves all non-map fields using a temporary struct.
+func (m *TestRecord3Datastore) saveNonMapFields() ([]datastore.Property, error) {
+	// Create a temporary struct with only the non-map fields
+	type nonMapFields struct {
+		Key *datastore.Key `datastore:"-"`
+
+		Id string `datastore:"id"`
+
+		EntityType string `datastore:"entity_type"`
+
+		EntityId string `datastore:"entity_id"`
+
+		TotalCount int64 `datastore:"total_count"`
+	}
+
+	tmp := nonMapFields{
+
+		Key: m.Key,
+
+		Id: m.Id,
+
+		EntityType: m.EntityType,
+
+		EntityId: m.EntityId,
+
+		TotalCount: m.TotalCount,
+	}
+
+	return datastore.SaveStruct(&tmp)
+}
+
+// Load implements the PropertyLoadSaver interface for TestRecord3Datastore.
+// It deserializes JSON-encoded map fields back to Go maps.
+func (m *TestRecord3Datastore) Load(props []datastore.Property) error {
+	// Separate map properties from regular properties
+	var regularProps []datastore.Property
+
+	var CountsByTypeProp *datastore.Property
+
+	for i := range props {
+		switch props[i].Name {
+
+		case "counts_by_type":
+			CountsByTypeProp = &props[i]
+
+		default:
+			regularProps = append(regularProps, props[i])
+		}
+	}
+
+	// Load non-map fields using a temporary struct
+	type nonMapFields struct {
+		Key *datastore.Key `datastore:"-"`
+
+		Id string `datastore:"id"`
+
+		EntityType string `datastore:"entity_type"`
+
+		EntityId string `datastore:"entity_id"`
+
+		TotalCount int64 `datastore:"total_count"`
+	}
+
+	var tmp nonMapFields
+	if err := datastore.LoadStruct(&tmp, regularProps); err != nil {
+		return err
+	}
+
+	// Copy non-map fields back
+
+	m.Key = tmp.Key
+
+	m.Id = tmp.Id
+
+	m.EntityType = tmp.EntityType
+
+	m.EntityId = tmp.EntityId
+
+	m.TotalCount = tmp.TotalCount
+
+	// Deserialize CountsByType from JSON
+	if CountsByTypeProp != nil {
+		var jsonBytes []byte
+		switch v := CountsByTypeProp.Value.(type) {
+		case []byte:
+			jsonBytes = v
+		case string:
+			jsonBytes = []byte(v)
+		default:
+			return fmt.Errorf("unexpected type for counts_by_type: %T", CountsByTypeProp.Value)
+		}
+		if len(jsonBytes) > 0 {
+			m.CountsByType = make(map[string]int64)
+			if err := json.Unmarshal(jsonBytes, &m.CountsByType); err != nil {
+				return fmt.Errorf("failed to unmarshal CountsByType: %w", err)
+			}
+		}
+	}
+
+	return nil
 }

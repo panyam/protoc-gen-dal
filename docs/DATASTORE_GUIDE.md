@@ -443,12 +443,80 @@ client.GetAll(ctx, query, &emails)
 query := datastore.NewQuery("User").EventualConsistency()
 ```
 
+## Map Fields (PropertyLoadSaver)
+
+Google Cloud Datastore doesn't natively support Go map types like `map[string]int64`. To store map fields, use the `implement_property_loader` option which generates the PropertyLoadSaver interface:
+
+```protobuf
+message ReactionCountsDatastore {
+  option (dal.v1.datastore_options) = {
+    source: "api.v1.ReactionCounts"
+    kind: "ReactionCounts"
+    implement_property_loader: true  // Enable PropertyLoadSaver generation
+  };
+
+  string entity_id = 1;
+  int64 total_count = 2;
+
+  // Map field - will be serialized to JSON
+  map<string, int64> counts_by_type = 3 [(dal.v1.column) = {
+    datastore_tags: ["noindex"]  // Maps are typically not indexed
+  }];
+}
+```
+
+This generates `Save()` and `Load()` methods:
+
+```go
+type ReactionCountsDatastore struct {
+    Key          *datastore.Key   `datastore:"-"`
+    EntityId     string           `datastore:"entity_id"`
+    TotalCount   int64            `datastore:"total_count"`
+    CountsByType map[string]int64 `datastore:"counts_by_type,noindex"`
+}
+
+// Save implements PropertyLoadSaver - serializes maps to JSON
+func (m *ReactionCountsDatastore) Save() ([]datastore.Property, error) { ... }
+
+// Load implements PropertyLoadSaver - deserializes JSON back to maps
+func (m *ReactionCountsDatastore) Load(props []datastore.Property) error { ... }
+```
+
+**How it works:**
+1. `Save()` extracts non-map fields using a temporary struct, then JSON-encodes map fields as `[]byte` properties
+2. `Load()` separates map properties, loads non-map fields, then JSON-decodes map properties back
+
+**Usage:**
+
+```go
+counts := &dsgen.ReactionCountsDatastore{
+    EntityId:   "post-123",
+    TotalCount: 5,
+    CountsByType: map[string]int64{
+        "like": 3,
+        "love": 2,
+    },
+}
+
+key := datastore.NameKey(counts.Kind(), counts.EntityId, nil)
+_, err := client.Put(ctx, key, counts)  // PropertyLoadSaver.Save() called automatically
+
+var fetched dsgen.ReactionCountsDatastore
+err = client.Get(ctx, key, &fetched)     // PropertyLoadSaver.Load() called automatically
+// fetched.CountsByType == map[string]int64{"like": 3, "love": 2}
+```
+
+**Supported map types:**
+- `map[string]int64`, `map[string]int32`, `map[string]string`, etc.
+- Maps with any scalar value type
+- Maps with message value types (nested messages also JSON-serialized)
+
 ## Limitations
 
-- **No PropertyLoadSaver**: Keys managed manually, not via LoadKey/SaveKey interface
 - **String IDs only for uint32**: Proto uint32 fields become string in Datastore
 - **No automatic key generation**: Create keys explicitly before Put operations
 - **No embedded entities**: All nested messages stored as entity properties
+- **Map fields require PropertyLoadSaver**: Use `implement_property_loader: true` for structs with map fields
 
 ## Common Patterns
 

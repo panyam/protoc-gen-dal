@@ -189,6 +189,90 @@ func (x *TestRecord2Datastore) GetBoolToMessage() map[bool]*MapValueMessageDatas
 	return nil
 }
 
+// TestRecord3Datastore tests Datastore handling of maps with scalar value types.
+// This is the pattern used for counting likes by reaction type, etc.
+// Google Cloud Datastore does NOT natively support map types, so the generated
+// code implements PropertyLoadSaver to serialize maps as JSON.
+type TestRecord3Datastore struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The entity identifier (stored as datastore key name)
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// Entity type and ID being counted
+	EntityType string `protobuf:"bytes,2,opt,name=entity_type,json=entityType,proto3" json:"entity_type,omitempty"`
+	EntityId   string `protobuf:"bytes,3,opt,name=entity_id,json=entityId,proto3" json:"entity_id,omitempty"`
+	// Total count across all types
+	TotalCount int64 `protobuf:"varint,4,opt,name=total_count,json=totalCount,proto3" json:"total_count,omitempty"`
+	// Counts broken down by type - this is the map field that needs PropertyLoadSaver
+	CountsByType  map[string]int64 `protobuf:"bytes,5,rep,name=counts_by_type,json=countsByType,proto3" json:"counts_by_type,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TestRecord3Datastore) Reset() {
+	*x = TestRecord3Datastore{}
+	mi := &file_datastore_testany_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TestRecord3Datastore) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TestRecord3Datastore) ProtoMessage() {}
+
+func (x *TestRecord3Datastore) ProtoReflect() protoreflect.Message {
+	mi := &file_datastore_testany_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TestRecord3Datastore.ProtoReflect.Descriptor instead.
+func (*TestRecord3Datastore) Descriptor() ([]byte, []int) {
+	return file_datastore_testany_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *TestRecord3Datastore) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *TestRecord3Datastore) GetEntityType() string {
+	if x != nil {
+		return x.EntityType
+	}
+	return ""
+}
+
+func (x *TestRecord3Datastore) GetEntityId() string {
+	if x != nil {
+		return x.EntityId
+	}
+	return ""
+}
+
+func (x *TestRecord3Datastore) GetTotalCount() int64 {
+	if x != nil {
+		return x.TotalCount
+	}
+	return 0
+}
+
+func (x *TestRecord3Datastore) GetCountsByType() map[string]int64 {
+	if x != nil {
+		return x.CountsByType
+	}
+	return nil
+}
+
 var File_datastore_testany_proto protoreflect.FileDescriptor
 
 const file_datastore_testany_proto_rawDesc = "" +
@@ -216,7 +300,19 @@ const file_datastore_testany_proto_rawDesc = "" +
 	"\x12BoolToMessageEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\bR\x03key\x129\n" +
 	"\x05value\x18\x02 \x01(\v2#.datastore.MapValueMessageDatastoreR\x05value:\x028\x01:$Ҧ\x1d \n" +
-	"\rtest_records2*\x0fapi.TestRecord2B\x9a\x01\n" +
+	"\rtest_records2*\x0fapi.TestRecord2\"\xd6\x02\n" +
+	"\x14TestRecord3Datastore\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1f\n" +
+	"\ventity_type\x18\x02 \x01(\tR\n" +
+	"entityType\x12\x1b\n" +
+	"\tentity_id\x18\x03 \x01(\tR\bentityId\x12\x1f\n" +
+	"\vtotal_count\x18\x04 \x01(\x03R\n" +
+	"totalCount\x12f\n" +
+	"\x0ecounts_by_type\x18\x05 \x03(\v21.datastore.TestRecord3Datastore.CountsByTypeEntryB\r\x92\xa6\x1d\tr\anoindexR\fcountsByType\x1a?\n" +
+	"\x11CountsByTypeEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\x03R\x05value:\x028\x01:&Ҧ\x1d\"\n" +
+	"\rtest_records3*\x0fapi.TestRecord38\x01B\x9a\x01\n" +
 	"\rcom.datastoreB\fTestanyProtoP\x01Z7github.com/panyam/protoc-gen-dal/tests/gen/go/datastore\xa2\x02\x03DXX\xaa\x02\tDatastore\xca\x02\tDatastore\xe2\x02\x15Datastore\\GPBMetadata\xea\x02\tDatastoreb\x06proto3"
 
 var (
@@ -231,30 +327,33 @@ func file_datastore_testany_proto_rawDescGZIP() []byte {
 	return file_datastore_testany_proto_rawDescData
 }
 
-var file_datastore_testany_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_datastore_testany_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_datastore_testany_proto_goTypes = []any{
 	(*TestRecord1Datastore)(nil),     // 0: datastore.TestRecord1Datastore
 	(*MapValueMessageDatastore)(nil), // 1: datastore.MapValueMessageDatastore
 	(*TestRecord2Datastore)(nil),     // 2: datastore.TestRecord2Datastore
-	nil,                              // 3: datastore.TestRecord2Datastore.Int32ToMessageEntry
-	nil,                              // 4: datastore.TestRecord2Datastore.Int64ToMessageEntry
-	nil,                              // 5: datastore.TestRecord2Datastore.Uint32ToMessageEntry
-	nil,                              // 6: datastore.TestRecord2Datastore.BoolToMessageEntry
+	(*TestRecord3Datastore)(nil),     // 3: datastore.TestRecord3Datastore
+	nil,                              // 4: datastore.TestRecord2Datastore.Int32ToMessageEntry
+	nil,                              // 5: datastore.TestRecord2Datastore.Int64ToMessageEntry
+	nil,                              // 6: datastore.TestRecord2Datastore.Uint32ToMessageEntry
+	nil,                              // 7: datastore.TestRecord2Datastore.BoolToMessageEntry
+	nil,                              // 8: datastore.TestRecord3Datastore.CountsByTypeEntry
 }
 var file_datastore_testany_proto_depIdxs = []int32{
-	3, // 0: datastore.TestRecord2Datastore.int32_to_message:type_name -> datastore.TestRecord2Datastore.Int32ToMessageEntry
-	4, // 1: datastore.TestRecord2Datastore.int64_to_message:type_name -> datastore.TestRecord2Datastore.Int64ToMessageEntry
-	5, // 2: datastore.TestRecord2Datastore.uint32_to_message:type_name -> datastore.TestRecord2Datastore.Uint32ToMessageEntry
-	6, // 3: datastore.TestRecord2Datastore.bool_to_message:type_name -> datastore.TestRecord2Datastore.BoolToMessageEntry
-	1, // 4: datastore.TestRecord2Datastore.Int32ToMessageEntry.value:type_name -> datastore.MapValueMessageDatastore
-	1, // 5: datastore.TestRecord2Datastore.Int64ToMessageEntry.value:type_name -> datastore.MapValueMessageDatastore
-	1, // 6: datastore.TestRecord2Datastore.Uint32ToMessageEntry.value:type_name -> datastore.MapValueMessageDatastore
-	1, // 7: datastore.TestRecord2Datastore.BoolToMessageEntry.value:type_name -> datastore.MapValueMessageDatastore
-	8, // [8:8] is the sub-list for method output_type
-	8, // [8:8] is the sub-list for method input_type
-	8, // [8:8] is the sub-list for extension type_name
-	8, // [8:8] is the sub-list for extension extendee
-	0, // [0:8] is the sub-list for field type_name
+	4, // 0: datastore.TestRecord2Datastore.int32_to_message:type_name -> datastore.TestRecord2Datastore.Int32ToMessageEntry
+	5, // 1: datastore.TestRecord2Datastore.int64_to_message:type_name -> datastore.TestRecord2Datastore.Int64ToMessageEntry
+	6, // 2: datastore.TestRecord2Datastore.uint32_to_message:type_name -> datastore.TestRecord2Datastore.Uint32ToMessageEntry
+	7, // 3: datastore.TestRecord2Datastore.bool_to_message:type_name -> datastore.TestRecord2Datastore.BoolToMessageEntry
+	8, // 4: datastore.TestRecord3Datastore.counts_by_type:type_name -> datastore.TestRecord3Datastore.CountsByTypeEntry
+	1, // 5: datastore.TestRecord2Datastore.Int32ToMessageEntry.value:type_name -> datastore.MapValueMessageDatastore
+	1, // 6: datastore.TestRecord2Datastore.Int64ToMessageEntry.value:type_name -> datastore.MapValueMessageDatastore
+	1, // 7: datastore.TestRecord2Datastore.Uint32ToMessageEntry.value:type_name -> datastore.MapValueMessageDatastore
+	1, // 8: datastore.TestRecord2Datastore.BoolToMessageEntry.value:type_name -> datastore.MapValueMessageDatastore
+	9, // [9:9] is the sub-list for method output_type
+	9, // [9:9] is the sub-list for method input_type
+	9, // [9:9] is the sub-list for extension type_name
+	9, // [9:9] is the sub-list for extension extendee
+	0, // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_datastore_testany_proto_init() }
@@ -268,7 +367,7 @@ func file_datastore_testany_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_datastore_testany_proto_rawDesc), len(file_datastore_testany_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
