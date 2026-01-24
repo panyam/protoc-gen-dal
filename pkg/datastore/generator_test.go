@@ -351,6 +351,86 @@ func TestGenerateDatastore_DatastoreTags(t *testing.T) {
 	}
 }
 
+// TestGenerateDatastore_KeyFieldCollision tests that a message with a field named "key"
+// doesn't collide with the auto-generated datastore.Key field.
+//
+// BUG: Currently this test is expected to fail because the generator adds a
+// `Key *datastore.Key` field which collides with user-defined `key` fields.
+// The generator should either:
+// 1. Rename the auto-generated field to EntityKey/DSKey
+// 2. Detect the collision and error/warn
+// 3. Allow users to customize the auto-generated field name
+func TestGenerateDatastore_KeyFieldCollision(t *testing.T) {
+	t.Skip("BUG: Key field collision not yet handled - see https://github.com/panyam/protoc-gen-dal/issues/TODO")
+
+	// Given: A message with a field named "key" (common in key-value stores)
+	plugin := testutil.CreateTestPlugin(t, &testutil.TestProtoSet{
+		Files: []testutil.TestFile{
+			// API proto with "key" field
+			{
+				Name: "api/v1/tag.proto",
+				Pkg:  "api.v1",
+				Messages: []testutil.TestMessage{
+					{
+						Name: "Tag",
+						Fields: []testutil.TestField{
+							{Name: "id", Number: 1, TypeName: "string"},
+							{Name: "key", Number: 2, TypeName: "string"},   // This becomes Key in Go
+							{Name: "value", Number: 3, TypeName: "string"},
+						},
+					},
+				},
+			},
+			// Datastore target
+			{
+				Name: "datastore/v1/tag.proto",
+				Pkg:  "datastore.v1",
+				Messages: []testutil.TestMessage{
+					{
+						Name: "TagDatastore",
+						DatastoreOpts: &dalv1.DatastoreOptions{
+							Source: "api.v1.Tag",
+							Kind:   "Tag",
+						},
+						Fields: []testutil.TestField{
+							{Name: "id", Number: 1, TypeName: "string"},
+							// key field should be inherited from source
+						},
+					},
+				},
+			},
+		},
+	})
+
+	// When: We collect and generate
+	msgs, err := collector.CollectMessages(plugin, collector.TargetDatastore)
+	if err != nil {
+		t.Fatalf("CollectMessages failed: %v", err)
+	}
+	result, err := Generate(msgs)
+
+	// Then: Generation should succeed without field collision
+	if err != nil {
+		t.Fatalf("Generate failed: %v", err)
+	}
+
+	if len(result.Files) == 0 {
+		t.Fatal("Expected at least one generated file")
+	}
+
+	content := result.Files[0].Content
+
+	// The generated struct should have both:
+	// 1. The auto-generated datastore.Key field (for entity key)
+	// 2. The user's "key" field (for tag key property)
+	// These should NOT collide - they need different Go field names
+
+	// Check that the content compiles (no duplicate field names)
+	if strings.Count(content, "Key ") > 1 {
+		t.Errorf("Field name collision detected - multiple 'Key' fields.\nGenerated content:\n%s", content)
+	}
+}
+
 // Test helpers (copied from collector_test.go pattern)
 
 // Test helpers have been moved to pkg/generator/testutil
