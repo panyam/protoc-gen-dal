@@ -34,10 +34,10 @@ message User {
 }
 ```
 
-**GORM sidecar** (`gorm/user.proto`):
+**GORM sidecar** (`dal/user_gorm.proto`):
 ```protobuf
 syntax = "proto3";
-package gorm;
+package dal;
 
 import "dal/v1/annotations.proto";
 import "api/user.proto";
@@ -64,11 +64,11 @@ message UserGORM {
 version: v2
 plugins:
   - local: protoc-gen-dal-gorm
-    out: gen
+    out: gen/gorm
     opt: paths=source_relative
 ```
 
-**Generated code** (`gen/gorm/user_gorm.go`):
+**Generated code** (`gen/gorm/dal/user_gorm_gorm.go`):
 ```go
 type UserGORM struct {
     ID        uint32 `gorm:"primaryKey;autoIncrement"`
@@ -82,7 +82,7 @@ func (UserGORM) TableName() string {
 }
 ```
 
-**Generated converters** (`gen/gorm/user_converters.go`):
+**Generated converters** (`gen/gorm/dal/user_gorm_converters.go`):
 ```go
 func UserToUserGORM(
     src *api.User,
@@ -111,6 +111,22 @@ apiUser, err := UserFromUserGORM(nil, &dbUser, nil)
 ```
 
 ## Features
+
+### Multi-Service Support
+
+The plugin preserves directory structure to avoid filename collisions. Proto files in different directories generate to separate subdirectories:
+
+```
+# Input protos
+likes/v1/gorm.proto
+tags/v1/gorm.proto
+
+# Output (with out: gen/gorm)
+gen/gorm/likes/v1/gorm_gorm.go
+gen/gorm/tags/v1/gorm_gorm.go
+```
+
+This enables monorepos where multiple services have their own `gorm.proto` files without collision.
 
 ### DAL Helper Methods (Optional)
 
