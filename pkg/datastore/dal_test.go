@@ -212,7 +212,8 @@ func TestGenerateDALFilename_DefaultSuffix(t *testing.T) {
 	}
 
 	filename := generateDALFilename("datastore/user.proto", options)
-	expected := "user_datastore_dal.go"
+	// Directory structure is preserved: datastore/user.proto -> datastore/user_datastore_dal.go
+	expected := "datastore/user_datastore_dal.go"
 
 	if filename != expected {
 		t.Errorf("Expected filename '%s', got '%s'", expected, filename)
@@ -226,7 +227,8 @@ func TestGenerateDALFilename_WithOutputDir(t *testing.T) {
 	}
 
 	filename := generateDALFilename("datastore/user.proto", options)
-	expected := "dal/user_datastore_dal.go"
+	// Output dir prepended to full path with preserved directory
+	expected := "dal/datastore/user_datastore_dal.go"
 
 	if filename != expected {
 		t.Errorf("Expected filename '%s', got '%s'", expected, filename)

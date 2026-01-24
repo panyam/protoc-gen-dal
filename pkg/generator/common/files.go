@@ -44,30 +44,29 @@ func GroupMessagesByFile(messages []*collector.MessageInfo) map[string][]*collec
 
 // GenerateFilenameFromProto creates an output filename from a proto file path.
 //
-// This extracts the base name from the proto file path and adds the specified
-// suffix to create the output filename.
+// This preserves the directory structure from the proto file path to ensure
+// that files from different packages don't collide. The directory structure
+// is maintained and only the .proto extension is replaced with the suffix.
 //
 // Examples:
-//   - GenerateFilenameFromProto("gorm/user.proto", "_gorm.go") -> "user_gorm.go"
-//   - GenerateFilenameFromProto("dal/v1/book.proto", "_datastore.go") -> "book_datastore.go"
-//   - GenerateFilenameFromProto("protos/author.proto", ".go") -> "author.go"
+//   - GenerateFilenameFromProto("gorm/user.proto", "_gorm.go") -> "gorm/user_gorm.go"
+//   - GenerateFilenameFromProto("likes/v1/gorm.proto", "_gorm.go") -> "likes/v1/gorm_gorm.go"
+//   - GenerateFilenameFromProto("tags/v1/gorm.proto", "_gorm.go") -> "tags/v1/gorm_gorm.go"
+//   - GenerateFilenameFromProto("dal/v1/book.proto", "_datastore.go") -> "dal/v1/book_datastore.go"
 //
 // Parameters:
-//   - protoPath: Path to the proto file (e.g., "gorm/user.proto")
+//   - protoPath: Path to the proto file (e.g., "likes/v1/gorm.proto")
 //   - suffix: Suffix to add to the base name (e.g., "_gorm.go", "_datastore.go")
 //
 // Returns:
-//   - output filename with the specified suffix
+//   - output filename with directory structure preserved and specified suffix
 func GenerateFilenameFromProto(protoPath, suffix string) string {
-	// Extract base name without extension
-	baseName := protoPath
-	if idx := strings.LastIndex(baseName, "/"); idx != -1 {
-		baseName = baseName[idx+1:]
+	// Remove .proto extension and add suffix, preserving directory structure
+	result := protoPath
+	if idx := strings.LastIndex(result, ".proto"); idx != -1 {
+		result = result[:idx]
 	}
-	if idx := strings.LastIndex(baseName, ".proto"); idx != -1 {
-		baseName = baseName[:idx]
-	}
-	return baseName + suffix
+	return result + suffix
 }
 
 // GenerateConverterFilename creates a converter filename from a proto file path.

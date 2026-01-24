@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/panyam/protoc-gen-dal/tests/gen/go/api"
-	"github.com/panyam/protoc-gen-dal/tests/gen/gorm"
+	"github.com/panyam/protoc-gen-dal/tests/gen/gorm/gorm"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 

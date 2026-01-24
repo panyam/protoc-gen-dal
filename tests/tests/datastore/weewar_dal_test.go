@@ -20,7 +20,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/datastore"
-	dsgen "github.com/panyam/protoc-gen-dal/tests/gen/datastore"
+	dsgen "github.com/panyam/protoc-gen-dal/tests/gen/datastore/datastore"
 )
 
 // Test kinds for Weewar entities

@@ -5,7 +5,7 @@ import (
 	"context"
 
 	dslib "cloud.google.com/go/datastore"
-	datastore "github.com/panyam/protoc-gen-dal/tests/gen/datastore"
+	datastore "github.com/panyam/protoc-gen-dal/tests/gen/datastore/datastore"
 )
 
 // WorldDatastoreDAL provides database access helper methods for datastore.WorldDatastore.

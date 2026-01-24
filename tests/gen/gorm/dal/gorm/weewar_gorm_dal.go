@@ -5,7 +5,7 @@ import (
 	"context"
 	"errors"
 
-	gorm "github.com/panyam/protoc-gen-dal/tests/gen/gorm"
+	gorm "github.com/panyam/protoc-gen-dal/tests/gen/gorm/gorm"
 	gormlib "gorm.io/gorm"
 )
 

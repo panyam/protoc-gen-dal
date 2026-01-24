@@ -90,9 +90,15 @@ func GenerateDALHelpers(messages []*collector.MessageInfo, options *DALOptions) 
 
 		// Override with explicit entity import path if provided
 		if options.EntityImportPath != "" {
-			entityPkgInfo.ImportPath = options.EntityImportPath
+			// With directory preservation, append the proto file's directory to the base import path
+			// e.g., proto "gorm/user.proto" + base "github.com/.../gen/gorm" = "github.com/.../gen/gorm/gorm"
+			importPath := options.EntityImportPath
+			if protoDir := extractProtoDir(protoFile); protoDir != "" {
+				importPath = importPath + "/" + protoDir
+			}
+			entityPkgInfo.ImportPath = importPath
 			// Extract package name from path (last component)
-			entityPkgInfo.Alias = common.GetPackageAlias(options.EntityImportPath)
+			entityPkgInfo.Alias = common.GetPackageAlias(importPath)
 		}
 
 		content, err := generateDALFileCodeWithOptions(msgs, entityPkgInfo, options)
@@ -119,24 +125,41 @@ func GenerateDALHelpers(messages []*collector.MessageInfo, options *DALOptions) 
 
 // generateDALFilename generates the filename for DAL helpers based on options
 func generateDALFilename(protoFile string, options *DALOptions) string {
-	// Get base filename from proto file (e.g., "gorm/user.proto" -> "user_gorm")
-	base := common.GenerateFilenameFromProto(protoFile, "_gorm.go")
-	base = strings.TrimSuffix(base, ".go")
+	// Get full path from proto file (e.g., "gorm/user.proto" -> "gorm/user_gorm.go")
+	fullPath := common.GenerateFilenameFromProto(protoFile, "_gorm.go")
+	fullPath = strings.TrimSuffix(fullPath, ".go")
 
-	// Apply prefix/suffix
-	var filename string
-	if options.FilenamePrefix != "" {
-		filename = options.FilenamePrefix + base + ".go"
-	} else {
-		filename = base + options.FilenameSuffix + ".go"
+	// Separate directory and base name
+	dir := ""
+	base := fullPath
+	if idx := strings.LastIndex(fullPath, "/"); idx != -1 {
+		dir = fullPath[:idx+1] // includes trailing slash
+		base = fullPath[idx+1:]
 	}
 
-	// Apply output directory if specified
+	// Apply prefix/suffix to base name only
+	var filename string
+	if options.FilenamePrefix != "" {
+		filename = dir + options.FilenamePrefix + base + ".go"
+	} else {
+		filename = dir + base + options.FilenameSuffix + ".go"
+	}
+
+	// Apply output directory if specified (prepend to full path)
 	if options.OutputDir != "" {
 		filename = options.OutputDir + "/" + filename
 	}
 
 	return filename
+}
+
+// extractProtoDir extracts the directory portion from a proto file path.
+// e.g., "gorm/user.proto" -> "gorm", "likes/v1/gorm.proto" -> "likes/v1", "user.proto" -> ""
+func extractProtoDir(protoFile string) string {
+	if idx := strings.LastIndex(protoFile, "/"); idx != -1 {
+		return protoFile[:idx]
+	}
+	return ""
 }
 
 // generateDALFileCode generates the DAL helper code for messages in a proto file

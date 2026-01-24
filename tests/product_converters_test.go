@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/panyam/protoc-gen-dal/tests/gen/go/api"
-	"github.com/panyam/protoc-gen-dal/tests/gen/gorm"
+	"github.com/panyam/protoc-gen-dal/tests/gen/gorm/gorm"
 )
 
 // TestProductConversion_RepeatedAndMapFields verifies that repeated primitives

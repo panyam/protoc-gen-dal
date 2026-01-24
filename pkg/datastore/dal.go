@@ -100,8 +100,14 @@ func GenerateDALHelpers(messages []*collector.MessageInfo, options *DALOptions) 
 
 		// Override with explicit entity import path if provided
 		if options.EntityImportPath != "" {
-			entityPkgInfo.ImportPath = options.EntityImportPath
-			entityPkgInfo.Alias = common.GetPackageAlias(options.EntityImportPath)
+			// With directory preservation, append the proto file's directory to the base import path
+			// e.g., proto "datastore/user.proto" + base "github.com/.../gen/datastore" = "github.com/.../gen/datastore/datastore"
+			importPath := options.EntityImportPath
+			if protoDir := extractProtoDir(protoFile); protoDir != "" {
+				importPath = importPath + "/" + protoDir
+			}
+			entityPkgInfo.ImportPath = importPath
+			entityPkgInfo.Alias = common.GetPackageAlias(importPath)
 		}
 
 		content, err := generateDALFileCodeWithOptions(msgs, entityPkgInfo, options)
@@ -128,24 +134,41 @@ func GenerateDALHelpers(messages []*collector.MessageInfo, options *DALOptions) 
 
 // generateDALFilename generates the filename for DAL helpers based on options.
 func generateDALFilename(protoFile string, options *DALOptions) string {
-	// Get base filename from proto file (e.g., "datastore/user.proto" -> "user_datastore")
-	base := common.GenerateFilenameFromProto(protoFile, "_datastore.go")
-	base = strings.TrimSuffix(base, ".go")
+	// Get full path from proto file (e.g., "datastore/user.proto" -> "datastore/user_datastore.go")
+	fullPath := common.GenerateFilenameFromProto(protoFile, "_datastore.go")
+	fullPath = strings.TrimSuffix(fullPath, ".go")
 
-	// Apply prefix/suffix
-	var filename string
-	if options.FilenamePrefix != "" {
-		filename = options.FilenamePrefix + base + ".go"
-	} else {
-		filename = base + options.FilenameSuffix + ".go"
+	// Separate directory and base name
+	dir := ""
+	base := fullPath
+	if idx := strings.LastIndex(fullPath, "/"); idx != -1 {
+		dir = fullPath[:idx+1] // includes trailing slash
+		base = fullPath[idx+1:]
 	}
 
-	// Apply output directory if specified
+	// Apply prefix/suffix to base name only
+	var filename string
+	if options.FilenamePrefix != "" {
+		filename = dir + options.FilenamePrefix + base + ".go"
+	} else {
+		filename = dir + base + options.FilenameSuffix + ".go"
+	}
+
+	// Apply output directory if specified (prepend to full path)
 	if options.OutputDir != "" {
 		filename = options.OutputDir + "/" + filename
 	}
 
 	return filename
+}
+
+// extractProtoDir extracts the directory portion from a proto file path.
+// e.g., "datastore/user.proto" -> "datastore", "likes/v1/gae.proto" -> "likes/v1", "user.proto" -> ""
+func extractProtoDir(protoFile string) string {
+	if idx := strings.LastIndex(protoFile, "/"); idx != -1 {
+		return protoFile[:idx]
+	}
+	return ""
 }
 
 // generateDALFileCodeWithOptions generates the DAL helper code for messages.

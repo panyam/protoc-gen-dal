@@ -344,7 +344,8 @@ func TestGenerateDALFilename_DefaultSuffix(t *testing.T) {
 	}
 
 	filename := generateDALFilename("gorm/user.proto", options)
-	expected := "user_gorm_dal.go"
+	// Directory structure is preserved: gorm/user.proto -> gorm/user_gorm_dal.go
+	expected := "gorm/user_gorm_dal.go"
 
 	if filename != expected {
 		t.Errorf("Expected filename '%s', got '%s'", expected, filename)
@@ -359,7 +360,8 @@ func TestGenerateDALFilename_CustomPrefix(t *testing.T) {
 	}
 
 	filename := generateDALFilename("gorm/user.proto", options)
-	expected := "dal_user_gorm.go"
+	// Prefix applied to base name only, directory preserved
+	expected := "gorm/dal_user_gorm.go"
 
 	if filename != expected {
 		t.Errorf("Expected filename '%s', got '%s'", expected, filename)
@@ -374,7 +376,8 @@ func TestGenerateDALFilename_WithOutputDir(t *testing.T) {
 	}
 
 	filename := generateDALFilename("gorm/user.proto", options)
-	expected := "dal/user_gorm_dal.go"
+	// Output dir prepended to full path with preserved directory
+	expected := "dal/gorm/user_gorm_dal.go"
 
 	if filename != expected {
 		t.Errorf("Expected filename '%s', got '%s'", expected, filename)
@@ -389,7 +392,8 @@ func TestGenerateDALFilename_WithOutputDirAndPrefix(t *testing.T) {
 	}
 
 	filename := generateDALFilename("gorm/user.proto", options)
-	expected := "dal/helpers_user_gorm.go"
+	// Output dir prepended, prefix applied to base name only
+	expected := "dal/gorm/helpers_user_gorm.go"
 
 	if filename != expected {
 		t.Errorf("Expected filename '%s', got '%s'", expected, filename)

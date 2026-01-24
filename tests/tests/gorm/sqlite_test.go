@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/panyam/protoc-gen-dal/tests/gen/go/api"
-	gormgen "github.com/panyam/protoc-gen-dal/tests/gen/gorm"
-	"github.com/panyam/protoc-gen-dal/tests/gen/gorm/dal"
+	gormgen "github.com/panyam/protoc-gen-dal/tests/gen/gorm/gorm"
+	"github.com/panyam/protoc-gen-dal/tests/gen/gorm/dal/gorm"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"

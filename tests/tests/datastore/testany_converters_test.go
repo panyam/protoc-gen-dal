@@ -19,7 +19,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/panyam/protoc-gen-dal/tests/gen/datastore"
+	"github.com/panyam/protoc-gen-dal/tests/gen/datastore/datastore"
 	"github.com/panyam/protoc-gen-dal/tests/gen/go/api"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/timestamppb"

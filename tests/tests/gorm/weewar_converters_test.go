@@ -5,7 +5,7 @@ import (
 	"time"
 
 	wwv1 "github.com/panyam/protoc-gen-dal/tests/gen/go/weewar/v1"
-	"github.com/panyam/protoc-gen-dal/tests/gen/gorm"
+	"github.com/panyam/protoc-gen-dal/tests/gen/gorm/gorm"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 

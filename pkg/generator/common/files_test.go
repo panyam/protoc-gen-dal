@@ -26,22 +26,22 @@ func TestGenerateFilenameFromProto(t *testing.T) {
 		expected  string
 	}{
 		{
-			name:      "GORM file with path",
+			name:      "GORM file with path - preserves directory",
 			protoPath: "gorm/user.proto",
 			suffix:    "_gorm.go",
-			expected:  "user_gorm.go",
+			expected:  "gorm/user_gorm.go",
 		},
 		{
-			name:      "Datastore file with nested path",
+			name:      "Datastore file with nested path - preserves directory",
 			protoPath: "dal/v1/book.proto",
 			suffix:    "_datastore.go",
-			expected:  "book_datastore.go",
+			expected:  "dal/v1/book_datastore.go",
 		},
 		{
-			name:      "Simple file with .go suffix",
+			name:      "Simple file with .go suffix - preserves directory",
 			protoPath: "protos/author.proto",
 			suffix:    ".go",
-			expected:  "author.go",
+			expected:  "protos/author.go",
 		},
 		{
 			name:      "File without directory",
@@ -50,10 +50,22 @@ func TestGenerateFilenameFromProto(t *testing.T) {
 			expected:  "message_gorm.go",
 		},
 		{
-			name:      "Deep nested path",
+			name:      "Deep nested path - preserves full structure",
 			protoPath: "a/b/c/d/entity.proto",
 			suffix:    "_model.go",
-			expected:  "entity_model.go",
+			expected:  "a/b/c/d/entity_model.go",
+		},
+		{
+			name:      "Multi-service collision case 1",
+			protoPath: "likes/v1/gorm.proto",
+			suffix:    "_gorm.go",
+			expected:  "likes/v1/gorm_gorm.go",
+		},
+		{
+			name:      "Multi-service collision case 2",
+			protoPath: "tags/v1/gorm.proto",
+			suffix:    "_gorm.go",
+			expected:  "tags/v1/gorm_gorm.go",
 		},
 	}
 
@@ -75,19 +87,29 @@ func TestGenerateConverterFilename(t *testing.T) {
 		expected  string
 	}{
 		{
-			name:      "GORM converter",
+			name:      "GORM converter - preserves directory",
 			protoPath: "gorm/user.proto",
-			expected:  "user_converters.go",
+			expected:  "gorm/user_converters.go",
 		},
 		{
-			name:      "Datastore converter",
+			name:      "Datastore converter - preserves directory",
 			protoPath: "dal/v1/book.proto",
-			expected:  "book_converters.go",
+			expected:  "dal/v1/book_converters.go",
 		},
 		{
-			name:      "Simple converter",
+			name:      "Simple converter - no directory",
 			protoPath: "message.proto",
 			expected:  "message_converters.go",
+		},
+		{
+			name:      "Multi-service converter 1",
+			protoPath: "likes/v1/gorm.proto",
+			expected:  "likes/v1/gorm_converters.go",
+		},
+		{
+			name:      "Multi-service converter 2",
+			protoPath: "tags/v1/gorm.proto",
+			expected:  "tags/v1/gorm_converters.go",
 		},
 	}
 
@@ -99,6 +121,45 @@ func TestGenerateConverterFilename(t *testing.T) {
 					tt.protoPath, result, tt.expected)
 			}
 		})
+	}
+}
+
+// TestGenerateFilenameFromProto_CollisionAvoidance tests that proto files with
+// the same base name in different directories generate unique output filenames.
+// This is critical for multi-service repos like goapplib where likes/v1/gorm.proto
+// and tags/v1/gorm.proto would otherwise both generate "gorm_gorm.go".
+func TestGenerateFilenameFromProto_CollisionAvoidance(t *testing.T) {
+	// These proto paths should generate DIFFERENT output filenames
+	collisionCases := []struct {
+		protoPath1 string
+		protoPath2 string
+		suffix     string
+	}{
+		{
+			protoPath1: "likes/v1/gorm.proto",
+			protoPath2: "tags/v1/gorm.proto",
+			suffix:     "_gorm.go",
+		},
+		{
+			protoPath1: "service1/v1/models.proto",
+			protoPath2: "service2/v1/models.proto",
+			suffix:     "_gorm.go",
+		},
+		{
+			protoPath1: "a/gae.proto",
+			protoPath2: "b/gae.proto",
+			suffix:     ".go",
+		},
+	}
+
+	for _, tc := range collisionCases {
+		result1 := GenerateFilenameFromProto(tc.protoPath1, tc.suffix)
+		result2 := GenerateFilenameFromProto(tc.protoPath2, tc.suffix)
+
+		if result1 == result2 {
+			t.Errorf("COLLISION: %q and %q both generate %q - filenames must be unique",
+				tc.protoPath1, tc.protoPath2, result1)
+		}
 	}
 }
 

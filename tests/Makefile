@@ -6,10 +6,11 @@ buf: ensureenv clean
 	buf dep update
 	buf generate
 	goimports -w `find gen | grep "\.go"`
-	cd gen/gorm && go build -o /dev/null .
-	cd gen/gorm/dal && go build -o /dev/null .
-	cd gen/datastore && go build -o /dev/null .
-	cd gen/datastore/dal && go build -o /dev/null .
+	# Directory structure is preserved: gorm/*.proto -> gen/gorm/gorm/*, datastore/*.proto -> gen/datastore/datastore/*
+	cd gen/gorm/gorm && go build -o /dev/null .
+	cd gen/gorm/dal/gorm && go build -o /dev/null .
+	cd gen/datastore/datastore && go build -o /dev/null .
+	cd gen/datastore/dal/datastore && go build -o /dev/null .
 	go test ./...
 
 ensureenv:

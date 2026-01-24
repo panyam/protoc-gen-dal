@@ -19,7 +19,7 @@ import (
 	"testing"
 
 	"cloud.google.com/go/datastore"
-	dsgen "github.com/panyam/protoc-gen-dal/tests/gen/datastore"
+	dsgen "github.com/panyam/protoc-gen-dal/tests/gen/datastore/datastore"
 )
 
 const testRecord3Kind = "test_records3"
