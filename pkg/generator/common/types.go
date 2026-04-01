@@ -17,6 +17,7 @@ package common
 import (
 	"fmt"
 
+	"github.com/panyam/protokit/fields"
 	"google.golang.org/protobuf/compiler/protogen"
 )
 
@@ -231,58 +232,13 @@ func ProtoFieldToGoType(field *protogen.Field, structNameFunc StructNameFunc, so
 }
 
 // IsNumericKind checks if a proto kind represents a numeric type.
-//
-// Numeric types can be safely cast between each other in generated code,
-// though precision may be lost in some conversions.
-//
-// Parameters:
-//   - kind: The proto kind as a string
-//
-// Returns:
-//   - true if the kind is numeric, false otherwise
+// Delegates to protokit/fields.IsNumericKind.
 func IsNumericKind(kind string) bool {
-	numericKinds := map[string]bool{
-		"int32":    true,
-		"int64":    true,
-		"uint32":   true,
-		"uint64":   true,
-		"sint32":   true,
-		"sint64":   true,
-		"fixed32":  true,
-		"fixed64":  true,
-		"sfixed32": true,
-		"sfixed64": true,
-		"float":    true,
-		"double":   true,
-	}
-	return numericKinds[kind]
+	return fields.IsNumericKind(kind)
 }
 
 // ProtoKindToGoType converts a proto kind to its Go type for casting.
-//
-// This is useful when generating type conversion code where explicit casts
-// are needed (e.g., converting between different numeric types).
-//
-// Parameters:
-//   - kind: The proto kind as a string
-//
-// Returns:
-//   - the Go type suitable for type casting
+// Delegates to protokit/fields.NormalizeNumericKind.
 func ProtoKindToGoType(kind string) string {
-	switch kind {
-	case "int32", "sint32", "sfixed32":
-		return "int32"
-	case "int64", "sint64", "sfixed64":
-		return "int64"
-	case "uint32", "fixed32":
-		return "uint32"
-	case "uint64", "fixed64":
-		return "uint64"
-	case "float":
-		return "float32"
-	case "double":
-		return "float64"
-	default:
-		return kind
-	}
+	return fields.NormalizeNumericKind(kind)
 }

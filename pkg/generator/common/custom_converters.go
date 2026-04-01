@@ -17,6 +17,7 @@ package common
 import (
 	"strings"
 
+	"github.com/panyam/protokit/names"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
 
@@ -71,16 +72,10 @@ func GetColumnName(field *protogen.Field) string {
 }
 
 // ToSnakeCase converts a string to snake_case.
+// Delegates to protokit/names.ToSnakeCase.
 // Example: "CreatedAt" -> "created_at"
 func ToSnakeCase(s string) string {
-	var result strings.Builder
-	for i, r := range s {
-		if i > 0 && r >= 'A' && r <= 'Z' {
-			result.WriteRune('_')
-		}
-		result.WriteRune(r)
-	}
-	return strings.ToLower(result.String())
+	return names.ToSnakeCase(s)
 }
 
 // CollectCustomConverterImports scans a message's fields for custom converter functions

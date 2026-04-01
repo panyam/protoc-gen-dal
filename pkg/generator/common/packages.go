@@ -15,62 +15,18 @@
 package common
 
 import (
-	"strings"
-
+	"github.com/panyam/protokit/packages"
 	"google.golang.org/protobuf/compiler/protogen"
 )
 
 // ExtractPackageName extracts the Go package name from a protogen message.
-//
-// The Go package name is used for generating code in the correct package and
-// for creating import statements. This function handles buf-managed packages
-// that may have explicit package name overrides after a semicolon.
-//
-// Examples:
-//   - "github.com/panyam/protoc-gen-dal/test/gen/dal;testdal" -> "testdal"
-//   - "github.com/example/api/v1" -> "v1"
-//   - "mypackage" -> "mypackage"
-//
-// Parameters:
-//   - msg: A protogen message from which to extract the package name
-//
-// Returns:
-//   - the Go package name
+// Delegates to protokit/packages.ExtractGoPackageName.
 func ExtractPackageName(msg *protogen.Message) string {
-	// GoImportPath format is "path/to/package" or "path/to/package;packagename"
-	importPath := string(msg.GoIdent.GoImportPath)
-
-	// Check if there's a package override (after semicolon)
-	if idx := strings.LastIndex(importPath, ";"); idx != -1 {
-		return importPath[idx+1:]
-	}
-
-	// Otherwise use the last part of the path
-	if idx := strings.LastIndex(importPath, "/"); idx != -1 {
-		return importPath[idx+1:]
-	}
-
-	return importPath
+	return packages.ExtractGoPackageName(msg)
 }
 
 // GetPackageAlias returns the default alias for a package path.
-//
-// This is used when creating import statements with aliases. The alias is
-// typically the last segment of the package path.
-//
-// Examples:
-//   - GetPackageAlias("github.com/myapp/converters") -> "converters"
-//   - GetPackageAlias("example.com/api/v1") -> "v1"
-//   - GetPackageAlias("mypackage") -> "mypackage"
-//
-// Parameters:
-//   - pkgPath: The full package import path
-//
-// Returns:
-//   - the default alias (last segment of path)
+// Delegates to protokit/packages.GetPackageAlias.
 func GetPackageAlias(pkgPath string) string {
-	if idx := strings.LastIndex(pkgPath, "/"); idx != -1 {
-		return pkgPath[idx+1:]
-	}
-	return pkgPath
+	return packages.GetPackageAlias(pkgPath)
 }
