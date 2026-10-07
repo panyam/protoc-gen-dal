@@ -15,50 +15,15 @@
 package common
 
 import (
-	"strings"
-
+	"github.com/panyam/protokit/packages"
 	"google.golang.org/protobuf/compiler/protogen"
 )
 
-// PackageInfo contains extracted information about a proto message's package.
-type PackageInfo struct {
-	// ImportPath is the clean import path without ;packagename suffix
-	// Example: "github.com/test/gen/go/api"
-	ImportPath string
-
-	// Alias is the package alias for import statements
-	// Example: "api" (from ".../go/api")
-	Alias string
-}
+// PackageInfo is an alias for packages.PackageInfo from protokit.
+type PackageInfo = packages.PackageInfo
 
 // ExtractPackageInfo extracts clean import path and package alias from a proto message.
-// This is used when generating converters to properly import and reference message types.
-//
-// The function handles:
-// - Stripping ;packagename suffix from GoImportPath
-// - Extracting the last path component as the alias
-//
-// Example:
-//   Input: message with GoImportPath = "github.com/test/gen/go/api;apipb"
-//   Output: PackageInfo{ImportPath: "github.com/test/gen/go/api", Alias: "api"}
+// Delegates to protokit/packages.ExtractPackageInfo.
 func ExtractPackageInfo(msg *protogen.Message) PackageInfo {
-	if msg == nil {
-		return PackageInfo{}
-	}
-
-	importPath := string(msg.GoIdent.GoImportPath)
-
-	// Strip ;packagename suffix if present
-	// protogen sometimes includes ";packagename" suffix which is not valid for imports
-	if idx := strings.LastIndex(importPath, ";"); idx != -1 {
-		importPath = importPath[:idx]
-	}
-
-	// Extract package alias from last path component
-	alias := GetPackageAlias(importPath)
-
-	return PackageInfo{
-		ImportPath: importPath,
-		Alias:      alias,
-	}
+	return packages.ExtractPackageInfo(msg)
 }

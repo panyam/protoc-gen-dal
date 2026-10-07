@@ -1,7 +1,8 @@
 module github.com/panyam/protoc-gen-dal
 
-go 1.24
+go 1.24.6
 
-require google.golang.org/protobuf v1.36.6
-
-require github.com/google/go-cmp v0.7.0 // indirect
+require (
+	github.com/panyam/protokit v0.0.5
+	google.golang.org/protobuf v1.36.11
+)

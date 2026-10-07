@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/panyam/protokit/names"
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/proto"
 
@@ -353,21 +354,11 @@ func capitalize(s string) string {
 }
 
 func toSnakeCase(s string) string {
-	var result strings.Builder
-	for i, r := range s {
-		if i > 0 && r >= 'A' && r <= 'Z' {
-			result.WriteRune('_')
-		}
-		result.WriteRune(r)
-	}
-	return strings.ToLower(result.String())
+	return names.ToSnakeCase(s)
 }
 
 func toLowerCamelCase(s string) string {
-	if s == "" {
-		return ""
-	}
-	return strings.ToLower(s[:1]) + s[1:]
+	return names.ToCamelCase(s)
 }
 
 // getTableName gets the table name from annotation or defaults to snake_case message name
