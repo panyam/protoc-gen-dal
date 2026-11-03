@@ -1,13 +1,12 @@
 module github.com/panyam/protoc-gen-dal/tests
 
-go 1.24.0
-
-toolchain go1.24.6
+go 1.24.6
 
 require (
 	cloud.google.com/go/datastore v1.21.0
 	github.com/panyam/protoc-gen-dal v0.0.2
-	google.golang.org/protobuf v1.36.7
+	google.golang.org/api v0.247.0
+	google.golang.org/protobuf v1.36.11
 	gorm.io/driver/postgres v1.6.0
 	gorm.io/driver/sqlite v1.6.0
 	gorm.io/gorm v1.31.1
@@ -44,7 +43,6 @@ require (
 	golang.org/x/sys v0.35.0 // indirect
 	golang.org/x/text v0.28.0 // indirect
 	golang.org/x/time v0.12.0 // indirect
-	google.golang.org/api v0.247.0 // indirect
 	google.golang.org/genproto v0.0.0-20250603155806-513f23925822 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250818200422-3122310a409c // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250811230008-5f3141c8851a // indirect

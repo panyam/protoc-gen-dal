@@ -14,59 +14,12 @@
 
 package common
 
-import "sort"
+import "github.com/panyam/protokit/packages"
 
-// ImportSpec represents a Go import with optional alias.
-//
-// Import specs are used when generating import statements in Go files.
-// The alias is optional and used when the package name conflicts with
-// local identifiers or when a shorter name is desired.
-//
-// Examples:
-//   - ImportSpec{Path: "fmt"} -> import "fmt"
-//   - ImportSpec{Alias: "pb", Path: "google.golang.org/protobuf"} -> import pb "google.golang.org/protobuf"
-type ImportSpec struct {
-	// Alias is the optional import alias (e.g., "models", "pb", "api")
-	Alias string
+// ImportSpec is an alias for packages.ImportSpec from protokit.
+// Represents a Go import with optional alias.
+type ImportSpec = packages.ImportSpec
 
-	// Path is the full import path (e.g., "github.com/example/models")
-	Path string
-}
-
-// ImportMap is a helper type for collecting unique imports.
-//
-// Use a map with the import path as key to automatically deduplicate imports.
-// Convert to []ImportSpec when ready to render in templates.
-type ImportMap map[string]ImportSpec
-
-// Add adds an import to the map.
-//
-// If an import with the same path already exists, it keeps the existing one.
-// This prevents duplicate imports.
-//
-// Parameters:
-//   - spec: The import specification to add
-func (m ImportMap) Add(spec ImportSpec) {
-	if _, exists := m[spec.Path]; !exists {
-		m[spec.Path] = spec
-	}
-}
-
-// ToSlice converts the import map to a slice of import specs, sorted by path.
-//
-// This is useful for template rendering which typically expects slices.
-// Sorting ensures deterministic output across runs.
-//
-// Returns:
-//   - slice of import specs, sorted by import path
-func (m ImportMap) ToSlice() []ImportSpec {
-	var result []ImportSpec
-	for _, spec := range m {
-		result = append(result, spec)
-	}
-	// Sort by import path for deterministic output
-	sort.Slice(result, func(i, j int) bool {
-		return result[i].Path < result[j].Path
-	})
-	return result
-}
+// ImportMap is an alias for packages.ImportMap from protokit.
+// Deduplicating map of imports keyed by path.
+type ImportMap = packages.ImportMap
