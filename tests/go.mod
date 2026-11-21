@@ -49,4 +49,4 @@ require (
 	google.golang.org/grpc v1.74.2 // indirect
 )
 
-replace github.com/panyam/protoc-gen-dal v0.0.2 => ../
+replace github.com/panyam/protoc-gen-dal => ../
