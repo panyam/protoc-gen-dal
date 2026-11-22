@@ -4,7 +4,7 @@ go 1.24.6
 
 require (
 	cloud.google.com/go/datastore v1.21.0
-	github.com/panyam/protoc-gen-dal v0.0.2
+	github.com/panyam/protoc-gen-dal v0.0.14
 	google.golang.org/api v0.247.0
 	google.golang.org/protobuf v1.36.11
 	gorm.io/driver/postgres v1.6.0
